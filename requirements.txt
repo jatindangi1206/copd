@@ -1,0 +1,6 @@
+# EDA and report (02-11). Models: requirements-models.txt
+numpy
+pandas
+scipy
+matplotlib
+xlrd              # reads data/COPDAI_DATASHEET_01.xls

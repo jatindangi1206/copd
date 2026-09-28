@@ -1,0 +1,14 @@
+# Models (run_models.py). Python >= 3.10. On a CUDA workstation install torch
+# first from https://pytorch.org for your CUDA version, then: pip install -r requirements-models.txt
+numpy
+pandas
+scipy
+psutil            # per-core CPU usage for the core prompt (falls back to load average)
+xgboost           # XGBoost
+catboost          # CatBoost
+torch             # RNN, LSTM, RS-DPF, GRU-ODE-Bayes, neural ODE, gap-aware transformer
+torchdiffeq       # physiology-informed neural ODE
+hmmlearn          # HMM
+filterpy          # nonlinear state-space model (UKF + RTS smoother)
+particles         # particle filter and smoother
+timesfm[torch]    # TimesFM 3.0; weights download from Hugging Face on first run (non-commercial licence)

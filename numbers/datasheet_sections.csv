@@ -1,0 +1,24 @@
+section,columns,pct
+Age and sex,2,100.0
+Current symptoms,17,93.04812834224599
+Disease history,7,84.84848484848484
+Etiotype,1,100.0
+"GOLD group, smoking, exposures, comorbidity",21,94.94949494949496
+Physical examination,18,99.49494949494951
+Chest examination,15,100.0
+Treatment,32,39.015151515151516
+Blood count,4,62.121212121212125
+Liver tests,7,62.33766233766234
+Kidney tests,4,62.878787878787875
+Lipids,3,53.535353535353536
+Thyroid,4,38.63636363636363
+Blood sugar,2,43.93939393939393
+IgE and other tests,8,2.6515151515151514
+"Imaging (X-ray, CT, ECG, echo)",16,96.21212121212122
+Six-minute walk test,8,96.96969696969697
+"Spirometry, before bronchodilator",11,93.66391184573003
+"Spirometry, after bronchodilator",11,47.658402203856745
+Oscillometry,17,77.18360071301248
+Diagnosis and watch details,5,100.0
+CAT score,1,96.96969696969697
+BODE score,1,100.0

@@ -1,0 +1,10 @@
+# patient-level data: keep out of git, copy to the workstation separately
+data/
+model_data/
+results/
+clinical_table.csv
+
+# local
+.venv/
+__pycache__/
+.DS_Store
