@@ -4,6 +4,15 @@ COPD pilot cohort (33 patients, c001-c033): clinical datasheet + smartwatch HRV.
 are done; the models are written but not yet run. Read README.md (layout, setup, commands) and
 results.md (what each script found) first.
 
+The project was built in an earlier Claude session on the user's Mac. Everything that session
+knew - the user's instructions and why, data traps, numbers, per-model notes, gotchas, next
+steps - is in docs/HANDOFF.md, loaded here:
+
+@docs/HANDOFF.md
+
+On a new machine: patient data (data/, model_data/, clinical_table.csv) is not in git - check it
+is there before running anything.
+
 ## Decisions already made - don't reopen them
 
 - **Order is fixed: imputation first, then forecasting.** Imputation hides the 20% `mask_random`

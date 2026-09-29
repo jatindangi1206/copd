@@ -5,7 +5,7 @@ one section per script, in run order. figures go to figs/ (figs_dark/ with THEME
 ## codings.py --check
 
 ```
-.venv/bin/python copd_clinical/codings.py --check
+python codings.py --check
 ```
 
 - ok: yes/no remap, ND/NK as missing, mMRC midpoints, mixed unit durations, BODE reconstruction
@@ -16,7 +16,7 @@ one section per script, in run order. figures go to figs/ (figs_dark/ with THEME
 ## 02_clinical_eda.py
 
 ```
-.venv/bin/python copd_clinical/02_clinical_eda.py
+python 02_clinical_eda.py
 ```
 
 figs: clin_cohort, clin_severity, clin_corr, clin_vs_wearable
@@ -34,7 +34,7 @@ figs: clin_cohort, clin_severity, clin_corr, clin_vs_wearable
 ## 03_data_presence.py
 
 ```
-.venv/bin/python copd_clinical/03_data_presence.py
+python 03_data_presence.py
 ```
 
 figs: 03a-readings-per-patient, 03b-totals-and-days. table: numbers/data_presence.csv
@@ -49,7 +49,7 @@ figs: 03a-readings-per-patient, 03b-totals-and-days. table: numbers/data_presenc
 ## 04_hrv_per_patient.py
 
 ```
-.venv/bin/python copd_clinical/04_hrv_per_patient.py
+python 04_hrv_per_patient.py
 ```
 
 figs: 04-hrv-over-time-per-patient
@@ -61,7 +61,7 @@ figs: 04-hrv-over-time-per-patient
 ## 05_missingness.py
 
 ```
-.venv/bin/python copd_clinical/05_missingness.py
+python 05_missingness.py
 ```
 
 figs: 05a-gap-between-readings, 05b-coverage-per-patient, 05c-readings-per-day, 05d-daily-coverage. table: numbers/hrv_missingness.csv
@@ -80,7 +80,7 @@ figs: 05a-gap-between-readings, 05b-coverage-per-patient, 05c-readings-per-day, 
 ## 06_hrv_distributions.py
 
 ```
-.venv/bin/python copd_clinical/06_hrv_distributions.py
+python 06_hrv_distributions.py
 ```
 
 figs: 06a-hrv-curves-per-patient, 06b-hrv-histogram, 06c-hrv-curve-each-patient, 06d-median-hrv-per-patient
@@ -95,7 +95,7 @@ figs: 06a-hrv-curves-per-patient, 06b-hrv-histogram, 06c-hrv-curve-each-patient,
 ## 07_sleep_and_events.py
 
 ```
-.venv/bin/python copd_clinical/07_sleep_and_events.py
+python 07_sleep_and_events.py
 ```
 
 figs: 07a-hrv-sleep, 07b-hrv-around-exacerbations. table: numbers/hrv_sleep.csv
@@ -108,7 +108,7 @@ figs: 07a-hrv-sleep, 07b-hrv-around-exacerbations. table: numbers/hrv_sleep.csv
 ## 08_sleep_stages.py
 
 ```
-.venv/bin/python copd_clinical/08_sleep_stages.py
+python 08_sleep_stages.py
 ```
 
 figs: 08a-sleep-stage-split, 08b-hrv-deep-vs-light. tables: numbers/sleep_blocks.csv, numbers/sleep_stage_hrv.csv
@@ -123,7 +123,7 @@ figs: 08a-sleep-stage-split, 08b-hrv-deep-vs-light. tables: numbers/sleep_blocks
 ## 09_clinical_profile.py
 
 ```
-.venv/bin/python copd_clinical/09_clinical_profile.py
+python 09_clinical_profile.py
 ```
 
 figs: 09a-datasheet-completeness, 09b-symptoms-and-history, 09c-lung-and-walk. tables: numbers/datasheet_sections.csv, comorbidities.csv, imaging.csv, treatment.csv, treatment_count.csv
@@ -142,7 +142,7 @@ figs: 09a-datasheet-completeness, 09b-symptoms-and-history, 09c-lung-and-walk. t
 ## 11_model_data.py
 
 ```
-.venv/bin/python copd_clinical/11_model_data.py
+python 11_model_data.py
 ```
 
 figs: 11a-segment-threshold, 11b-segments. files: model_data/
@@ -157,11 +157,11 @@ figs: 11a-segment-threshold, 11b-segments. files: model_data/
 ## 10_report.py
 
 ```
-.venv/bin/python copd_clinical/10_report.py
+python 10_report.py
 ```
 
-- wrote COPD_EDA_Report.html, 24 figures from figs/
-- wrote COPD_EDA_Report_dark.html, 24 figures from figs_dark/
+- wrote COPD_EDA_Report.html, 25 figures from figs/
+- wrote COPD_EDA_Report_dark.html, 25 figures from figs_dark/
 
 ## models
 
