@@ -142,6 +142,54 @@ fig.suptitle("Sorting patients by exacerbation during monitoring (yes / no) from
 fig.tight_layout()
 save(fig, "12c-exacerbation-results")
 
+# ------------------------------------------------------------------ tuned runs (tune_models.py, run_models.py --tuned)
+TUNED = RUN / "summary_tuned.csv"
+if TUNED.exists():
+    import json
+    St = pd.read_csv(TUNED)
+    mcol = "mask" if "mask" in St else "imputer"           # the column that holds the mask (impute) or imputer
+    rows = []
+    for task, mask, label in TESTS:
+        for model in REGISTRY:
+            if model in REFERENCE.values() or model in ("linear", "last_value"):
+                continue
+            r = St[(St.task == task) & (St.model == model) & ((St[mcol] == mask) if mask else True)]
+            if r.empty:
+                continue
+            r, base = r.iloc[-1], R[(R.test == label) & (R.model == model)].iloc[0]
+            ok = np.isfinite(r.mae) and r.mae < 1000 and r.n_nonfinite == 0 and r.n_nonpositive == 0 and r.pct_above_max <= 5
+            rows.append(dict(task=task, test=label, model=model, name=NAMES[model], default=base.mae,
+                             tuned=r.mae if ok else np.nan, change=(r.mae - base.mae) if ok else np.nan,
+                             reference=R[(R.test == label) & R.reference].mae.iat[0]))
+    Tn = pd.DataFrame(rows)
+    Tn.to_csv(NUMBERS / "model_results_tuned.csv", index=False)
+    tun = []
+    for f in sorted((RUN / "tuning").glob("*/*.json")):
+        j = json.loads(f.read_text())
+        tun.append(dict(task=j["task"], model=j["model"], name=NAMES[j["model"]], trials=j["trials"], series=j["series"],
+                        default_val_mae=j["default_val_mae"], val_mae=j["val_mae"],
+                        params="; ".join(f"{k} {v:.3g}" if isinstance(v, float) else f"{k} {v}" for k, v in j["params"].items())))
+    pd.DataFrame(tun).to_csv(NUMBERS / "tuning.csv", index=False)
+
+    fig, ax = plt.subplots(1, 4, figsize=(17, 6.5), sharey=False)
+    for a_, (_, _, label) in zip(ax, TESTS):
+        d = Tn[Tn.test == label].sort_values("tuned", ascending=False).reset_index(drop=True)
+        a_.hlines(d.index, d[["default", "tuned"]].min(axis=1), d[["default", "tuned"]].max(axis=1), color=GREY, lw=1.5)
+        a_.plot(d.default, d.index, "o", color=GREY, ms=6, label="default settings")
+        a_.plot(d.tuned, d.index, "o", color=BLUE, ms=6, label="tuned settings")
+        a_.axvline(d.reference.iat[0], color=ORANGE, ls="--", lw=1)
+        a_.set_yticks(d.index, [n.split(" (")[0] for n in d.name], fontsize=8)
+        a_.set_title(label, fontsize=10)
+        a_.set_xlabel("average error (MAE)")
+        a_.grid(axis="y", visible=False)
+    ax[3].legend(fontsize=8, loc="upper right")
+    fig.suptitle("Default against tuned settings, on the official tests (dashed: the reference)")
+    fig.tight_layout()
+    save(fig, "12d-tuned-results")
+    for label, d in Tn.groupby("test", sort=False):
+        print(f"tuned {label:17s} better {int((d.change < -0.05).sum())}, same {int((d.change.abs() <= 0.05).sum())}, "
+              f"worse {int((d.change > 0.05).sum())}; best tuned {d.sort_values('tuned').name.iat[0]} {d.tuned.min():.2f}")
+
 for test, d in R.groupby("test", sort=False):
     ok = d[d.usable].sort_values("mae")
     ref = ok[ok.reference].iloc[0]

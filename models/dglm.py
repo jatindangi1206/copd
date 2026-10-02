@@ -20,6 +20,8 @@ NU is set per series from the spread of its log readings.
 import numpy as np
 from scipy.special import digamma, polygamma
 
+from .data import hp
+
 DELTA = 0.98
 
 
@@ -31,7 +33,7 @@ def _inv_trigamma(q):
     return a
 
 
-def _design(period, t0, ly):
+def _design(period, t0, ly, nu_scale=1.0):
     w = 2 * np.pi / period
     G = np.array([[1, 0, 0], [0, np.cos(w), -np.sin(w)], [0, np.sin(w), np.cos(w)]])
     F = np.array([1.0, 1.0, 0.0])
@@ -39,15 +41,15 @@ def _design(period, t0, ly):
     m0 = np.array([np.nanmean(ly) if ok.any() else 4.0, 0.0, 0.0])
     C0 = np.diag([1.0, 0.1, 0.1])
     dl = np.diff(ly[ok]) if ok.sum() > 2 else np.array([0.3])
-    nu = float(np.clip(1.0 / max(0.5 * np.var(dl), 1e-3), 1.0, 500.0))
+    nu = float(np.clip(nu_scale / max(0.5 * np.var(dl), 1e-3), 1.0, 500.0))
     return G, F, m0, C0, nu
 
 
-def _filter(y, G, F, m, C, nu):
+def _filter(y, G, F, m, C, nu, delta=DELTA):
     T = len(y)
     ms, Cs, As, Rs = np.zeros((T, 3)), np.zeros((T, 3, 3)), np.zeros((T, 3)), np.zeros((T, 3, 3))
     for t in range(T):
-        a, R = G @ m, G @ C @ G.T / DELTA
+        a, R = G @ m, G @ C @ G.T / delta
         As[t], Rs[t] = a, R
         if not np.isnan(y[t]):
             f, q = F @ a, max(F @ R @ F, 1e-8)
@@ -78,8 +80,8 @@ def impute(series, ctx):
     out = []
     for s in series:
         y = s.x.hrv.to_numpy(float)
-        G, F, m0, C0, nu = _design(ctx["period"], s.x.t.iat[0], np.log(y))
-        sm, sC = _smooth(G, *_filter(y, G, F, m0, C0, nu))
+        G, F, m0, C0, nu = _design(ctx["period"], s.x.t.iat[0], np.log(y), hp(ctx, "nu_scale", 1.0))
+        sm, sC = _smooth(G, *_filter(y, G, F, m0, C0, nu, hp(ctx, "delta", DELTA)))
         f, q = sm @ F, np.einsum("i,tij,j->t", F, sC, F)
         out.append(np.where(np.isnan(y), np.exp(f + q / 2), y))
     return out
@@ -89,10 +91,11 @@ def forecast(history, horizons, ctx):
     out = []
     for s, h in zip(history, horizons):
         y = s.x.hrv_obs.to_numpy(float)
-        G, F, m0, C0, nu = _design(ctx["period"], s.x.t.iat[0], np.log(y))
-        ms, Cs, _, _ = _filter(y, G, F, m0, C0, nu)
+        delta = hp(ctx, "delta", DELTA)
+        G, F, m0, C0, nu = _design(ctx["period"], s.x.t.iat[0], np.log(y), hp(ctx, "nu_scale", 1.0))
+        ms, Cs, _, _ = _filter(y, G, F, m0, C0, nu, delta)
         m, C, preds = ms[-1], Cs[-1], []
-        Wv = (1 - DELTA) / DELTA * G @ C @ G.T      # evolution variance fixed at the origin (W&H 6.3):
+        Wv = (1 - delta) / delta * G @ C @ G.T      # evolution variance fixed at the origin (W&H 6.3):
         for _ in range(h):                           # uncertainty grows linearly, not by 1/DELTA per step
             m, C = G @ m, G @ C @ G.T + Wv
             preds.append(np.exp(F @ m + F @ C @ F / 2))

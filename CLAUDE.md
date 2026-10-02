@@ -53,6 +53,13 @@ is there before running anything.
 - gast forecast gave all NaN once and worked on an identical rerun; cause unknown. If NaNs return, look there first.
 - 12_exac_classify.py is in this repo and covers every datasheet patient with a dated outcome
   (all except c005, c032, c037 and c034). It writes results/exac_monitoring/.
+- 3 Oct: all 14 models tuned (tune_models.py, 42 studies) and rerun with `run_models.py --tuned`
+  (results/summary_tuned.csv); SHAP and ablation in shap_analysis.py. Report sections 16-17. Tuning uses a
+  practice set cut from the training data, never the official test - keep it that way.
+- models/gast.py got a numerical guard (clamp of the FFT count at 0) that fixed its NaN runs. It is still the
+  placeholder architecture; ask before changing the design itself.
+- CatBoost runs on CPU by default (it stalled on the shared GPU). One GPU: 5 jobs at once made the slow models
+  3x slower; run slow studies on their own.
 - To rerun (the commands that were used): use /home/kcdha/timesfm3/.venv/bin/python (the default python cannot import pandas) and
   `export TIMESFM_CHECKPOINT=/home/kcdha/timesfm3/timesfm-3.0-pytorch` (local weights, no download). Then
   `run_models.py check`, `impute all` (random, then `--mask block`), `forecast all`, `daily all`,

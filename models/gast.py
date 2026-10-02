@@ -16,6 +16,7 @@ Inputs and training loop: seq.py (the same as the RNN and LSTM).
 """
 import torch
 
+from .data import hp
 from .seq import fit_forecast, fit_impute
 
 D, HEADS, BLOCKS = 64, 4, 2
@@ -44,20 +45,22 @@ class GapSSM(torch.nn.Module):
         parts = []
         for rev in ([False, True] if self.bi else [False]):
             num = _decay_conv(x * seen, rate, rev)
-            den = _decay_conv(seen.expand_as(x), rate, rev)
+            # the FFT leaves rounding noise around zero after a long gap; a slightly negative count made
+            # num / den blow up and log1p return NaN (seen as all-NaN predictions)
+            den = _decay_conv(seen.expand_as(x), rate, rev).clamp(min=0)
             parts += [num / (den + 1e-6), torch.log1p(den)]
         return self.out(torch.cat(parts, -1))
 
 
 class Net(torch.nn.Module):
-    def __init__(self, n_in, bidirectional):
+    def __init__(self, n_in, bidirectional, d=D, heads=HEADS, blocks=BLOCKS, dropout=0.1):
         super().__init__()
         self.bi = bidirectional
-        self.embed = torch.nn.Linear(n_in, D)
-        self.ssm = torch.nn.ModuleList(GapSSM(D, bidirectional) for _ in range(BLOCKS))
-        self.att = torch.nn.ModuleList(torch.nn.TransformerEncoderLayer(D, HEADS, 2 * D, 0.1, batch_first=True)
-                                       for _ in range(BLOCKS))
-        self.head = torch.nn.Linear(D, 1)
+        self.embed = torch.nn.Linear(n_in, d)
+        self.ssm = torch.nn.ModuleList(GapSSM(d, bidirectional) for _ in range(blocks))
+        self.att = torch.nn.ModuleList(torch.nn.TransformerEncoderLayer(d, heads, 2 * d, dropout, batch_first=True)
+                                       for _ in range(blocks))
+        self.head = torch.nn.Linear(d, 1)
 
     def forward(self, x):
         seen = x[..., 1:2]                       # seen / was-real flag is input column 1 in both tasks
@@ -70,9 +73,14 @@ class Net(torch.nn.Module):
         return self.head(h).squeeze(-1)
 
 
+def _net(ctx, bi):
+    return lambda n: Net(n, bi, hp(ctx, "d", D), hp(ctx, "heads", HEADS), hp(ctx, "blocks", BLOCKS),
+                         hp(ctx, "dropout", 0.1))
+
+
 def impute(series, ctx):
-    return fit_impute(lambda n: Net(n, True), series, ctx)
+    return fit_impute(_net(ctx, True), series, ctx)
 
 
 def forecast(history, horizons, ctx):
-    return fit_forecast(lambda n: Net(n, False), history, horizons, ctx)
+    return fit_forecast(_net(ctx, False), history, horizons, ctx)

@@ -47,6 +47,11 @@ def _t(frame, daily):
     return (frame.time.dt.hour * 6 + frame.time.dt.minute // 10).to_numpy()
 
 
+def hp(ctx, name, default):
+    """A hyperparameter: ctx['params'][name] if tuning (or a tuned run) set it, else the default."""
+    return ctx.get("params", {}).get(name, default)
+
+
 def _quick(series):
     """The 6 longest series for --quick / check (the first 6 were all short, so long-segment failures never showed)."""
     return sorted(series, key=lambda s: len(s.x), reverse=True)[:6]
@@ -186,6 +191,6 @@ def save(task, name, P, m, extra):
     m = {**m, **extra, "finished": time.strftime("%Y-%m-%d %H:%M")}
     (out / "metrics.json").write_text(json.dumps(m, indent=1))
     row = pd.DataFrame([{"task": task, "run": name, **m}])
-    summ = RESULTS / "summary.csv"
+    summ = RESULTS / ("summary_tuned.csv" if extra.get("tuned") else "summary.csv")
     row.to_csv(summ, mode="a", header=not summ.exists(), index=False)
     return out

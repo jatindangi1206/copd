@@ -266,3 +266,34 @@ THEME=light python 13_method_figures.py; THEME=dark python 13_method_figures.py
 - figs 13a (imputation flow), 13b (forecasting flow), 13c (classification flow), 13d (model families: input, idea, output), 13e (classification methods)
 - 13a and 13b are drawn on a real segment with the best usable model's real predictions (read from results/summary.csv), so rerun after the models
 - report: 13d in section 12, 13a in section 13, 13b in section 14, 13c and 13e in section 15; each of 13-15 has a short "what the numbers mean" list
+
+## tune_models.py
+
+```
+python tune_models.py impute|forecast|daily <model>      # logs/tune_sweep.sh runs them in chains
+python run_models.py <task> <model> --tuned              # official tests with the best setting -> results/summary_tuned.csv
+```
+
+- 42 studies (14 models x impute / forecast / daily), optuna tpe. 40 tries for quick models, 8 for rsdpf, pf, gru_ode_bayes (60 segments), 10 for timesfm3. trial 0 = defaults
+- practice set, never the official test: impute = a further 15% of visible readings hidden in runs; forecast / daily = last 20% of the train part
+- a setting that gives non-finite, <= 0 or >5% above 129 predictions scores 1000 (dglm impute hit this often, gast once)
+- official tests, default -> tuned. block: lstm 27.7 -> 26.8, rnn 28.0 -> 27.2, gast 27.9 -> 27.5, hmm 32.4 -> 30.2. counting > 0.1 as a change: 9 better, 5 same, 0 worse
+- random: gast 26.3 -> 25.5, lstm 26.4 -> 25.5, hmm 32.2 -> 27.3
+- every 10 min: timesfm3 31.7 -> 30.1 (best tuned), but gast default 29.9 is still the lowest; 6 better, 6 same, 2 worse (gru_ode_bayes 31.5 -> 32.3)
+- daily: ossa 26.3 -> 19.4, gast 19.9 -> 18.3, rnn 20.6 -> 19.4; xgboost 17.8 best. practice-set gains of 8-10 for rnn / lstm did not carry over (lstm 20.6 -> 21.1)
+- trees barely move (xgboost, catboost within 0.3 everywhere); pf, rsdpf, pinode no gain
+- catboost now runs on cpu (it stalled on the shared gpu); its defaults were rerun on cpu
+- gast: the fft count of real readings went slightly negative after long gaps (19% of entries, divisor crossed zero in 1.3%), giving the NaN runs. clamped at 0 in models/gast.py; defaults rerun: forecast 31.3 -> 29.9
+
+## shap_analysis.py
+
+```
+python shap_analysis.py all --tuned ; THEME=dark python shap_analysis.py figures
+```
+
+- treeshap for xgboost / catboost on the scored readings, tuned settings. xgboost shares: impute readings after 28%, nearest reading before/after 24%, readings before 21%, heart rate 8% (vitals 20% in all)
+- forecast: recent readings 34%, time of day of the target 32%, vitals 11%. daily: recent readings 30%, heart rate 16%, vitals 46%
+- ablation (refit without a vital, block test): all vitals +0.7 to +2.6 (lstm +2.65, rnn +2.33, gast +2.25, catboost +0.94, xgboost +0.90, pinode +0.67); heart rate alone +0.4 to +1.8; steps and temperature ~0
+- only xgboost, catboost, rnn, lstm, gast, pinode use vitals; the rest read hrv and time of day
+- classification shap (refit on all 37 patients, descriptive only): xgboost reduced set leans on six-minute walk 49%, spirometry 25%
+- figs 14a-e, 12d (default vs tuned), 13f (tuning flow); report sections 16 and 17, conclusions now 18

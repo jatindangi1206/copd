@@ -12,6 +12,8 @@ forecast: filter to the end of the history, push the particles forward (H9).
 """
 import numpy as np
 
+from .data import hp
+
 N_PART, N_PATHS = 1000, 100
 
 
@@ -39,7 +41,7 @@ def _model_class():
     return LogAR, ssm
 
 
-def _params(ly, t, period, h=0):
+def _params(ly, t, period, h=0, share=0.7):
     ok = ~np.isnan(ly)
     a = 2 * np.pi * t / period
     X = np.column_stack([np.ones(len(t)), np.cos(a), np.sin(a)])
@@ -51,14 +53,14 @@ def _params(ly, t, period, h=0):
     both = ok[1:] & ok[:-1]
     rho = float(np.clip(np.corrcoef(r[:-1][both], r[1:][both])[0, 1], 0.0, 0.99)) if both.sum() > 3 else 0.5
     v = max(np.nanvar(r), 1e-4)
-    return dict(mu=mu, rho=rho, sigma=np.sqrt(0.7 * v * (1 - rho ** 2) + 1e-6), tau=np.sqrt(0.3 * v),
+    return dict(mu=mu, rho=rho, sigma=np.sqrt(share * v * (1 - rho ** 2) + 1e-6), tau=np.sqrt((1 - share) * v),
                 sd0=np.sqrt(v))
 
 
 def _run(ly, p, ctx, smooth):
     import particles
     LogAR, ssm = _model_class()
-    n = 100 if ctx["quick"] else N_PART
+    n = 100 if ctx["quick"] else hp(ctx, "n_part", N_PART)
     model = LogAR(**p)
     np.random.seed(ctx["seed"])                      # particles draws from numpy's global generator
     pf = particles.SMC(fk=ssm.Bootstrap(ssm=model, data=ly), N=n, store_history=smooth, verbose=False)
@@ -70,9 +72,9 @@ def impute(series, ctx):
     out = []
     for s in series:
         ly = np.log(s.x.hrv.to_numpy(float))
-        p = _params(ly, s.x.t.to_numpy(), ctx["period"])
+        p = _params(ly, s.x.t.to_numpy(), ctx["period"], 0, hp(ctx, "sigma_share", 0.7))
         pf = _run(ly, p, ctx, smooth=True)
-        paths = np.array(pf.hist.backward_sampling(20 if ctx["quick"] else N_PATHS))   # (T, M)
+        paths = np.array(pf.hist.backward_sampling(20 if ctx["quick"] else hp(ctx, "n_paths", N_PATHS)))   # (T, M)
         pred = np.exp(paths + p["tau"] ** 2 / 2).mean(axis=1)
         y = s.x.hrv.to_numpy(float)
         out.append(np.where(np.isnan(y), pred, y))
@@ -85,7 +87,7 @@ def forecast(history, horizons, ctx):
     for s, h in zip(history, horizons):
         ly = np.log(s.x.hrv_obs.to_numpy(float))
         n = len(ly)
-        p = _params(ly, s.x.t.to_numpy(), ctx["period"], h)
+        p = _params(ly, s.x.t.to_numpy(), ctx["period"], h, hp(ctx, "sigma_share", 0.7))
         pf = _run(ly, {**p, "mu": p["mu"][:n]}, ctx, smooth=False)
         x, w, mu = pf.X.copy(), pf.W, p["mu"]
         preds = []

@@ -21,19 +21,20 @@ import math
 import numpy as np
 import torch
 
-from .data import from_z, phase, to_z, zstats
+from .data import from_z, hp, phase, to_z, zstats
 
 K, ALPHA = 2, 0.5
 W, BATCH, N_TRAIN, N_RUN = 144, 32, 64, 512
 
 
 class RSDPF(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, k=K, alpha=ALPHA):
         super().__init__()
-        self.level = torch.nn.Parameter(torch.linspace(-0.8, 0.8, K))
-        self.phi_raw = torch.nn.Parameter(torch.full((K,), 1.5))
-        self.log_sig = torch.nn.Parameter(torch.full((K,), -1.0))
-        self.pi_logit = torch.nn.Parameter(torch.eye(K) * 3.0)
+        self.K, self.alpha = k, alpha
+        self.level = torch.nn.Parameter(torch.linspace(-0.8, 0.8, k))
+        self.phi_raw = torch.nn.Parameter(torch.full((k,), 1.5))
+        self.log_sig = torch.nn.Parameter(torch.full((k,), -1.0))
+        self.pi_logit = torch.nn.Parameter(torch.eye(k) * 3.0)
         self.log_tau = torch.nn.Parameter(torch.tensor(-1.0))
         self.circ = torch.nn.Parameter(torch.zeros(2))
 
@@ -46,14 +47,14 @@ class RSDPF(torch.nn.Module):
         dev = y.device
         log_pi = torch.log_softmax(self.pi_logit, -1)
         phi, sig, tau = torch.sigmoid(self.phi_raw), torch.exp(self.log_sig), torch.exp(self.log_tau)
-        s = torch.randint(0, K, (B, n), device=dev, generator=gen)
+        s = torch.randint(0, self.K, (B, n), device=dev, generator=gen)
         x = self.mean(s, sc[:, 0]) + sig[s] * torch.randn(B, n, device=dev, generator=gen)
         logw = torch.full((B, n), -math.log(n), device=dev)
         ll, means = torch.zeros(B, device=dev), []
         for t in range(T):
             if t > 0:
-                s_new = torch.randint(0, K, (B, n), device=dev, generator=gen)
-                logw = logw + log_pi[s, s_new] + math.log(K)
+                s_new = torch.randint(0, self.K, (B, n), device=dev, generator=gen)
+                logw = logw + log_pi[s, s_new] + math.log(self.K)
                 x = (self.mean(s_new, sc[:, t]) + phi[s_new] * (x - self.mean(s_new, sc[:, t - 1]))
                      + sig[s_new] * torch.randn(B, n, device=dev, generator=gen))
                 s = s_new
@@ -63,7 +64,7 @@ class RSDPF(torch.nn.Module):
             ll = ll + torch.where(obs, torch.logsumexp(lw, -1) - torch.logsumexp(logw, -1), torch.zeros_like(ll))
             w = torch.softmax(lw, -1)
             means.append((w * x).sum(-1))
-            q = ALPHA * w + (1 - ALPHA) / n
+            q = self.alpha * w + (1 - self.alpha) / n
             idx = torch.multinomial(q, n, replacement=True, generator=gen)
             logw = torch.log(torch.gather(w, 1, idx) + 1e-12) - torch.log(torch.gather(q, 1, idx))
             logw = logw - torch.logsumexp(logw, -1, keepdim=True)
@@ -92,10 +93,10 @@ def _train(zs, scs, ctx):
     torch.manual_seed(ctx["seed"])
     rng = np.random.default_rng(ctx["seed"])
     dev = ctx["device"]
-    m = RSDPF().to(dev)
-    opt = torch.optim.Adam(m.parameters(), lr=0.01)
-    length = min(W, min(len(z) for z in zs))
-    for step in range(10 if ctx["quick"] else 1500):
+    m = RSDPF(hp(ctx, "K", K), hp(ctx, "alpha", ALPHA)).to(dev)
+    opt = torch.optim.Adam(m.parameters(), lr=hp(ctx, "lr", 0.01))
+    length = min(hp(ctx, "window", W), min(len(z) for z in zs))
+    for step in range(10 if ctx["quick"] else hp(ctx, "steps", 1500)):
         ii = rng.integers(0, len(zs), BATCH)
         ys, ss = [], []
         for i in ii:
@@ -104,7 +105,7 @@ def _train(zs, scs, ctx):
             ss.append(scs[i][a:a + length])
         y = torch.as_tensor(np.array(ys), dtype=torch.float32, device=dev)
         sc = torch.as_tensor(np.array(ss), dtype=torch.float32, device=dev)
-        ll, _, _ = m.run(y, sc, N_TRAIN)
+        ll, _, _ = m.run(y, sc, hp(ctx, "n_train", N_TRAIN))
         loss = -(ll.sum() / (~torch.isnan(y)).sum().clamp(min=1))
         opt.zero_grad()
         loss.backward()
@@ -135,7 +136,7 @@ def impute(series, ctx):
     st = zstats(series)
     zs, scs = _prep(series, ctx["period"], "hrv", st)
     m = _train(zs, scs, ctx)
-    n, dev = (64 if ctx["quick"] else N_RUN), ctx["device"]
+    n, dev = (64 if ctx["quick"] else hp(ctx, "n_run", N_RUN)), ctx["device"]
     gen = torch.Generator(device=dev).manual_seed(ctx["seed"])
     est = [None] * len(zs)
     with torch.no_grad():
@@ -154,7 +155,7 @@ def forecast(history, horizons, ctx):
     st = zstats(history)
     zs, scs = _prep(history, ctx["period"], "hrv_obs", st)
     m = _train(zs, scs, ctx)
-    n, dev, period = (64 if ctx["quick"] else N_RUN), ctx["device"], ctx["period"]
+    n, dev, period = (64 if ctx["quick"] else hp(ctx, "n_run", N_RUN)), ctx["device"], ctx["period"]
     gen = torch.Generator(device=dev).manual_seed(ctx["seed"])
     hmax, out = max(horizons), [None] * len(zs)
     with torch.no_grad():

@@ -14,7 +14,7 @@ forecast: direct multi-step (see fit_forecast): the history, then blank slots af
 import numpy as np
 import torch
 
-from .data import COVS, cov_matrix, from_z, phase, to_z, zstats
+from .data import COVS, cov_matrix, from_z, hp, phase, to_z, zstats
 
 W = 288        # training window, slots (2 days of 10-minute data)
 HIDE = 0.2     # extra share hidden during imputation training
@@ -57,7 +57,7 @@ def _windows(arrays, length, rng, n):
 def _fit(net, ctx, make_batch, steps):
     dev = ctx["device"]
     net.to(dev)
-    opt = torch.optim.Adam(net.parameters(), lr=1e-3)
+    opt = torch.optim.Adam(net.parameters(), lr=hp(ctx, "lr", 1e-3))
     for step in range(steps):
         x, y, m = (torch.as_tensor(a, device=dev) for a in make_batch())
         pred = net(x)
@@ -75,21 +75,21 @@ def fit_impute(make_net, series, ctx):
     rng = np.random.default_rng(ctx["seed"])
     torch.manual_seed(ctx["seed"])
     st = zstats(series)
-    covs = cov_matrix(series, [c for c in COVS if c in series[0].x])
+    covs = cov_matrix(series, [c for c in COVS if c in series[0].x and c not in hp(ctx, "drop", ())])
     zs = [to_z(s.x.hrv.to_numpy(float), s.pid, st) for s in series]
     scs = [np.column_stack(phase(s.x.t, ctx["period"])) for s in series]
-    length = min(W, max(len(z) for z in zs))
+    length = min(hp(ctx, "window", W), max(len(z) for z in zs))
     n_in = 6 + covs[0].shape[1]
     net = make_net(n_in)
 
     def batch():
-        z, c, sc, valid = _windows([zs, covs, scs], length, rng, BATCH)
+        z, c, sc, valid = _windows([zs, covs, scs], length, rng, hp(ctx, "batch", BATCH))
         seen = ~np.isnan(z) & (valid > 0)
-        hide = seen & (rng.random(z.shape) < HIDE)
+        hide = seen & (rng.random(z.shape) < hp(ctx, "hide", HIDE))
         x = _impute_batch(z, c, sc, seen & ~hide)
         return x, np.nan_to_num(z).astype(np.float32), hide.astype(np.float32)
 
-    net = _fit(net, ctx, batch, 20 if ctx["quick"] else 3000)
+    net = _fit(net, ctx, batch, 20 if ctx["quick"] else hp(ctx, "steps", 3000))
     out = []
     with torch.no_grad():
         for s, z, c, sc in zip(series, zs, covs, scs):
@@ -116,7 +116,7 @@ def fit_forecast(make_net, history, horizons, ctx):
     zo = [to_z(s.x.hrv_obs.to_numpy(float), s.pid, st) for s in history]
     feats = [np.column_stack([z, ~np.isnan(o), *phase(s.x.t, period)]).astype(np.float32)
              for s, z, o in zip(history, zf, zo)]            # per slot: value, was-real, sin, cos
-    length = min(W, max(len(f) for f in feats))
+    length = min(hp(ctx, "window", W), max(len(f) for f in feats))
     net = make_net(4)
 
     def shifted(f):
@@ -126,14 +126,14 @@ def fit_forecast(make_net, history, horizons, ctx):
         return x
 
     def batch():
-        f, o, valid = _windows([feats, zo], length, rng, BATCH)
+        f, o, valid = _windows([feats, zo], length, rng, hp(ctx, "batch", BATCH))
         n = valid.sum(1).astype(int)
         cut = np.maximum(1, (rng.uniform(0.2, 0.9, len(n)) * n).astype(int))     # the origin
         f[np.arange(length)[None] > cut[:, None], :2] = 0    # nothing after the origin is known
         m = (~np.isnan(o)) & (valid > 0)
         return shifted(f), np.where(m, np.nan_to_num(o), 0).astype(np.float32), m.astype(np.float32)
 
-    net = _fit(net, ctx, batch, 20 if ctx["quick"] else 3000)
+    net = _fit(net, ctx, batch, 20 if ctx["quick"] else hp(ctx, "steps", 3000))
     hmax = max(horizons)
     out = []
     with torch.no_grad():

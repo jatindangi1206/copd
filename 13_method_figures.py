@@ -585,3 +585,41 @@ fig.suptitle("How each kind of classification method turns enrolment tests into 
              "The score is the same for all: AUC", y=.998, fontsize=11.5)
 fig.tight_layout(h_pad=0.6)
 save(fig, "13e-classification-methods")
+
+
+# ============================================================ 13f tuning flow
+fig, ax = canvas(14, 7.5)
+ax.set_xlim(0, 100)
+ax.set_ylim(-3, 60)
+ax.text(0, 58, "How the settings are tuned without touching the official test", fontsize=13, fontweight="bold", va="top")
+ax.text(0, 50.5, "1   A practice set is carved out of what the model is allowed to see anyway", fontsize=11, va="center")
+r2 = np.random.default_rng(7)
+ax.text(2, 45, "Imputation", fontsize=9.5, va="center")
+ax.add_patch(Rectangle((16, 43), 60, 4, fc=BLUE, alpha=.45, ec="none"))
+for x0_, w_, c_ in [(21, 2.5, ORANGE), (33, 4, ORANGE), (52, 2, ORANGE), (66, 3, ORANGE), (27, 2, FILL), (41, 3.5, FILL), (59, 2.5, FILL), (71, 2, FILL)]:
+    ax.add_patch(Rectangle((x0_, 43), w_, 4, fc=c_, ec="none"))
+ax.text(2, 37.5, "Forecasting", fontsize=9.5, va="center")
+ax.add_patch(Rectangle((16, 35.5), 38.4, 4, fc=BLUE, alpha=.45, ec="none"))
+ax.add_patch(Rectangle((54.4, 35.5), 9.6, 4, fc=FILL, ec="none"))
+ax.add_patch(Rectangle((64, 35.5), 12, 4, fc=ORANGE, ec="none"))
+for yy, c_, txt in [(46.5, BLUE, "readings the model learns from"), (42, FILL, "practice set: used to compare settings"),
+                    (37.5, ORANGE, "official test: never seen while tuning")]:
+    ax.add_patch(Rectangle((79, yy - 1), 2.5, 2, fc=c_, alpha=.45 if c_ == BLUE else 1, ec="none"))
+    ax.text(82.5, yy, txt, fontsize=8.5, va="center", color=INK2)
+ax.text(16, 32.3, "Imputation: a further 15% of the visible readings is hidden in whole runs.   "
+        "Forecasting: the last 20% of the learning part is held back.", fontsize=8.5, color=INK2)
+ax.text(0, 26, "2   Many settings are tried; each is scored on the practice set only", fontsize=11, va="center")
+box(ax, 2, 12, 17, 9, "the current\ndefault settings\n(always try 1)", fs=9)
+arrow(ax, 19.5, 16.5, 24.5, 16.5)
+box(ax, 25, 12, 19, 9, "try a setting:\nfit the model,\nscore on the practice set", fs=9, ec=FILL, color=FILL)
+arrow(ax, 44.5, 16.5, 49.5, 16.5)
+box(ax, 50, 12, 19, 9, "the search suggests\nthe next setting from\nthe scores so far", fs=9)
+ax.annotate("", (34.5, 11.7), (59.5, 11.7), arrowprops=dict(arrowstyle="-|>", color=INK2, lw=1.2, connectionstyle="arc3,rad=-.3"))
+ax.text(47, 6.6, "repeat: 40 tries (8 for the slow models)", ha="center", fontsize=8.5, color=INK2)
+arrow(ax, 69.5, 16.5, 74.5, 16.5)
+box(ax, 75, 12, 23, 9, "keep the setting with the\nlowest practice error", fs=9, bold=True)
+ax.text(0, 2.5, "3   The model is run once more on the official test with its best setting, and compared with its default result",
+        fontsize=11, va="center")
+ax.text(2, -1.5, "A setting that gives impossible values (not a number, zero or below, or more than 5% above the watch's maximum) is thrown out.",
+        fontsize=8.5, color=INK2)
+save(fig, "13f-tuning-flow")

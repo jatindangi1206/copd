@@ -15,7 +15,7 @@ forecast: run over the end of the history and keep propagating (H9).
 import numpy as np
 import torch
 
-from .data import COVS, from_z, to_z, zstats
+from .data import COVS, from_z, hp, to_z, zstats
 from .vendor.gru_ode_bayes import NNFOwithBayesianJumps
 
 W, BATCH, HIDDEN = 288, 16, 32
@@ -47,8 +47,9 @@ def _sparse(chunks, offsets, dev):
     return times, ptr, X, M, idx
 
 
-def _net(C, dev):
-    return NNFOwithBayesianJumps(input_size=C, hidden_size=HIDDEN, p_hidden=32, prep_hidden=8,
+def _net(C, dev, ctx):
+    return NNFOwithBayesianJumps(input_size=C, hidden_size=hp(ctx, "hidden", HIDDEN),
+                                 p_hidden=hp(ctx, "p_hidden", 32), prep_hidden=hp(ctx, "prep_hidden", 8),
                                  cov_size=1, cov_hidden=8, logvar=True, mixing=1e-4, solver="euler").to(dev)
 
 
@@ -56,14 +57,15 @@ def _train(arrays, ctx):
     torch.manual_seed(ctx["seed"])
     rng = np.random.default_rng(ctx["seed"])
     dev = ctx["device"]
-    net = _net(arrays[0].shape[1], dev)
-    opt = torch.optim.Adam(net.parameters(), lr=1e-3)
+    net = _net(arrays[0].shape[1], dev, ctx)
+    opt = torch.optim.Adam(net.parameters(), lr=hp(ctx, "lr", 1e-3))
     lens = np.array([len(a) for a in arrays])
-    for step in range(5 if ctx["quick"] else 1500):
+    w, batch = hp(ctx, "window", W), hp(ctx, "batch", BATCH)
+    for step in range(5 if ctx["quick"] else hp(ctx, "steps", 1500)):
         chunks = []
-        for i in rng.choice(len(arrays), BATCH, p=lens / lens.sum()):
-            a = int(rng.integers(0, max(1, lens[i] - W + 1)))
-            chunks.append(arrays[i][a:a + W])
+        for i in rng.choice(len(arrays), batch, p=lens / lens.sum()):
+            a = int(rng.integers(0, max(1, lens[i] - w + 1)))
+            chunks.append(arrays[i][a:a + w])
         times, ptr, X, M, idx = _sparse(chunks, [0] * len(chunks), dev)
         T = float(max(len(c) for c in chunks))
         _, loss, _, _ = net(times, ptr, X, M, idx, delta_t=1.0, T=T, cov=torch.ones(len(chunks), 1, device=dev))
@@ -116,7 +118,7 @@ def forecast(history, horizons, ctx):
     out = [None] * len(arrays)
     with torch.no_grad():
         for b in [np.arange(i, min(i + BATCH, len(arrays))) for i in range(0, len(arrays), BATCH)]:
-            ctxs = [arrays[i][-W:] for i in b]
+            ctxs = [arrays[i][-hp(ctx, "window", W):] for i in b]
             L = max(len(c) for c in ctxs)
             f = _path_means(net, ctxs, [L - len(c) for c in ctxs], L + hmax, dev)   # all contexts end at L
             for row, i in enumerate(b):

@@ -10,14 +10,14 @@ forecast: online, adaptive window: SSA on the trailing window of the history
 """
 import numpy as np
 
-from .data import lin_fill
+from .data import hp, lin_fill
 
 RANK, ITERS, WINDOWS = 3, 30, 4
 NU2_MAX = 0.95      # above this the forecast recurrence is not trusted
 
 
-def _embed_len(n, period):
-    return int(max(2, min(period, n // 2)))
+def _embed_len(n, period, frac=1.0):
+    return int(max(2, min(period * frac, n // 2)))
 
 
 def _reconstruct(y, L, r):
@@ -38,10 +38,10 @@ def impute(series, ctx):
         ly = np.log(s.x.hrv.to_numpy(float))
         miss = np.isnan(ly)
         z = lin_fill(ly)
-        L = _embed_len(len(z), ctx["period"])
+        L = _embed_len(len(z), ctx["period"], hp(ctx, "embed_frac", 1.0))
         lo, hi = np.nanmin(ly), np.nanmax(ly)
-        for _ in range(3 if ctx["quick"] else ITERS):
-            rec, _ = _reconstruct(z, L, min(RANK, L))
+        for _ in range(3 if ctx["quick"] else hp(ctx, "iters", ITERS)):
+            rec, _ = _reconstruct(z, L, min(hp(ctx, "rank", RANK), L))
             z = np.where(miss, np.clip(rec, lo, hi), ly)      # H1: stay inside the observed range
         out.append(np.exp(z))
     return out
@@ -50,14 +50,14 @@ def impute(series, ctx):
 def forecast(history, horizons, ctx):
     out = []
     for s, h in zip(history, horizons):
-        ly = np.log(s.x.hrv.to_numpy(float))[-WINDOWS * ctx["period"]:]
-        L = _embed_len(len(ly), ctx["period"])
-        r = min(RANK, L - 1)
+        ly = np.log(s.x.hrv.to_numpy(float))[-hp(ctx, "windows", WINDOWS) * ctx["period"]:]
+        L = _embed_len(len(ly), ctx["period"], hp(ctx, "embed_frac", 1.0))
+        r = min(hp(ctx, "rank", RANK), L - 1)
         lo, hi = np.nanmin(ly), np.nanmax(ly)
         rec, U = _reconstruct(ly, L, r)
         pi = U[-1, :r]
         nu2 = float(pi @ pi)
-        if nu2 >= NU2_MAX:                  # the recurrence divides by 1 - nu2 and explodes as nu2 -> 1
+        if nu2 >= hp(ctx, "nu2_max", NU2_MAX):                  # the recurrence divides by 1 - nu2 and explodes as nu2 -> 1
             out.append(np.full(h, np.exp(rec.mean())))     # fall back to the window's level
             continue
         R = (U[:-1, :r] @ pi) / (1 - nu2)   # linear recurrence

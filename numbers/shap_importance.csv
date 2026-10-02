@@ -1,0 +1,169 @@
+task,model,feature,group,mean_abs_shap,rows
+impute,xgboost,lag1,readings before,0.03070525825023651,4000
+impute,xgboost,lag2,readings before,0.024398231878876686,4000
+impute,xgboost,lag3,readings before,0.018388008698821068,4000
+impute,xgboost,lag4,readings before,0.015646662563085556,4000
+impute,xgboost,lag5,readings before,0.011160533875226974,4000
+impute,xgboost,lag6,readings before,0.021554652601480484,4000
+impute,xgboost,lag7,readings before,0.011465713381767273,4000
+impute,xgboost,lag8,readings before,0.01612054742872715,4000
+impute,xgboost,lag9,readings before,0.014756647869944572,4000
+impute,xgboost,lag10,readings before,0.013080142438411713,4000
+impute,xgboost,lag11,readings before,0.013633884489536285,4000
+impute,xgboost,lag12,readings before,0.012528286315500736,4000
+impute,xgboost,lead1,readings after,0.09020175784826279,4000
+impute,xgboost,lead2,readings after,0.03419982269406319,4000
+impute,xgboost,lead3,readings after,0.017988422885537148,4000
+impute,xgboost,lead4,readings after,0.017058104276657104,4000
+impute,xgboost,lead5,readings after,0.01448115799576044,4000
+impute,xgboost,lead6,readings after,0.016371067613363266,4000
+impute,xgboost,lead7,readings after,0.01082642376422882,4000
+impute,xgboost,lead8,readings after,0.014785056933760643,4000
+impute,xgboost,lead9,readings after,0.011425784789025784,4000
+impute,xgboost,lead10,readings after,0.01161904726177454,4000
+impute,xgboost,lead11,readings after,0.014378705061972141,4000
+impute,xgboost,lead12,readings after,0.014755436219274998,4000
+impute,xgboost,prev,nearest reading before/after,0.12005892395973206,4000
+impute,xgboost,dprev,distance to nearest reading,0.020603591576218605,4000
+impute,xgboost,next,nearest reading before/after,0.10747865587472916,4000
+impute,xgboost,dnext,distance to nearest reading,0.013252167031168938,4000
+impute,xgboost,sin,time of day,0.010174421593546867,4000
+impute,xgboost,cos,time of day,0.0321170836687088,4000
+impute,xgboost,hr,heart rate,0.07464944571256638,4000
+impute,xgboost,temp,temperature,0.03493623808026314,4000
+impute,xgboost,steps,steps,0.008623073808848858,4000
+impute,xgboost,sleep_frac,sleep,0.0702272579073906,4000
+impute,xgboost,steps_active_frac,step activity,0.003347108606249094,4000
+impute,catboost,lag1,readings before,0.02781285858578606,4000
+impute,catboost,lag2,readings before,0.02840456263208655,4000
+impute,catboost,lag3,readings before,0.019960160061469872,4000
+impute,catboost,lag4,readings before,0.016681612464864763,4000
+impute,catboost,lag5,readings before,0.017560771180751222,4000
+impute,catboost,lag6,readings before,0.028550396619729905,4000
+impute,catboost,lag7,readings before,0.014375559157111487,4000
+impute,catboost,lag8,readings before,0.021176555002062385,4000
+impute,catboost,lag9,readings before,0.018530294957285868,4000
+impute,catboost,lag10,readings before,0.017827221230710094,4000
+impute,catboost,lag11,readings before,0.018309948966421685,4000
+impute,catboost,lag12,readings before,0.014304143007173448,4000
+impute,catboost,lead1,readings after,0.039650917855893614,4000
+impute,catboost,lead2,readings after,0.04927797614445264,4000
+impute,catboost,lead3,readings after,0.028553795791765084,4000
+impute,catboost,lead4,readings after,0.021003930316774545,4000
+impute,catboost,lead5,readings after,0.015849074090853694,4000
+impute,catboost,lead6,readings after,0.018412604571117357,4000
+impute,catboost,lead7,readings after,0.013253598233123469,4000
+impute,catboost,lead8,readings after,0.01758129924784151,4000
+impute,catboost,lead9,readings after,0.015452747558927083,4000
+impute,catboost,lead10,readings after,0.015529453615396554,4000
+impute,catboost,lead11,readings after,0.014288051069531614,4000
+impute,catboost,lead12,readings after,0.022193546465616353,4000
+impute,catboost,prev,nearest reading before/after,0.12529185294944042,4000
+impute,catboost,dprev,distance to nearest reading,0.02395799768787147,4000
+impute,catboost,next,nearest reading before/after,0.10673183783496813,4000
+impute,catboost,dnext,distance to nearest reading,0.06304334916565696,4000
+impute,catboost,sin,time of day,0.02165973171796103,4000
+impute,catboost,cos,time of day,0.04710930854295893,4000
+impute,catboost,hr,heart rate,0.0794087403832791,4000
+impute,catboost,temp,temperature,0.03939582584946452,4000
+impute,catboost,steps,steps,0.012676269362812352,4000
+impute,catboost,sleep_frac,sleep,0.09045637214970541,4000
+impute,catboost,steps_active_frac,step activity,0.00685434899755131,4000
+forecast,xgboost,lag0,recent readings,0.03295513987541199,4000
+forecast,xgboost,lag1,recent readings,0.01669202744960785,4000
+forecast,xgboost,lag2,recent readings,0.014847763814032078,4000
+forecast,xgboost,lag3,recent readings,0.01358787901699543,4000
+forecast,xgboost,lag4,recent readings,0.01187722198665142,4000
+forecast,xgboost,lag5,recent readings,0.01171261165291071,4000
+forecast,xgboost,lag6,recent readings,0.011463882401585579,4000
+forecast,xgboost,lag7,recent readings,0.011361484415829182,4000
+forecast,xgboost,lag8,recent readings,0.010847141034901142,4000
+forecast,xgboost,lag9,recent readings,0.011104711331427097,4000
+forecast,xgboost,lag10,recent readings,0.012183054350316525,4000
+forecast,xgboost,lag11,recent readings,0.010967769660055637,4000
+forecast,xgboost,lag12,recent readings,0.011256363242864609,4000
+forecast,xgboost,lag13,recent readings,0.0114471185952425,4000
+forecast,xgboost,lag14,recent readings,0.010637663304805756,4000
+forecast,xgboost,lag15,recent readings,0.012051793746650219,4000
+forecast,xgboost,mean_day,last day's mean and spread,0.03516681119799614,4000
+forecast,xgboost,sd_day,last day's mean and spread,0.03400531783699989,4000
+forecast,xgboost,h,how far ahead,0.03342023119330406,4000
+forecast,xgboost,sin_now,time of day now,0.024011127650737762,4000
+forecast,xgboost,cos_now,time of day now,0.01671280711889267,4000
+forecast,xgboost,sin_target,time of day of the target,0.06842530518770218,4000
+forecast,xgboost,cos_target,time of day of the target,0.13090704381465912,4000
+forecast,xgboost,hr,heart rate,0.026417478919029236,4000
+forecast,xgboost,temp,temperature,0.01772472821176052,4000
+forecast,xgboost,steps,steps,0.007731885649263859,4000
+forecast,xgboost,sleep_frac,sleep,0.006119253113865852,4000
+forecast,xgboost,steps_active_frac,step activity,0.008744630962610245,4000
+forecast,catboost,lag0,recent readings,0.03450838693404492,4000
+forecast,catboost,lag1,recent readings,0.012818136923940208,4000
+forecast,catboost,lag2,recent readings,0.010747242253004765,4000
+forecast,catboost,lag3,recent readings,0.008058412260291458,4000
+forecast,catboost,lag4,recent readings,0.009498272285404607,4000
+forecast,catboost,lag5,recent readings,0.005985359558309273,4000
+forecast,catboost,lag6,recent readings,0.007984510197482348,4000
+forecast,catboost,lag7,recent readings,0.005000744003375086,4000
+forecast,catboost,lag8,recent readings,0.006539797152675292,4000
+forecast,catboost,lag9,recent readings,0.0053453710504985106,4000
+forecast,catboost,lag10,recent readings,0.006870364770824273,4000
+forecast,catboost,lag11,recent readings,0.007914564949837213,4000
+forecast,catboost,lag12,recent readings,0.0056380927440388825,4000
+forecast,catboost,lag13,recent readings,0.008276336034226997,4000
+forecast,catboost,lag14,recent readings,0.0071901235012342335,4000
+forecast,catboost,lag15,recent readings,0.008856956768646071,4000
+forecast,catboost,lag16,recent readings,0.006642280937807166,4000
+forecast,catboost,lag17,recent readings,0.005624068613181049,4000
+forecast,catboost,lag18,recent readings,0.00744417243259477,4000
+forecast,catboost,lag19,recent readings,0.006788972702051477,4000
+forecast,catboost,mean_day,last day's mean and spread,0.0235013904999458,4000
+forecast,catboost,sd_day,last day's mean and spread,0.023926723632315332,4000
+forecast,catboost,h,how far ahead,0.03503231921893205,4000
+forecast,catboost,sin_now,time of day now,0.008536988430174194,4000
+forecast,catboost,cos_now,time of day now,0.01188785592403287,4000
+forecast,catboost,sin_target,time of day of the target,0.06079268206044003,4000
+forecast,catboost,cos_target,time of day of the target,0.14406602757346265,4000
+forecast,catboost,hr,heart rate,0.01518873086819575,4000
+forecast,catboost,temp,temperature,0.011911450708629194,4000
+forecast,catboost,steps,steps,0.002562887818069874,4000
+forecast,catboost,sleep_frac,sleep,0.005312590485122345,4000
+forecast,catboost,steps_active_frac,step activity,0.008045530642750952,4000
+daily,xgboost,lag0,recent readings,0.025122161954641342,318
+daily,xgboost,lag1,recent readings,0.0220949687063694,318
+daily,xgboost,lag2,recent readings,0.011835471726953983,318
+daily,xgboost,lag3,recent readings,0.021286671981215477,318
+daily,xgboost,lag4,recent readings,0.01390778087079525,318
+daily,xgboost,lag5,recent readings,0.02673359401524067,318
+daily,xgboost,lag6,recent readings,0.029106643050909042,318
+daily,xgboost,mean_day,last day's mean and spread,0.006994160357862711,318
+daily,xgboost,sd_day,last day's mean and spread,0.036681219935417175,318
+daily,xgboost,h,how far ahead,0.02592921070754528,318
+daily,xgboost,sin_now,time of day now,0.004816707689315081,318
+daily,xgboost,cos_now,time of day now,0.0015701452502980828,318
+daily,xgboost,sin_target,time of day of the target,0.02936309017241001,318
+daily,xgboost,cos_target,time of day of the target,0.013768232427537441,318
+daily,xgboost,hr,heart rate,0.0796448215842247,318
+daily,xgboost,temp,temperature,0.05537484213709831,318
+daily,xgboost,steps,steps,0.045026976615190506,318
+daily,xgboost,sleep_frac,sleep,0.05161010101437569,318
+daily,xgboost,steps_active_frac,step activity,0.0,318
+daily,catboost,lag0,recent readings,0.03222419927961808,318
+daily,catboost,lag1,recent readings,0.024335493931586093,318
+daily,catboost,lag2,recent readings,0.010966935201755344,318
+daily,catboost,lag3,recent readings,0.013362408570384041,318
+daily,catboost,lag4,recent readings,0.02171786413468586,318
+daily,catboost,lag5,recent readings,0.019414853580065755,318
+daily,catboost,lag6,recent readings,0.015241934537134579,318
+daily,catboost,mean_day,last day's mean and spread,0.014765949374443185,318
+daily,catboost,sd_day,last day's mean and spread,0.04817245840570584,318
+daily,catboost,h,how far ahead,0.04693389496683781,318
+daily,catboost,sin_now,time of day now,0.009260287240867176,318
+daily,catboost,cos_now,time of day now,0.002647065094875728,318
+daily,catboost,sin_target,time of day of the target,0.04318482105085019,318
+daily,catboost,cos_target,time of day of the target,0.024852611513926162,318
+daily,catboost,hr,heart rate,0.07118509040243194,318
+daily,catboost,temp,temperature,0.04710981396384564,318
+daily,catboost,steps,steps,0.02905242979448991,318
+daily,catboost,sleep_frac,sleep,0.05195846236878027,318
+daily,catboost,steps_active_frac,step activity,0.0,318

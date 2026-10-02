@@ -1,0 +1,214 @@
+task,model,feature_set,feature,group,mean_abs_shap,rows
+classification,xgboost,all,six_m:AVG_SPO2_0,six-minute walk,0.05177055671811104,37
+classification,xgboost,all,six_m:MIN_SPO2_0,six-minute walk,0.0,37
+classification,xgboost,all,six_m:MAX_SPO2,six-minute walk,0.48737871646881104,37
+classification,xgboost,all,six_m:AVG__HR_0,six-minute walk,0.0,37
+classification,xgboost,all,six_m:MIN_HR_0,six-minute walk,0.0,37
+classification,xgboost,all,six_m:MAX_HR_0,six-minute walk,0.0,37
+classification,xgboost,all,six_m:DIS_COVRD_0,six-minute walk,0.45651301741600037,37
+classification,xgboost,all,spiro:FVC [L]_PRE_0,spirometry,0.07229350507259369,37
+classification,xgboost,all,spiro:FVC [L]_%PRED_PRE_0,spirometry,0.04412773624062538,37
+classification,xgboost,all,spiro:FEV 1 [L]_PRE_0,spirometry,0.0,37
+classification,xgboost,all,spiro:FEV 1 [L]_%PRED_PRE_0,spirometry,0.0,37
+classification,xgboost,all,spiro:FEV/FVC %PRED_PRE_0,spirometry,0.0,37
+classification,xgboost,all,spiro:FEV/FVC %PRED_PRE_0#2,spirometry,0.0,37
+classification,xgboost,all,spiro:PEF_L/s_PRE_0,spirometry,0.06523474305868149,37
+classification,xgboost,all,spiro:PEF_L/s_%PRED_PRE_0,spirometry,0.08968539535999298,37
+classification,xgboost,all,spiro:FE_ 25-75_L/SPRED_PRE_0,spirometry,0.0,37
+classification,xgboost,all,spiro:FE_ 25-75_L/s%PRED_PRE_0,spirometry,0.1541406810283661,37
+classification,xgboost,all,spiro:FVC [L]_POST)_0,spirometry,0.0,37
+classification,xgboost,all,spiro:FVC [L]_%POSTD_POST_0,spirometry,0.0,37
+classification,xgboost,all,spiro:FEV 1 [L]_POST_0,spirometry,0.051283180713653564,37
+classification,xgboost,all,spiro:FEV 1 [L]_%POSTD_POST_0,spirometry,0.0,37
+classification,xgboost,all,spiro:FEV/FVC %POSTD_POST_0,spirometry,0.0,37
+classification,xgboost,all,spiro:FEV/FVC %POSTD_POST_0#2,spirometry,0.0,37
+classification,xgboost,all,spiro:PEF_L/s_POST_0,spirometry,0.0,37
+classification,xgboost,all,spiro:PEF_L/s_%POSTD_POST_0,spirometry,0.0,37
+classification,xgboost,all,spiro:FE_ 25-75_L/s_POST_0,spirometry,0.04744487255811691,37
+classification,xgboost,all,spiro:FE_ 25-75_L/s%POSTD_POST_0,spirometry,0.0,37
+classification,xgboost,all,impul:R5_REF_0,oscillometry,0.0,37
+classification,xgboost,all,impul:R20_REF_0,oscillometry,0.04412371665239334,37
+classification,xgboost,all,impul:R5-20_REF_0,oscillometry,0.0,37
+classification,xgboost,all,impul:X5_REF_0,oscillometry,0.0,37
+classification,xgboost,all,impul:R5_ACT_VAL_0,oscillometry,0.0,37
+classification,xgboost,all,impul:R20_ACT_VAL_0,oscillometry,0.0,37
+classification,xgboost,all,impul:R5-20_ACT_VAL_0,oscillometry,0.0,37
+classification,xgboost,all,impul:X5_ACT_VAL_0,oscillometry,0.0,37
+classification,xgboost,all,impul:AX_ACT_VAL_0,oscillometry,0.0,37
+classification,xgboost,all,impul:R5_%PRED_0,oscillometry,0.0,37
+classification,xgboost,all,impul:R20_%PRED_0,oscillometry,0.0,37
+classification,xgboost,all,impul:X5_%PRED_0,oscillometry,0.3943350911140442,37
+classification,xgboost,all,age,age,0.0,37
+classification,xgboost,all,sex_male,sex,0.0,37
+classification,xgboost,all,bode,BODE,0.0,37
+classification,xgboost,all,cat,CAT,0.0,37
+classification,xgboost,all,followup_days,days monitored,0.015070496127009392,37
+classification,gaussian_nb,all,six_m:AVG_SPO2_0,six-minute walk,0.0008273804908424652,37
+classification,gaussian_nb,all,six_m:MIN_SPO2_0,six-minute walk,0.00045072690622584456,37
+classification,gaussian_nb,all,six_m:MAX_SPO2,six-minute walk,0.0004261754322998186,37
+classification,gaussian_nb,all,six_m:AVG__HR_0,six-minute walk,0.00020372146074274333,37
+classification,gaussian_nb,all,six_m:MIN_HR_0,six-minute walk,0.0002483369761843461,37
+classification,gaussian_nb,all,six_m:MAX_HR_0,six-minute walk,0.00032097692912236905,37
+classification,gaussian_nb,all,six_m:DIS_COVRD_0,six-minute walk,0.0035820315578901168,37
+classification,gaussian_nb,all,spiro:FVC [L]_PRE_0,spirometry,0.0003565113682190904,37
+classification,gaussian_nb,all,spiro:FVC [L]_%PRED_PRE_0,spirometry,4.4559125781851844e-05,37
+classification,gaussian_nb,all,spiro:FEV 1 [L]_PRE_0,spirometry,0.0010936554812070807,37
+classification,gaussian_nb,all,spiro:FEV 1 [L]_%PRED_PRE_0,spirometry,0.0004694718197977149,37
+classification,gaussian_nb,all,spiro:FEV/FVC %PRED_PRE_0,spirometry,0.00023317446845738934,37
+classification,gaussian_nb,all,spiro:FEV/FVC %PRED_PRE_0#2,spirometry,0.00014620952632591586,37
+classification,gaussian_nb,all,spiro:PEF_L/s_PRE_0,spirometry,0.00040502683195070267,37
+classification,gaussian_nb,all,spiro:PEF_L/s_%PRED_PRE_0,spirometry,0.0001865402746360116,37
+classification,gaussian_nb,all,spiro:FE_ 25-75_L/SPRED_PRE_0,spirometry,0.010631621912361658,37
+classification,gaussian_nb,all,spiro:FE_ 25-75_L/s%PRED_PRE_0,spirometry,0.00223872036615342,37
+classification,gaussian_nb,all,spiro:FVC [L]_POST)_0,spirometry,0.0013157384513554978,37
+classification,gaussian_nb,all,spiro:FVC [L]_%POSTD_POST_0,spirometry,0.0001866958561803479,37
+classification,gaussian_nb,all,spiro:FEV 1 [L]_POST_0,spirometry,0.0004903644505502701,37
+classification,gaussian_nb,all,spiro:FEV 1 [L]_%POSTD_POST_0,spirometry,0.0006987362815019213,37
+classification,gaussian_nb,all,spiro:FEV/FVC %POSTD_POST_0,spirometry,0.002829662012733698,37
+classification,gaussian_nb,all,spiro:FEV/FVC %POSTD_POST_0#2,spirometry,0.0014399633189667352,37
+classification,gaussian_nb,all,spiro:PEF_L/s_POST_0,spirometry,0.008475579356047189,37
+classification,gaussian_nb,all,spiro:PEF_L/s_%POSTD_POST_0,spirometry,0.0010129239836500442,37
+classification,gaussian_nb,all,spiro:FE_ 25-75_L/s_POST_0,spirometry,0.05836089173237622,37
+classification,gaussian_nb,all,spiro:FE_ 25-75_L/s%POSTD_POST_0,spirometry,0.003878854746756042,37
+classification,gaussian_nb,all,impul:R5_REF_0,oscillometry,0.00024019889132586463,37
+classification,gaussian_nb,all,impul:R20_REF_0,oscillometry,0.02871680974493796,37
+classification,gaussian_nb,all,impul:R5-20_REF_0,oscillometry,0.05056077266511274,37
+classification,gaussian_nb,all,impul:X5_REF_0,oscillometry,0.0275078516568057,37
+classification,gaussian_nb,all,impul:R5_ACT_VAL_0,oscillometry,0.0027314187060947697,37
+classification,gaussian_nb,all,impul:R20_ACT_VAL_0,oscillometry,0.002499837941221543,37
+classification,gaussian_nb,all,impul:R5-20_ACT_VAL_0,oscillometry,0.0012327898361015645,37
+classification,gaussian_nb,all,impul:X5_ACT_VAL_0,oscillometry,0.05337537884524797,37
+classification,gaussian_nb,all,impul:AX_ACT_VAL_0,oscillometry,0.00012028293754236763,37
+classification,gaussian_nb,all,impul:R5_%PRED_0,oscillometry,0.004777792943670881,37
+classification,gaussian_nb,all,impul:R20_%PRED_0,oscillometry,0.0010227318883994656,37
+classification,gaussian_nb,all,impul:X5_%PRED_0,oscillometry,0.03720580760120822,37
+classification,gaussian_nb,all,age,age,0.0011194974786211955,37
+classification,gaussian_nb,all,sex_male,sex,0.06529018464130654,37
+classification,gaussian_nb,all,bode,BODE,0.0002686065983207374,37
+classification,gaussian_nb,all,cat,CAT,0.0009795476165190711,37
+classification,gaussian_nb,all,followup_days,days monitored,0.0030056392796712623,37
+classification,random_forest,all,six_m:AVG_SPO2_0,six-minute walk,0.00729271981521523,37
+classification,random_forest,all,six_m:MIN_SPO2_0,six-minute walk,0.001659162939237856,37
+classification,random_forest,all,six_m:MAX_SPO2,six-minute walk,0.028262567670304748,37
+classification,random_forest,all,six_m:AVG__HR_0,six-minute walk,0.0025726966566515007,37
+classification,random_forest,all,six_m:MIN_HR_0,six-minute walk,0.0023982043450365776,37
+classification,random_forest,all,six_m:MAX_HR_0,six-minute walk,0.00533014611937528,37
+classification,random_forest,all,six_m:DIS_COVRD_0,six-minute walk,0.023106085268748865,37
+classification,random_forest,all,spiro:FVC [L]_PRE_0,spirometry,0.007591059432910451,37
+classification,random_forest,all,spiro:FVC [L]_%PRED_PRE_0,spirometry,0.0023830438199046243,37
+classification,random_forest,all,spiro:FEV 1 [L]_PRE_0,spirometry,0.004574492085926229,37
+classification,random_forest,all,spiro:FEV 1 [L]_%PRED_PRE_0,spirometry,0.004504967392050757,37
+classification,random_forest,all,spiro:FEV/FVC %PRED_PRE_0,spirometry,0.008351335820493428,37
+classification,random_forest,all,spiro:FEV/FVC %PRED_PRE_0#2,spirometry,0.004673946301404408,37
+classification,random_forest,all,spiro:PEF_L/s_PRE_0,spirometry,0.010294145840487517,37
+classification,random_forest,all,spiro:PEF_L/s_%PRED_PRE_0,spirometry,0.004605951151034918,37
+classification,random_forest,all,spiro:FE_ 25-75_L/SPRED_PRE_0,spirometry,0.009157102489079718,37
+classification,random_forest,all,spiro:FE_ 25-75_L/s%PRED_PRE_0,spirometry,0.01871310751539354,37
+classification,random_forest,all,spiro:FVC [L]_POST)_0,spirometry,0.0051732836634134985,37
+classification,random_forest,all,spiro:FVC [L]_%POSTD_POST_0,spirometry,0.0027697981264687044,37
+classification,random_forest,all,spiro:FEV 1 [L]_POST_0,spirometry,0.007733820763191313,37
+classification,random_forest,all,spiro:FEV 1 [L]_%POSTD_POST_0,spirometry,0.0022931727889302714,37
+classification,random_forest,all,spiro:FEV/FVC %POSTD_POST_0,spirometry,0.003338597102736464,37
+classification,random_forest,all,spiro:FEV/FVC %POSTD_POST_0#2,spirometry,0.0017025956562751125,37
+classification,random_forest,all,spiro:PEF_L/s_POST_0,spirometry,0.007994164617444217,37
+classification,random_forest,all,spiro:PEF_L/s_%POSTD_POST_0,spirometry,0.004018323182804516,37
+classification,random_forest,all,spiro:FE_ 25-75_L/s_POST_0,spirometry,0.0011808176384297188,37
+classification,random_forest,all,spiro:FE_ 25-75_L/s%POSTD_POST_0,spirometry,0.0004062588972498883,37
+classification,random_forest,all,impul:R5_REF_0,oscillometry,0.013958134132420566,37
+classification,random_forest,all,impul:R20_REF_0,oscillometry,0.009368010172465172,37
+classification,random_forest,all,impul:R5-20_REF_0,oscillometry,0.0018522617309927568,37
+classification,random_forest,all,impul:X5_REF_0,oscillometry,0.006342001187456927,37
+classification,random_forest,all,impul:R5_ACT_VAL_0,oscillometry,0.01042674617107382,37
+classification,random_forest,all,impul:R20_ACT_VAL_0,oscillometry,0.010312990834019329,37
+classification,random_forest,all,impul:R5-20_ACT_VAL_0,oscillometry,0.004948677376645436,37
+classification,random_forest,all,impul:X5_ACT_VAL_0,oscillometry,0.019340761274968404,37
+classification,random_forest,all,impul:AX_ACT_VAL_0,oscillometry,0.0038429541359739318,37
+classification,random_forest,all,impul:R5_%PRED_0,oscillometry,0.0031478825591347713,37
+classification,random_forest,all,impul:R20_%PRED_0,oscillometry,0.00890182526224289,37
+classification,random_forest,all,impul:X5_%PRED_0,oscillometry,0.031738290777414836,37
+classification,random_forest,all,age,age,0.004398651074917478,37
+classification,random_forest,all,sex_male,sex,0.0,37
+classification,random_forest,all,bode,BODE,0.001557829733034543,37
+classification,random_forest,all,cat,CAT,0.0015519227470094908,37
+classification,random_forest,all,followup_days,days monitored,0.019745752661583904,37
+classification,xgboost,reduced,six_m:AVG_SPO2_0,six-minute walk,0.21101921796798706,37
+classification,xgboost,reduced,six_m:MIN_SPO2_0,six-minute walk,0.0,37
+classification,xgboost,reduced,six_m:MAX_SPO2,six-minute walk,0.6039735674858093,37
+classification,xgboost,reduced,six_m:AVG__HR_0,six-minute walk,0.0,37
+classification,xgboost,reduced,six_m:MIN_HR_0,six-minute walk,0.0,37
+classification,xgboost,reduced,six_m:MAX_HR_0,six-minute walk,0.0,37
+classification,xgboost,reduced,six_m:DIS_COVRD_0,six-minute walk,0.5549376606941223,37
+classification,xgboost,reduced,spiro:FVC [L]_PRE_0,spirometry,0.1708761602640152,37
+classification,xgboost,reduced,spiro:FVC [L]_%PRED_PRE_0,spirometry,0.0,37
+classification,xgboost,reduced,spiro:FEV 1 [L]_PRE_0,spirometry,0.0,37
+classification,xgboost,reduced,spiro:FEV 1 [L]_%PRED_PRE_0,spirometry,0.0,37
+classification,xgboost,reduced,spiro:FEV/FVC %PRED_PRE_0,spirometry,0.0,37
+classification,xgboost,reduced,spiro:FEV/FVC %PRED_PRE_0#2,spirometry,0.0,37
+classification,xgboost,reduced,spiro:PEF_L/s_PRE_0,spirometry,0.26354244351387024,37
+classification,xgboost,reduced,spiro:PEF_L/s_%PRED_PRE_0,spirometry,0.0,37
+classification,xgboost,reduced,spiro:FE_ 25-75_L/SPRED_PRE_0,spirometry,0.0,37
+classification,xgboost,reduced,spiro:FE_ 25-75_L/s%PRED_PRE_0,spirometry,0.25325730443000793,37
+classification,xgboost,reduced,impul:R5_ACT_VAL_0,oscillometry,0.0,37
+classification,xgboost,reduced,impul:R20_ACT_VAL_0,oscillometry,0.0,37
+classification,xgboost,reduced,impul:X5_ACT_VAL_0,oscillometry,0.1640351116657257,37
+classification,xgboost,reduced,impul:AX_ACT_VAL_0,oscillometry,0.0,37
+classification,xgboost,reduced,impul:X5_%PRED_0,oscillometry,0.4494704306125641,37
+classification,xgboost,reduced,age,age,0.0,37
+classification,xgboost,reduced,sex_male,sex,0.0,37
+classification,xgboost,reduced,bode,BODE,0.0,37
+classification,xgboost,reduced,cat,CAT,0.0,37
+classification,xgboost,reduced,followup_days,days monitored,0.11608374863862991,37
+classification,random_forest,reduced,six_m:AVG_SPO2_0,six-minute walk,0.01060991774447946,37
+classification,random_forest,reduced,six_m:MIN_SPO2_0,six-minute walk,0.002907662778721805,37
+classification,random_forest,reduced,six_m:MAX_SPO2,six-minute walk,0.034954240756336206,37
+classification,random_forest,reduced,six_m:AVG__HR_0,six-minute walk,0.004537208870486421,37
+classification,random_forest,reduced,six_m:MIN_HR_0,six-minute walk,0.002880677430013224,37
+classification,random_forest,reduced,six_m:MAX_HR_0,six-minute walk,0.002477107304033369,37
+classification,random_forest,reduced,six_m:DIS_COVRD_0,six-minute walk,0.03230557193492902,37
+classification,random_forest,reduced,spiro:FVC [L]_PRE_0,spirometry,0.012039248574915359,37
+classification,random_forest,reduced,spiro:FVC [L]_%PRED_PRE_0,spirometry,0.009623716293374874,37
+classification,random_forest,reduced,spiro:FEV 1 [L]_PRE_0,spirometry,0.0035897733465014613,37
+classification,random_forest,reduced,spiro:FEV 1 [L]_%PRED_PRE_0,spirometry,0.005532584396259851,37
+classification,random_forest,reduced,spiro:FEV/FVC %PRED_PRE_0,spirometry,0.012021045728774726,37
+classification,random_forest,reduced,spiro:FEV/FVC %PRED_PRE_0#2,spirometry,0.004986658656036305,37
+classification,random_forest,reduced,spiro:PEF_L/s_PRE_0,spirometry,0.00394765760107777,37
+classification,random_forest,reduced,spiro:PEF_L/s_%PRED_PRE_0,spirometry,0.005203220044823556,37
+classification,random_forest,reduced,spiro:FE_ 25-75_L/SPRED_PRE_0,spirometry,0.01525136855734677,37
+classification,random_forest,reduced,spiro:FE_ 25-75_L/s%PRED_PRE_0,spirometry,0.022282247199048515,37
+classification,random_forest,reduced,impul:R5_ACT_VAL_0,oscillometry,0.007756745388078202,37
+classification,random_forest,reduced,impul:R20_ACT_VAL_0,oscillometry,0.016239095645124074,37
+classification,random_forest,reduced,impul:X5_ACT_VAL_0,oscillometry,0.028982538977502848,37
+classification,random_forest,reduced,impul:AX_ACT_VAL_0,oscillometry,0.00417179148818079,37
+classification,random_forest,reduced,impul:X5_%PRED_0,oscillometry,0.047124002157220145,37
+classification,random_forest,reduced,age,age,0.003329918160963196,37
+classification,random_forest,reduced,sex_male,sex,0.0,37
+classification,random_forest,reduced,bode,BODE,0.0026731917160484667,37
+classification,random_forest,reduced,cat,CAT,0.0019070232417949555,37
+classification,random_forest,reduced,followup_days,days monitored,0.02184579138790466,37
+classification,gaussian_nb,reduced,six_m:AVG_SPO2_0,six-minute walk,0.002506572700547874,37
+classification,gaussian_nb,reduced,six_m:MIN_SPO2_0,six-minute walk,0.0054850262343478715,37
+classification,gaussian_nb,reduced,six_m:MAX_SPO2,six-minute walk,0.0023188576671219303,37
+classification,gaussian_nb,reduced,six_m:AVG__HR_0,six-minute walk,0.0040924602233564575,37
+classification,gaussian_nb,reduced,six_m:MIN_HR_0,six-minute walk,0.0003294423783884138,37
+classification,gaussian_nb,reduced,six_m:MAX_HR_0,six-minute walk,0.005041952720940571,37
+classification,gaussian_nb,reduced,six_m:DIS_COVRD_0,six-minute walk,0.020330742641553334,37
+classification,gaussian_nb,reduced,spiro:FVC [L]_PRE_0,spirometry,0.008084677723422333,37
+classification,gaussian_nb,reduced,spiro:FVC [L]_%PRED_PRE_0,spirometry,0.003882898273429316,37
+classification,gaussian_nb,reduced,spiro:FEV 1 [L]_PRE_0,spirometry,0.001516261769955452,37
+classification,gaussian_nb,reduced,spiro:FEV 1 [L]_%PRED_PRE_0,spirometry,0.0036186593153081205,37
+classification,gaussian_nb,reduced,spiro:FEV/FVC %PRED_PRE_0,spirometry,0.000979687934076912,37
+classification,gaussian_nb,reduced,spiro:FEV/FVC %PRED_PRE_0#2,spirometry,0.001318657382616209,37
+classification,gaussian_nb,reduced,spiro:PEF_L/s_PRE_0,spirometry,0.00015818988899054937,37
+classification,gaussian_nb,reduced,spiro:PEF_L/s_%PRED_PRE_0,spirometry,0.010398179059378142,37
+classification,gaussian_nb,reduced,spiro:FE_ 25-75_L/SPRED_PRE_0,spirometry,0.03087625481557285,37
+classification,gaussian_nb,reduced,spiro:FE_ 25-75_L/s%PRED_PRE_0,spirometry,0.005209697759796545,37
+classification,gaussian_nb,reduced,impul:R5_ACT_VAL_0,oscillometry,0.028800936928067986,37
+classification,gaussian_nb,reduced,impul:R20_ACT_VAL_0,oscillometry,0.019718499958928527,37
+classification,gaussian_nb,reduced,impul:X5_ACT_VAL_0,oscillometry,0.09927386676458275,37
+classification,gaussian_nb,reduced,impul:AX_ACT_VAL_0,oscillometry,0.0037846801797067784,37
+classification,gaussian_nb,reduced,impul:X5_%PRED_0,oscillometry,0.08309457048317108,37
+classification,gaussian_nb,reduced,age,age,0.009821728234951832,37
+classification,gaussian_nb,reduced,sex_male,sex,0.04455943193567966,37
+classification,gaussian_nb,reduced,bode,BODE,0.008932402901363623,37
+classification,gaussian_nb,reduced,cat,CAT,0.0030330271621658218,37
+classification,gaussian_nb,reduced,followup_days,days monitored,0.05282550821720909,37

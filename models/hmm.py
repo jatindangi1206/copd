@@ -13,7 +13,7 @@ import numpy as np
 from scipy.special import logsumexp
 from scipy.stats import norm
 
-from .data import from_z, to_z, zstats
+from .data import from_z, hp, to_z, zstats
 
 STATES = 3
 
@@ -27,8 +27,8 @@ def _runs(z):
 def _fit(zs, ctx):
     from hmmlearn.hmm import GaussianHMM
     runs = [r for z in zs for r in _runs(z) if len(r) >= 2]
-    m = GaussianHMM(n_components=STATES, covariance_type="diag", n_iter=10 if ctx["quick"] else 200,
-                    random_state=ctx["seed"])
+    m = GaussianHMM(n_components=hp(ctx, "states", STATES), covariance_type="diag", n_iter=10 if ctx["quick"] else 200,
+                    min_covar=hp(ctx, "min_covar", 1e-3), random_state=ctx["seed"])
     m.fit(np.concatenate(runs)[:, None], lengths=[len(r) for r in runs])
     return m
 

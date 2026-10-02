@@ -15,11 +15,13 @@ Noise levels are set per series from the spread of its readings (Q_SHARE etc.).
 """
 import numpy as np
 
+from .data import hp
+
 LOW = 0.0
 Q_LEVEL, Q_CYCLE, R_SHARE = 0.05, 0.002, 0.5    # shares of the series' step-to-step variance
 
 
-def _setup(y, t, period, high):
+def _setup(y, t, period, high, ctx):
     from filterpy.kalman import MerweScaledSigmaPoints, UnscentedKalmanFilter
     w = 2 * np.pi / period
     rot = np.array([[1, 0, 0], [0, np.cos(w), -np.sin(w)], [0, np.sin(w), np.cos(w)]])
@@ -38,8 +40,9 @@ def _setup(y, t, period, high):
     ukf.x = np.array([c[0], amp * np.cos(a0 - ph), amp * np.sin(a0 - ph)])
     v = max(np.var(dz), 1e-3)
     ukf.P = np.diag([v, amp ** 2 + 1e-3, amp ** 2 + 1e-3])
-    ukf.Q = np.diag([Q_LEVEL * v, Q_CYCLE * v, Q_CYCLE * v])
-    ukf.R = np.array([[R_SHARE * max(np.var(np.diff(y[ok])) if ok.sum() > 2 else 1.0, 1.0)]])
+    ql, qc, rs = hp(ctx, "q_level", Q_LEVEL), hp(ctx, "q_cycle", Q_CYCLE), hp(ctx, "r_share", R_SHARE)
+    ukf.Q = np.diag([ql * v, qc * v, qc * v])
+    ukf.R = np.array([[rs * max(np.var(np.diff(y[ok])) if ok.sum() > 2 else 1.0, 1.0)]])
     # alpha=1, kappa=0 gives mean weights Wm = [0, 1/6, ...]: all >= 0, so the mean of the bounded
     # reading stays inside (LOW, HIGH). alpha=0.3 gave Wm[0] = -10 and negative HRV (H1 broken).
     return ukf, hx, pts
@@ -66,15 +69,15 @@ def _mean_reading(hx, pts, x, P):
     return float(pts.Wm @ np.array([hx(v)[0] for v in s]))
 
 
-def _high(series):
-    return 1.02 * max(np.nanmax(s.x.hrv_obs) for s in series)
+def _high(series, ctx):
+    return hp(ctx, "high_mult", 1.02) * max(np.nanmax(s.x.hrv_obs) for s in series)
 
 
 def impute(series, ctx):
-    high, out = _high(series), []
+    high, out = _high(series, ctx), []
     for s in series:
         y = s.x.hrv.to_numpy(float)
-        ukf, hx, pts = _setup(y, s.x.t.to_numpy(), ctx["period"], high)
+        ukf, hx, pts = _setup(y, s.x.t.to_numpy(), ctx["period"], high, ctx)
         mu, cov = _batch_filter(ukf, y)
         xs, ps, _ = ukf.rts_smoother(mu, cov)
         pred = np.array([_mean_reading(hx, pts, xs[i], ps[i]) for i in range(len(y))])
@@ -83,10 +86,10 @@ def impute(series, ctx):
 
 
 def forecast(history, horizons, ctx):
-    high, out = _high(history), []
+    high, out = _high(history, ctx), []
     for s, h in zip(history, horizons):
         y = s.x.hrv_obs.to_numpy(float)
-        ukf, hx, pts = _setup(y, s.x.t.to_numpy(), ctx["period"], high)
+        ukf, hx, pts = _setup(y, s.x.t.to_numpy(), ctx["period"], high, ctx)
         mu, cov = _batch_filter(ukf, y)
         ukf.x, ukf.P = mu[-1], cov[-1]
         preds = []

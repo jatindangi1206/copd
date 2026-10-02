@@ -1,0 +1,43 @@
+task,model,name,trials,series,default_val_mae,val_mae,params
+daily,catboost,CatBoost,40,23,20.634184700129325,18.037666414253394,n_estimators 250; depth 5; lr 0.107; K 6; l2_leaf_reg 5.4; pairs 2500
+daily,cd_gamma_dglm,CD-Gamma-DGLM,40,23,21.88265359228448,18.69072069190453,delta 0.995; nu_scale 0.307
+daily,gast,Gap-aware state-space transformer (our design),40,23,19.208818954293278,17.383140940752874,dropout 0.281; lr 0.00249; window 96; steps 1500; batch 16; d 128; heads 4; blocks 2
+daily,gru_ode_bayes,GRU-ODE-Bayes,8,23,18.076348906401662,17.675049425521525,hidden 64; p_hidden 32; prep_hidden 16; lr 0.000412; steps 1500; window 288; batch 16
+daily,hmm,Hidden Markov model,40,23,17.854436967620586,17.8258941669154,states 5; min_covar 0.0473
+daily,lstm,LSTM,40,23,29.19752287104582,20.808873770343983,dropout 0.149; lr 0.000625; window 288; steps 5000; batch 64; hidden 32; layers 3
+daily,nlssm,Nonlinear state-space model,40,23,16.68082526609199,16.414842815901395,q_level 0.0643; q_cycle 0.000138; r_share 1.71; high_mult 1.13
+daily,ossa,OSSA,40,23,22.224322830233348,17.246543816500477,rank 4; embed_frac 0.792; nu2_max 0.817; windows 6
+daily,pf,Particle filter and smoother,8,23,18.277561204848475,18.270545492016623,n_part 1000; sigma_share 0.846
+daily,pinode,Physiology-informed neural ODE,40,23,18.0904050489447,17.825710599257945,hidden 64; max_gap 18; lr 0.00172; steps 1000; batch 512
+daily,rnn,RNN,40,23,28.635897090528516,18.27219615140045,dropout 0.345; lr 0.00176; window 288; steps 5000; batch 64; hidden 256; layers 3
+daily,rsdpf,RS-DPF,8,23,17.818853042713606,17.694358576548126,K 2; alpha 0.742; lr 0.00858; steps 1500; n_train 128; window 72; n_run 256
+daily,timesfm3,TimesFM 3,10,23,17.9650068248402,17.756966316916724,context 256; time_cov True
+daily,xgboost,XGBoost,40,23,21.239755691274826,17.67642799845522,n_estimators 600; depth 4; lr 0.0165; K 6; subsample 0.529; colsample 0.928; min_child_weight 2; reg_lambda 14.7; pairs 1500
+forecast,catboost,CatBoost,40,259,30.739158196270886,30.639985412054365,n_estimators 1150; depth 4; lr 0.108; K 10; l2_leaf_reg 18; pairs 1000
+forecast,cd_gamma_dglm,CD-Gamma-DGLM,40,259,33.011477961436356,31.98806396857346,delta 0.995; nu_scale 2.6
+forecast,gast,Gap-aware state-space transformer (our design),40,259,30.38178237026277,29.94284024376312,dropout 0.237; lr 0.00205; window 288; steps 3000; batch 64; d 64; heads 2; blocks 3
+forecast,gru_ode_bayes,GRU-ODE-Bayes,8,60,32.013540752763454,31.656318301725417,hidden 32; p_hidden 64; prep_hidden 16; lr 0.000725; steps 500; window 144; batch 32
+forecast,hmm,Hidden Markov model,40,259,32.08039036907222,31.859578090261444,states 5; min_covar 0.0968
+forecast,lstm,LSTM,40,259,31.073731787437964,30.665690926117417,dropout 0.209; lr 0.000563; window 96; steps 3000; batch 64; hidden 256; layers 1
+forecast,nlssm,Nonlinear state-space model,40,259,32.718873295095726,32.33883228547554,q_level 0.0689; q_cycle 0.0109; r_share 1.96; high_mult 1.02
+forecast,ossa,OSSA,40,259,34.371262400901074,34.304504878962696,rank 2; embed_frac 0.962; nu2_max 0.901; windows 3
+forecast,pf,Particle filter and smoother,8,60,32.398514256295606,32.32521951358402,n_part 1000; sigma_share 0.872
+forecast,pinode,Physiology-informed neural ODE,40,259,31.082264136060513,30.893840041484157,hidden 16; max_gap 12; lr 0.00699; steps 1000; batch 256
+forecast,rnn,RNN,40,259,31.071257266572484,30.959063695640523,dropout 0.306; lr 0.000791; window 288; steps 3000; batch 64; hidden 64; layers 1
+forecast,rsdpf,RS-DPF,8,60,31.301559915787024,31.23341504788606,K 2; alpha 0.214; lr 0.0204; steps 1500; n_train 32; window 144; n_run 256
+forecast,timesfm3,TimesFM 3,10,259,32.58854962123853,31.001764783599874,context 1024; time_cov True
+forecast,xgboost,XGBoost,40,259,30.60064451482074,30.386131432196354,n_estimators 900; depth 10; lr 0.0645; K 8; subsample 0.854; colsample 0.409; min_child_weight 2; reg_lambda 0.115; pairs 5500
+impute,catboost,CatBoost,40,259,27.95299187198241,27.887052130894777,n_estimators 900; depth 6; lr 0.129; K 12; l2_leaf_reg 2.39
+impute,cd_gamma_dglm,CD-Gamma-DGLM,40,259,30.187289212761094,29.614174219426793,delta 0.957; nu_scale 2.94
+impute,gast,Gap-aware state-space transformer (our design),40,259,27.219728038746794,26.849376317900024,dropout 0.377; lr 0.00144; window 288; steps 3000; batch 64; d 128; heads 4; blocks 1; hide 0.296
+impute,gru_ode_bayes,GRU-ODE-Bayes,8,60,29.495963636869064,28.912267407965516,hidden 64; p_hidden 16; prep_hidden 8; lr 0.00264; steps 500; window 144; batch 32
+impute,hmm,Hidden Markov model,40,259,31.79621338764553,29.282711848910424,states 5; min_covar 0.00866
+impute,lstm,LSTM,40,259,28.084321850963708,26.554179193619078,dropout 0.261; lr 0.00188; window 96; steps 3000; batch 32; hidden 32; layers 3; hide 0.321
+impute,nlssm,Nonlinear state-space model,40,259,28.86354811119177,28.5499092537655,q_level 0.417; q_cycle 0.000579; r_share 0.545; high_mult 1.29
+impute,ossa,OSSA,40,259,30.286960130722996,29.09722153055087,rank 2; embed_frac 0.269; nu2_max 0.955; iters 10
+impute,pf,Particle filter and smoother,8,60,30.659466738954503,30.61997458966054,n_part 1000; sigma_share 0.816; n_paths 200
+impute,pinode,Physiology-informed neural ODE,40,259,29.3514300775188,29.255385862595034,hidden 64; max_gap 18; lr 0.00369; steps 2000; batch 512
+impute,rnn,RNN,40,259,27.844391936776205,26.64135670779301,dropout 0.272; lr 0.000752; window 432; steps 3000; batch 64; hidden 32; layers 3; hide 0.312
+impute,rsdpf,RS-DPF,8,60,29.81311178899533,29.702302225355567,K 3; alpha 0.701; lr 0.012; steps 1500; n_train 128; window 144; n_run 512
+impute,timesfm3,TimesFM 3,10,259,29.175319241239464,29.175319241239464,context 2048; gap_context 512
+impute,xgboost,XGBoost,40,259,27.928091201442243,27.860128322923174,n_estimators 900; depth 7; lr 0.0272; K 12; subsample 0.694; colsample 0.82; min_child_weight 19; reg_lambda 2.87

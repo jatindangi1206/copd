@@ -22,6 +22,8 @@ common.py                   paths and plot style
 11_model_data.py            model_data/: 10-min modelling table, segments, imputation masks, splits (self-checks)
 12_exac_classify.py         exacerbation classification from enrolment tests -> results/exac_monitoring/
 12_model_results.py         results/ -> numbers/model_results.csv, figs 12a-c
+tune_models.py              hyperparameter tuning (Optuna) on a practice set cut from the training data -> results/tuning/
+shap_analysis.py            SHAP for the tree models and classifiers, drop-a-vital ablation for the rest -> figs 14a-e
 13_method_figures.py        diagrams: how imputation, forecasting and classification work, one row per model family (needs results/)
 10_report.py                COPD_EDA_Report.html (light) + COPD_EDA_Report_dark.html
 results.md                  what each script found, script by script
@@ -94,6 +96,9 @@ python run_models.py forecast lstm --imputer xgboost
 python run_models.py daily cd_gamma_dglm           # day-level forecasting
 python run_models.py impute all                    # every model for the task, one by one
 python run_models.py check                         # every installed model on 6 series, tiny training
+python tune_models.py impute xgboost               # tune one model (40 tries; 8 for the slow ones); --list shows the budget
+python run_models.py impute xgboost --tuned        # run with the tuned settings -> results/summary_tuned.csv
+python shap_analysis.py all --tuned                # SHAP, ablation, figures 14a-e
 ```
 
 Cores: it shows how many cores are free and asks how many to use; with no answer

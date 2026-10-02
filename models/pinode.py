@@ -16,19 +16,19 @@ forecast: integrate forward from the end of the history (H9).
 import numpy as np
 import torch
 
-from .data import COVS, cov_matrix, from_z, phase, to_z, zstats
+from .data import COVS, cov_matrix, from_z, hp, phase, to_z, zstats
 
 MAX_GAP, HIDDEN, BATCH = 18, 32, 512
 
 
 class Field(torch.nn.Module):
-    def __init__(self, n_u, period):
+    def __init__(self, n_u, period, hidden=HIDDEN):
         super().__init__()
         self.period = period
         self.log_k = torch.nn.Parameter(torch.tensor(-2.0))
         self.c = torch.nn.Parameter(torch.zeros(3))
-        self.g = torch.nn.Sequential(torch.nn.Linear(3 + n_u, HIDDEN), torch.nn.Tanh(),
-                                     torch.nn.Linear(HIDDEN, 1))
+        self.g = torch.nn.Sequential(torch.nn.Linear(3 + n_u, hidden), torch.nn.Tanh(),
+                                     torch.nn.Linear(hidden, 1))
         torch.nn.init.zeros_(self.g[-1].weight)
         self.t0 = self.gap = self.u = None
 
@@ -55,12 +55,12 @@ def _solve(f, x0, t0, gap, u, grid):
     return odeint(f, x0[:, None], grid, method="rk4", options={"step_size": step})[..., 0]
 
 
-def _pairs(zs, us, ts):
+def _pairs(zs, us, ts, max_gap=MAX_GAP):
     rows = []
     for k, (z, u, t) in enumerate(zip(zs, us, ts)):
         obs = np.flatnonzero(~np.isnan(z))
         for i, j in zip(obs[:-1], obs[1:]):
-            if j - i <= MAX_GAP:
+            if j - i <= max_gap:
                 rows.append((z[i], z[j], ts[k][i], j - i, k, i))
     return rows
 
@@ -69,12 +69,13 @@ def _fit(zs, us, ts, n_u, ctx):
     torch.manual_seed(ctx["seed"])
     rng = np.random.default_rng(ctx["seed"])
     dev = ctx["device"]
-    f = Field(n_u, ctx["period"]).to(dev)
-    P = _pairs(zs, us, ts)
-    opt = torch.optim.Adam(f.parameters(), lr=3e-3)
+    f = Field(n_u, ctx["period"], hp(ctx, "hidden", HIDDEN)).to(dev)
+    P = _pairs(zs, us, ts, hp(ctx, "max_gap", MAX_GAP))
+    opt = torch.optim.Adam(f.parameters(), lr=hp(ctx, "lr", 3e-3))
+    batch = hp(ctx, "batch", BATCH)
     grid = torch.tensor([0.0, 1.0], device=dev)
-    for step in range(20 if ctx["quick"] else 2000):
-        b = [P[i] for i in rng.integers(0, len(P), BATCH)]
+    for step in range(20 if ctx["quick"] else hp(ctx, "steps", 2000)):
+        b = [P[i] for i in rng.integers(0, len(P), batch)]
         x0, x1, t0, gap = (torch.tensor([r[c] for r in b], dtype=torch.float32, device=dev) for c in range(4))
         u = torch.as_tensor(np.array([us[r[4]][r[5]] for r in b]), dtype=torch.float32, device=dev)
         pred = _solve(f, x0, t0, gap, u, grid)[-1]
@@ -92,7 +93,7 @@ def _inputs(series, ctx, col, use_covs):
     zs = [to_z(s.x[col].to_numpy(float), s.pid, st) for s in series]
     ts = [s.x.t.to_numpy(float) for s in series]
     if use_covs:
-        us = cov_matrix(series, [c for c in COVS if c in series[0].x])
+        us = cov_matrix(series, [c for c in COVS if c in series[0].x and c not in hp(ctx, "drop", ())])
     else:
         us = [np.zeros((len(z), 0)) for z in zs]
     return st, zs, ts, us

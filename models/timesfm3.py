@@ -13,7 +13,7 @@ import os
 
 import numpy as np
 
-from .data import lin_fill, phase
+from .data import hp, lin_fill, phase
 
 # TIMESFM_CHECKPOINT can point at an already-downloaded weights directory.
 CHECKPOINT = os.environ.get("TIMESFM_CHECKPOINT", "google/timesfm-3.0-pytorch")
@@ -40,9 +40,9 @@ def _predict(m, contexts, h, covs=None):
 
 def forecast(history, horizons, ctx):
     m, hmax, period = _model(ctx), max(horizons), ctx["period"]
-    contexts = [s.x.hrv.to_numpy(float)[-CONTEXT:] for s in history]
+    contexts = [s.x.hrv.to_numpy(float)[-hp(ctx, "context", CONTEXT):] for s in history]
     covs = None
-    if USE_TIME_COVARIATE:
+    if hp(ctx, "time_cov", USE_TIME_COVARIATE):
         covs = []
         for s, c in zip(history, contexts):
             tt = np.r_[s.x.t.to_numpy()[-len(c):], (s.x.t.iat[-1] + np.arange(1, hmax + 1)) % period]
@@ -56,6 +56,7 @@ def impute(series, ctx):
     m = _model(ctx)
     jobs = []                                       # (series, start, length)
     fills = [lin_fill(s.x.hrv) for s in series]
+    gc = hp(ctx, "gap_context", GAP_CONTEXT)
     for k, s in enumerate(series):
         miss = np.isnan(s.x.hrv.to_numpy(float))
         edges = np.flatnonzero(np.diff(np.r_[0, miss.astype(int), 0]))
@@ -63,8 +64,8 @@ def impute(series, ctx):
     fwd, bwd = {}, {}
     for L in sorted({j[2] for j in jobs}):
         group = [j for j in jobs if j[2] == L]
-        left = [(j, fills[j[0]][:j[1]][-GAP_CONTEXT:]) for j in group if j[1] > 0]
-        right = [(j, fills[j[0]][j[1] + L:][::-1][-GAP_CONTEXT:]) for j in group if j[1] + L < len(fills[j[0]])]
+        left = [(j, fills[j[0]][:j[1]][-gc:]) for j in group if j[1] > 0]
+        right = [(j, fills[j[0]][j[1] + L:][::-1][-gc:]) for j in group if j[1] + L < len(fills[j[0]])]
         for store, items in ((fwd, left), (bwd, right)):
             for a in range(0, len(items), 1024):
                 chunk = items[a:a + 1024]

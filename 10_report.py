@@ -236,6 +236,87 @@ FOLDS, INNER, REPEATS = 5, 3, 20        # the cross-validation design set in 12_
 
 
 
+# ------------------------------------------------------------------ tuning and what drives the predictions
+TN = pd.read_csv(NUMBERS / "model_results_tuned.csv")          # 12_model_results.py
+TU = pd.read_csv(NUMBERS / "tuning.csv")
+SH = pd.read_csv(NUMBERS / "shap_importance.csv")              # shap_analysis.py
+AB = pd.read_csv(NUMBERS / "ablation.csv")
+SC = pd.read_csv(NUMBERS / "shap_classification.csv")
+TESTS4 = ["Random test", "Block test", "Every 10 minutes", "Daily"]
+TIE = 0.1                                                       # a change smaller than this is called no change
+
+
+def arrow_cell(model, test):
+    r = TN[(TN.model == model) & (TN.test == test)]
+    if r.empty:
+        return "–"
+    r = r.iloc[0]
+    return f"{r.default:.1f} → –" if pd.isna(r.tuned) else f"{r.default:.1f} → {r.tuned:.1f}"
+
+
+tn_order = TN[TN.test == "Block test"].sort_values("tuned").model
+tn_rows = [[TN[TN.model == mdl].name.iat[0]] + [arrow_cell(mdl, t) for t in TESTS4] for mdl in tn_order]
+tn = {}
+for t in TESTS4:
+    d = TN[TN.test == t].dropna(subset=["tuned"])
+    b = d.sort_values("tuned").iloc[0]
+    g = d.sort_values("change").iloc[0]
+    tn[t] = dict(n=len(d), better=int((d.change < -TIE).sum()), worse=int((d.change > TIE).sum()),
+                 same=int((d.change.abs() <= TIE).sum()), best=b["name"], best_mae=b.tuned, ref=b.reference,
+                 gain=g["name"], gain_from=g.default, gain_to=g.tuned,
+                 beat=int((d.tuned < d.reference).sum()), beat_default=int((d.default < d.reference).sum()))
+tn_lost = int(TN.tuned.isna().sum())
+
+
+def the(name):
+    return ("" if name[:2].isupper() else "the ") + nm(name)
+
+
+_d10 = TN[TN.test == "Every 10 minutes"]
+_bd = _d10.sort_values("default").iloc[0]
+tn10_note = (f" Every 10 minutes, {the(_bd['name'])} with its default setting ({_bd.default:.1f}) is still lower than any tuned method."
+             if _bd.default < _d10.tuned.min() - 0.05 else "")
+tn_worse = sum(v["worse"] for v in tn.values())
+tn_quirk = ("A setting that wins on the practice set does not always win on the official test. Where a method got worse, "
+            "the search had fitted quirks of the practice set. This is why the official tests were kept out of the "
+            "search: the tuned scores here are honest, and some of them are worse."
+            if tn_worse else
+            "No method got clearly worse on the official tests, so the settings chosen on the practice set carried over.")
+_b = TN[TN.test == "Block test"]
+assert (_b.default - _b.tuned).max() < 5, "text says tuning moves the block-test scores by far less than the gap to a usable value"
+TASKNAME = {"impute": "Imputation", "forecast": "Every 10 minutes", "daily": "Daily"}
+tu_rows = [(r.name, TASKNAME[r.task], r.trials, f"{r.default_val_mae:.1f} → {r.val_mae:.1f}", r.params)
+           for r in TU.sort_values(["task", "name"], key=lambda c: c.map({"impute": 0, "forecast": 1, "daily": 2}) if c.name == "task" else c).itertuples()]
+VITALS = ["heart rate", "temperature", "steps", "sleep", "step activity"]
+sh = {}
+for t in ("impute", "forecast", "daily"):
+    g = SH[(SH.task == t) & (SH.model == "xgboost")].groupby("group").mean_abs_shap.sum()
+    g = (100 * g / g.sum()).sort_values(ascending=False)
+    sh[t] = dict(top=g.index[0], top_share=g.iat[0], second=g.index[1], second_share=g.iat[1],
+                 vitals=g.reindex(VITALS).fillna(0).sum(), g=g)
+assert sh["impute"]["top"] in ("nearest reading before/after", "readings after", "readings before") and sh["impute"]["vitals"] < 50, \
+    "text says the tree models fill from HRV itself, not the other vitals"
+_f = sh["forecast"]["g"]
+assert {_f.index[0], _f.index[1]} == {"recent readings", "time of day of the target"} and abs(_f.iat[0] - _f.iat[1]) < 10, \
+    "text says 10-minute forecasts lean about equally on recent readings and the target's time of day"
+assert sh["daily"]["vitals"] > 2 * sh["forecast"]["vitals"], "text says vitals carry far more weight in daily forecasts"
+ab_all = AB[AB.dropped == "all vitals"].set_index("model").change
+assert ab_all.min() > 0 and ab_all.abs().max() < 5, "text says removing all vitals raises the error, by a few points at most"
+_hr = AB[AB.dropped == "heart rate"].set_index("model").change
+ab_hr = "most" if (_hr / ab_all).median() > 0.5 else "part"
+ab_one = AB[~AB.dropped.isin(["none", "all vitals"])]
+ab_big = ab_one.loc[ab_one.change.idxmax()]
+ABNAME = {"xgboost": "XGBoost", "catboost": "CatBoost", "rnn": "RNN", "lstm": "LSTM", "gast": "our transformer",
+          "pinode": "the neural ODE"}
+sc_g = SC[SC.feature_set == "reduced"].groupby(["model", "group"]).mean_abs_shap.sum()
+sc_top = SC[SC.feature_set == "reduced"].groupby("model").mean_abs_shap.sum().idxmax()
+sc_share = (100 * sc_g[sc_top] / sc_g[sc_top].sum()).sort_values(ascending=False)
+CLFNAME = {"xgboost": "XGBoost", "random_forest": "random forest", "gaussian_nb": "naive Bayes", "grad_boost": "gradient boosting",
+           "lda": "linear discriminant analysis", "decision_tree": "decision tree", "logreg_l2": "logistic regression",
+           "extra_trees": "extra trees", "knn": "nearest neighbours", "logreg_l1": "sparse logistic regression",
+           "svm_linear": "straight support vector machine", "svm_rbf": "curved support vector machine"}
+
+
 # ------------------------------------------------------------------ helpers
 def table(rows, head):
     th = "".join(f"<th>{h}</th>" for h in head)
@@ -264,7 +345,7 @@ def page(figdir):
 <header>
 <h1>COPD pilot cohort: clinical and wearable data</h1>
 </header>
-<p class="abstract"><span class="lead">Summary.</span> {n['patients']} patients with COPD have a clinical record from enrolment, and {n_watch} of them have smartwatch data.{nw} The watch gave {n['hrv']:,} HRV readings from {n['hrv_pts']} patients and {n['hr']:,} heart-rate readings; the clinical team dated {n['ep']} exacerbations in {n['ep_pts']} patients. This report describes what the cohort holds and what the data look like, then sets out the modelling data: HRV cut into segments at gaps longer than {CFG['x_minutes']} minutes, used first for imputation and then for forecasting. The models were then run: sections 13 to 15 list what each one gave back.</p>
+<p class="abstract"><span class="lead">Summary.</span> {n['patients']} patients with COPD have a clinical record from enrolment, and {n_watch} of them have smartwatch data.{nw} The watch gave {n['hrv']:,} HRV readings from {n['hrv_pts']} patients and {n['hr']:,} heart-rate readings; the clinical team dated {n['ep']} exacerbations in {n['ep_pts']} patients. This report describes what the cohort holds and what the data look like, then sets out the modelling data: HRV cut into segments at gaps longer than {CFG['x_minutes']} minutes, used first for imputation and then for forecasting. The models were then run: sections 13 to 15 list what each one gave back, section 16 tunes their settings and section 17 looks at what they rely on.</p>
 
 <h2>1&ensp;The data</h2>
 <p>The data come from two sources joined by patient ID. The clinical datasheet has one row per patient at enrolment (symptoms, history, examination, blood tests, imaging, lung tests, walk test, questionnaires and treatment) and a separate list of exacerbation dates. It covers {n['patients']} patients, and all are included here; {n_watch} of them also have watch data.{nw} Where a patient lacks a kind of data, the report says so. The smartwatch export holds time-stamped readings for each patient, which we combined into one row per recorded minute. Nothing is filled in, so a missing reading stays missing.</p>
@@ -572,7 +653,66 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
 <li>These tests were taken at enrolment, so this asks whether the starting picture separates patients who later had a dated exacerbation from those who did not. It does not show cause, and it says nothing about patients whose exacerbation date is unknown.</li>
 </ul>
 
-<h2>16&ensp;Conclusions</h2>
+<h2>16&ensp;Tuning the models</h2>
+<h3>What we did</h3>
+<p>Every model has settings that are chosen before it sees any data: how many trees to grow, how large the network is, how fast it learns, how quickly old readings are forgotten. Sections 13 and 14 used our first choice for each. Here a search looked for better ones.</p>
+<p>The search must not see the official tests, or the scores would flatter the models. So each model got a practice set, cut out of the readings it was already allowed to see. For imputation, a further 15% of the visible readings were hidden in whole runs. For forecasting, the last 20% of the learning part was held back. The search tried a setting, scored it on the practice set, and used the scores so far to pick the next one to try; the first try was always the default. Each model was then run once more on the official tests with its best setting.</p>
+{fig("13f-tuning-flow", "How the settings are tuned",
+     "1: the practice set is cut out of what the model may see; the official test is left alone. 2: settings are tried one after another and scored on the practice set. 3: the best setting is run once on the official test.",
+     "The official tests take no part in choosing the settings.")}
+<p>The quick models had 40 tries each. The three slow ones (RS-DPF, the particle filter and GRU-ODE-Bayes) had 8, on 60 segments. TimesFM 3 is used as released, so only how much history it reads could be changed (10 tries). Imputation was tuned once, on practice gaps hidden in whole runs, and the same setting was used for both imputation tests.</p>
+<h3>Results</h3>
+<p>Average error on the official tests, default setting → tuned setting.</p>
+{table(tn_rows, ["Method", "Random test", "Block test", "Every 10 minutes", "Daily"])}
+<p class="small">Same error measure as sections 13 and 14. Sorted by the tuned block test. A dash after the arrow: the tuned run gave impossible values.</p>
+{fig("12d-tuned-results", "Default against tuned settings",
+     "One panel per test. Grey dot: the default setting. Blue dot: the tuned setting. Dashed: the reference.",
+     "")}
+<p>Lowest average error with tuned settings: random test, {nm(tn['Random test']['best'])} {tn['Random test']['best_mae']:.1f} (straight line {tn['Random test']['ref']:.1f}); block test, {nm(tn['Block test']['best'])} {tn['Block test']['best_mae']:.1f} (straight line {tn['Block test']['ref']:.1f}); every 10 minutes, {nm(tn['Every 10 minutes']['best'])} {tn['Every 10 minutes']['best_mae']:.1f} (patient's median {tn['Every 10 minutes']['ref']:.1f}); daily, {nm(tn['Daily']['best'])} {tn['Daily']['best_mae']:.1f} (patient's median {tn['Daily']['ref']:.1f}).{tn10_note}</p>
+<h3>What the numbers mean</h3>
+<ul>
+<li>Counting a change of more than {TIE} as a real change: in the block test {tn['Block test']['better']} of {tn['Block test']['n']} methods got better, {tn['Block test']['same']} stayed the same and {tn['Block test']['worse']} got worse; every 10 minutes {tn['Every 10 minutes']['better']} better, {tn['Every 10 minutes']['same']} the same, {tn['Every 10 minutes']['worse']} worse; daily {tn['Daily']['better']} better, {tn['Daily']['same']} the same, {tn['Daily']['worse']} worse.</li>
+<li>The largest gain in the block test was for {the(tn['Block test']['gain'])}, from {tn['Block test']['gain_from']:.1f} to {tn['Block test']['gain_to']:.1f}. Set that against the distance to the reference ({tn['Block test']['ref']:.1f}) and to the signal itself ({hrv_lo:.0f} to {hrv_hi:.0f}): tuning moves the scores by far less than the gap that would make a single filled value trustworthy.</li>
+<li>The daily test moved most: {the(tn['Daily']['gain'])} went from {tn['Daily']['gain_from']:.1f} to {tn['Daily']['gain_to']:.1f}. The default settings were sized for 10-minute data and suit a short daily series badly. But the daily test is small ({rd['top'].n:,} patient-days), and {tn['Daily']['worse']} methods got worse there.</li>
+<li>{tn_quirk}</li>
+<li>Against the references: with tuned settings {tn['Block test']['beat']} of {tn['Block test']['n']} methods beat the straight line in the block test ({tn['Block test']['beat_default']} with defaults), and {tn['Every 10 minutes']['beat']} of {tn['Every 10 minutes']['n']} beat the patient's median every 10 minutes ({tn['Every 10 minutes']['beat_default']} with defaults).</li>
+</ul>
+<h3>Settings chosen</h3>
+<p>For each method and test: how many settings were tried, the error on the practice set with the default and with the best setting, and the best setting itself.</p>
+{table(tu_rows, ["Method", "Test", "Tries", "Practice error: default → best", "Best setting"])}
+
+<h2>17&ensp;What the models rely on</h2>
+<h3>What we did</h3>
+<p>A score says how well a model does, not what it leans on. For the two tree models (XGBoost and CatBoost) we used SHAP. For one prediction, SHAP splits the prediction into a share for each input: how far that input pushed the prediction up or down from the average prediction. Averaging the size of those pushes over many predictions shows which inputs the model relies on most. It was worked out on the readings the official tests score, with the tuned settings.</p>
+<p>SHAP in this exact form exists only for tree models. For the other models that are given the other vitals (RNN, LSTM, our transformer, the neural ODE) we asked the question directly: take one vital away, fit the model again, and score the block test again. The remaining models read only HRV and the time of day, so there is nothing to take away.</p>
+<h3>Tree models: which inputs matter</h3>
+{fig("14a-shap-impute", "What drives a filled value",
+     "Left: the average size of each kind of input's push on the prediction, for XGBoost and CatBoost. Right: XGBoost, one dot per filled reading and input; a dot to the right pushed the filled value up, to the left pushed it down; the colour shows whether the input itself was high or low.",
+     f"The largest share comes from {sh['impute']['top']} ({sh['impute']['top_share']:.0f}%), then {sh['impute']['second']} ({sh['impute']['second_share']:.0f}%). The other vitals together account for {sh['impute']['vitals']:.0f}%.")}
+{fig("14b-shap-forecast", "What drives a 10-minute forecast",
+     "The same two panels for forecasting every 10 minutes.",
+     f"The largest share comes from {sh['forecast']['top']} ({sh['forecast']['top_share']:.0f}%), then {sh['forecast']['second']} ({sh['forecast']['second_share']:.0f}%). The other vitals together account for {sh['forecast']['vitals']:.0f}%.")}
+{fig("14c-shap-daily", "What drives a daily forecast",
+     "The same two panels for daily forecasting.",
+     f"The largest share comes from {sh['daily']['top']} ({sh['daily']['top_share']:.0f}%), then {sh['daily']['second']} ({sh['daily']['second_share']:.0f}%). The other vitals together account for {sh['daily']['vitals']:.0f}%.")}
+<h3>Do the other vitals help?</h3>
+{fig("14d-ablation-vitals", "Filling hidden HRV without each vital",
+     "For six models, the change in the block-test error when one vital (or all of them) is removed and the model is fitted again. Above zero: the error went up, so the vital was helping.",
+     f"Removing all the vitals changed the error by between {ab_all.min():+.2f} and {ab_all.max():+.2f} across the six models. The largest effect of a single vital was {ab_big.dropped} for {ABNAME[ab_big.model]} ({ab_big.change:+.2f}).")}
+<h3>Exacerbation classifiers</h3>
+{fig("14e-shap-classification", "What the exacerbation classifiers lean on",
+     "Left: for the three highest-scoring methods with the reduced inputs, the average size of each kind of test's push on the chance of yes. Right: the method that leans hardest on its inputs, one dot per patient and test.",
+     f"For {CLFNAME[sc_top]}, {sc_share.index[0]} carries {sc_share.iat[0]:.0f}% of the pushes and {sc_share.index[1]} {sc_share.iat[1]:.0f}%.")}
+<h3>What the numbers mean</h3>
+<ul>
+<li>To fill a hidden reading the tree models lean mostly on HRV itself, the readings just before and after the gap, more than on heart rate, temperature, steps or sleep. The removal test puts a size on the vitals: taking them all away raises the error by {ab_all.min():.1f} to {ab_all.max():.1f}, and {ab_hr} of that comes from heart rate. That is small next to the error itself (about {rb['top'].mae:.0f}) but not next to the lead over the straight line ({rb['ref'].mae - rb['top'].mae:.1f}): the vitals, heart rate above all, are part of why the models beat it.</li>
+<li>To forecast every 10 minutes the tree models lean on two things about equally: the recent readings ({sh['forecast']['g']['recent readings']:.0f}%) and the time of day being predicted ({sh['forecast']['g']['time of day of the target']:.0f}%). That is the patient's recent level plus the daily rhythm; the other vitals carry {sh['forecast']['vitals']:.0f}%.</li>
+<li>For daily forecasts the other vitals carry far more of the weight: {sh['daily']['vitals']:.0f}%, with heart rate at {sh['daily']['g']['heart rate']:.0f}%. The daily test is small, so this is a pointer for the next round, not a finding.</li>
+<li>SHAP describes what a fitted model uses. It does not show that an input causes HRV to change, and an input the model ignores may still matter in ways these models cannot pick up.</li>
+<li>For the exacerbation classifiers this is weaker still. The methods were refitted on all {xc['n']} patients to be explained, and section 15 found their scores are within reach of shuffled answers. The figure shows where a method put its weight, not that those tests predict an exacerbation.</li>
+</ul>
+
+<h2>18&ensp;Conclusions</h2>
 <ul>
 <li>{n['patients']} patients, almost all men, mostly GOLD groups A and B, with a detailed clinical record at enrolment; {n_watch} of them have weeks to months of watch data.</li>
 <li>The datasheet is nearly complete for symptoms, history, examination, imaging, walk test and spirometry before bronchodilator; blood tests and post-bronchodilator spirometry are about half filled.</li>
@@ -583,6 +723,8 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
 <li>Filling in hidden HRV, lowest average error: random test {rr['top']['name']} {rr['top'].mae:.1f} (straight line {rr['ref'].mae:.1f}); block test {nm(rb['top']['name'])} {rb['top'].mae:.1f} (straight line {rb['ref'].mae:.1f}).</li>
 <li>Forecasting HRV, lowest average error: every 10 minutes {rf['top']['name']} {rf['top'].mae:.1f} (patient's median {rf['ref'].mae:.1f}); daily {rd['top']['name']} {rd['top'].mae:.1f} (patient's median {rd['ref'].mae:.1f}).</li>
 <li>Exacerbation during monitoring from enrolment tests, highest AUC: {XP.auc['reduced']:.2f} (reduced set); shuffled answers scored as high or higher in {xc_shuffled['reduced']} of {xc['perm']} tries.</li>
+<li>Tuning the settings on a separate practice set: in the block test {tn['Block test']['better']} of {tn['Block test']['n']} methods improved and {tn['Block test']['worse']} got worse; lowest tuned error {nm(tn['Block test']['best'])} {tn['Block test']['best_mae']:.1f}. Every 10 minutes the lowest tuned error is {nm(tn['Every 10 minutes']['best'])} {tn['Every 10 minutes']['best_mae']:.1f}.{tn10_note}</li>
+<li>What the tree models rely on: for filling, {sh['impute']['top']} ({sh['impute']['top_share']:.0f}%); for forecasting, {sh['forecast']['top']} ({sh['forecast']['top_share']:.0f}%). The other vitals account for {sh['impute']['vitals']:.0f}% and {sh['forecast']['vitals']:.0f}%.</li>
 </ul>
 
 <h2>Terms</h2>

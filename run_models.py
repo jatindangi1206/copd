@@ -15,6 +15,7 @@ Results: results/<task>/<run>/predictions.csv.gz and metrics.json, one line
 per run in results/summary.csv. Data: model_data/ (built by 11_model_data.py).
 """
 import argparse
+import json
 import sys
 import time
 import traceback
@@ -30,6 +31,7 @@ p.add_argument("--imputer", default="linear", help="imputation model that fills 
 p.add_argument("--cores", type=int)
 p.add_argument("--device", choices=["cpu", "cuda"])
 p.add_argument("--seed", type=int, default=0)
+p.add_argument("--tuned", action="store_true", help="use the settings found by tune_models.py (results/tuning/)")
 p.add_argument("--quick", action="store_true", help="6 series, tiny training: checks the code runs")
 p.add_argument("--list", action="store_true")
 a = p.parse_args()
@@ -61,6 +63,12 @@ print(f"device: {device}")
 def run(task, name, quick):
     ctx = dict(device=device, cores=n_cores, quick=quick, seed=a.seed,
                period=7 if task == "daily" else 144)
+    if a.tuned:
+        f = data.RESULTS / "tuning" / task / f"{name}.json"
+        if not f.exists():
+            sys.exit(f"no tuned settings at {f}; run tune_models.py {task} {name} first")
+        ctx["params"] = json.loads(f.read_text())["params"]
+        print(f"tuned settings: {ctx['params']}")
     np.random.seed(a.seed)
     t0 = time.time()
     if task == "impute":
@@ -77,6 +85,9 @@ def run(task, name, quick):
     P, m = data.score(task, series, preds)
     extra.update(model=name, seconds=round(time.time() - t0, 1), cores=n_cores, device=device,
                  seed=a.seed, quick=quick)
+    if a.tuned:
+        run_name += "__tuned"
+        extra.update(tuned=True, params=json.dumps(ctx["params"]))
     return P, m, run_name, extra
 
 
