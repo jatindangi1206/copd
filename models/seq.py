@@ -7,9 +7,9 @@ impute  : inputs per slot = value (0 if blank), seen-flag, time of day, slots
           hides a further HIDE share of the visible readings at random and learns
           to rebuild them (the evaluation mask is never seen). Networks may look
           both ways.
-forecast: inputs = gap-filled value, was-real flag, time of day. Trained to
-          predict the next slot (loss on real readings only), then rolled forward
-          one step at a time. Networks must be causal (H9).
+forecast: direct multi-step (see fit_forecast): the history, then blank slots after
+          the origin, predicted in one pass; loss on real readings only. Networks
+          must be causal (H9).
 """
 import numpy as np
 import torch
@@ -41,7 +41,7 @@ def _impute_batch(z, cov, sc, obs):
 
 def _windows(arrays, length, rng, n):
     """n random windows of `length` across series; shorter series are padded (pad flag 0)."""
-    out = [[] for _ in arrays[0]] + [[]]
+    out = [[] for _ in arrays] + [[]]
     lens = np.array([len(a) for a in arrays[0]])
     for _ in range(n):
         i = int(rng.choice(len(lens), p=lens / lens.sum()))
@@ -101,37 +101,51 @@ def fit_impute(make_net, series, ctx):
 
 
 def fit_forecast(make_net, history, horizons, ctx):
+    """Direct multi-step: the network never sees its own output.
+
+    Input at slot t = [value at t-1, was-real flag at t-1, time of day at t]; output = value at t.
+    Training picks an origin in each window and blanks (value 0, flag 0) every slot after it, so
+    the network learns to predict the whole stretch after the origin from the past and the clock.
+    Prediction does the same: the history, then h blank slots, one forward pass. (The earlier version
+    fed each prediction back as input and rolled forward; the error compounded and drifted.)
+    """
     rng = np.random.default_rng(ctx["seed"])
     torch.manual_seed(ctx["seed"])
     st, period = zstats(history), ctx["period"]
     zf = [np.nan_to_num(to_z(s.x.hrv.to_numpy(float), s.pid, st)) for s in history]
     zo = [to_z(s.x.hrv_obs.to_numpy(float), s.pid, st) for s in history]
     feats = [np.column_stack([z, ~np.isnan(o), *phase(s.x.t, period)]).astype(np.float32)
-             for s, z, o in zip(history, zf, zo)]
+             for s, z, o in zip(history, zf, zo)]            # per slot: value, was-real, sin, cos
     length = min(W, max(len(f) for f in feats))
     net = make_net(4)
 
+    def shifted(f):
+        x = f.copy()
+        x[:, 1:, :2] = f[:, :-1, :2]                         # value and flag come from the slot before
+        x[:, 0, :2] = 0
+        return x
+
     def batch():
         f, o, valid = _windows([feats, zo], length, rng, BATCH)
-        y = o[:, 1:]
-        m = (~np.isnan(y)) & (valid[:, 1:] > 0)
-        x = f[:, :-1]
-        return x, np.where(m, y, 0).astype(np.float32), m.astype(np.float32)   # x[:, :t] -> slot t+1
+        n = valid.sum(1).astype(int)
+        cut = np.maximum(1, (rng.uniform(0.2, 0.9, len(n)) * n).astype(int))     # the origin
+        f[np.arange(length)[None] > cut[:, None], :2] = 0    # nothing after the origin is known
+        m = (~np.isnan(o)) & (valid > 0)
+        return shifted(f), np.where(m, np.nan_to_num(o), 0).astype(np.float32), m.astype(np.float32)
 
     net = _fit(net, ctx, batch, 20 if ctx["quick"] else 3000)
     hmax = max(horizons)
-    x = np.stack([np.concatenate([np.zeros((length - len(f[-length:]), 4), np.float32), f[-length:]])
-                  for f in feats])                      # last `length` slots, left-padded
-    tpos = np.array([s.x.t.iat[-1] for s in history])
-    preds = []
+    out = []
     with torch.no_grad():
-        xt = torch.as_tensor(x, device=ctx["device"])
-        for k in range(1, hmax + 1):
-            nxt = net(xt)[:, -1]
-            preds.append(nxt.cpu().numpy())
-            sn, cs = phase((tpos + k) % period, period)
-            row = torch.as_tensor(np.column_stack([nxt.cpu().numpy(), np.zeros(len(tpos)), sn, cs]).astype(np.float32),
-                                  device=ctx["device"])
-            xt = torch.cat([xt[:, 1:], row[:, None]], dim=1)
-    P = np.stack(preds, axis=1)
+        for a in range(0, len(history), 32):                 # chunks: attention over length + hmax slots is big
+            rows = []
+            for s, f in zip(history[a:a + 32], feats[a:a + 32]):
+                f = f[-length:]
+                tail = np.zeros((hmax, 4), np.float32)
+                tail[:, 2:] = np.column_stack(phase((s.x.t.iat[-1] + np.arange(1, hmax + 1)) % period, period))
+                head = np.zeros((length - len(f), 4), np.float32)
+                rows.append(np.concatenate([head, f, tail]))
+            x = torch.as_tensor(shifted(np.stack(rows)), device=ctx["device"])
+            out.append(net(x)[:, length:].cpu().numpy())
+    P = np.concatenate(out)
     return [from_z(P[i, :h], s.pid, st) for i, (s, h) in enumerate(zip(history, horizons))]

@@ -26,7 +26,7 @@ section = raw.iloc[1].ffill().astype(str).str.strip().str.rstrip(":").str.strip(
 names = raw.iloc[2].astype(str).str.strip()
 d = raw.iloc[3:]
 pid = d[names[names == "PARTCPNT_ID"].index[0]].astype(str).str.strip().str.lower()
-d = d[pid.str.match(r"^c0(0[1-9]|[12]\d|3[0-3])$")]
+d = d[pid.str.match(r"^c\d{3}$")]          # every patient row in the sheet
 N = len(d)
 
 

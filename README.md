@@ -6,19 +6,21 @@ Self-contained. Everything it reads is under `data/`, everything it writes goes 
 ```
 data/
   COPDAI_DATASHEET_01.xls   clinical datasheet: Baseline, Coding, exacerbation
-  raw/<pid>/<vital>/...     per-vital export, 33 patients
+  copd/<pid>/<vital>/...    per-vital export (29 Sep 2026), 40 patients (no c034)
+  raw/<pid>/<vital>/...     older export (18 Sep), 33 patients, not used
   wearable/<pid>.csv.gz     1-minute master per patient, one row per recorded minute
 codings.py                  the datasheet's coding scheme and its repairs  (--check)
 common.py                   paths and plot style
 02_clinical_eda.py          baseline clinical EDA
-03_data_presence.py         how much data each vital has
+03_data_presence.py         how much data each vital has, and since enrolment
 04_hrv_per_patient.py       raw HRV over time, per patient
 05_missingness.py           HRV gaps and coverage
 06_hrv_distributions.py     HRV distributions
-07_sleep_and_events.py      HRV in sleep, HRV around each exacerbation
+07_sleep_and_events.py      HRV in sleep; HRV, steps and sleep around each exacerbation
 08_sleep_stages.py          deep / light / almost-awake sleep and HRV (per sleep block)
 09_clinical_profile.py      datasheet completeness, symptoms/history, lung tests, imaging, treatment
 11_model_data.py            model_data/: 10-min modelling table, segments, imputation masks, splits (self-checks)
+12_model_results.py         GPU model results -> numbers/model_results.csv, figs 12a/12b
 10_report.py                COPD_EDA_Report.html (light) + COPD_EDA_Report_dark.html
 results.md                  what each script found, script by script
 run_models.py               runs the imputation and forecasting models (see below)
@@ -43,14 +45,17 @@ python codings.py --check
 for T in light dark; do for s in 02_clinical_eda 03_data_presence 04_hrv_per_patient 05_missingness 06_hrv_distributions 07_sleep_and_events 08_sleep_stages 09_clinical_profile 11_model_data; do
   THEME=$T python $s.py
 done; done
+# models, in this order (see Models below), then:
+python 12_exac_classify.py                                                       # exacerbation classification
+THEME=light python 12_model_results.py; THEME=dark python 12_model_results.py   # results/ -> numbers/, figs 12a-c
 python 10_report.py
 ```
 
 ## What the data is
 
-33 patients with both a datasheet row and wearable data. Every wearable patient
-has a datasheet row; 8 further datasheet patients (c034–c041) have no wearable
-data and are excluded.
+41 patients in the datasheet (c001–c041), all analysed. 40 have wearable data
+(export of 29 Sep 2026); c034 has none and is reported as such, not dropped.
+Watch analyses use whoever has a file in data/wearable/.
 
 17 exacerbation episodes are dated, across 12 patients; 16 of the 17 fall inside
 that patient's wearable coverage. Three patients (c005, c032, c037) have an event

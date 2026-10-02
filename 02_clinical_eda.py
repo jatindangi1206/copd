@@ -23,7 +23,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from codings import load_baseline, load_exacerbations, clean, yes_no, mmrc, DECODE
+from codings import load_baseline, load_exacerbations, clean, yes_no, mmrc, DECODE, wearable_pids
 
 from common import FIGS, WEAR as MASTER, BLUE as C1, ORANGE as C2, INK2, GREY
 ROOT = Path(__file__).resolve().parent
@@ -64,9 +64,10 @@ X.to_csv(Path(__file__).resolve().parent / "clinical_table.csv", index=False)
 
 say("# COPD baseline clinical EDA")
 say()
-say(f"**{len(X)} patients** — every wearable patient has a datasheet row "
-    f"(33/33, no id casualties). 8 further sheet patients (c034–c041) have no "
-    f"wearable data and are excluded.")
+no_watch = sorted(set(X.pid) - wearable_pids())
+say(f"**{len(X)} patients** in the sheet, all analysed. {len(X) - len(no_watch)} have watch data; "
+    f"no watch data: {', '.join(no_watch) or 'none'}. Watch-only patients not in the sheet: "
+    f"{', '.join(sorted(wearable_pids() - set(X.pid))) or 'none'}.")
 say()
 say("## Cohort")
 say()
@@ -76,10 +77,10 @@ say(f"- BMI median {X.bmi.median():.1f} (range {X.bmi.min():.1f}–{X.bmi.max():
 say(f"- GOLD: " + ", ".join(f"{k} {v}" for k, v in X.gold.value_counts().sort_index().items()))
 say(f"- mMRC median {X.mmrc.median():.1f}; CAT median {X.cat.median():.0f}; "
     f"BODE median {X.bode.median():.0f}")
-say(f"- Ever-smoker {int((clean(B['SMOKE_HX'])==1).sum())}/33, "
-    f"biomass exposure {int(X.biomass.sum())}/33, "
-    f"comorbidity {int(X.comorbid.sum())}/33, "
-    f"**sleep disturbance {int(X.sleep_dist.sum())}/33**")
+say(f"- Ever-smoker {int((clean(B['SMOKE_HX'])==1).sum())}/{len(X)}, "
+    f"biomass exposure {int(X.biomass.sum())}/{len(X)}, "
+    f"comorbidity {int(X.comorbid.sum())}/{len(X)}, "
+    f"**sleep disturbance {int(X.sleep_dist.sum())}/{len(X)}**")
 say()
 
 # ------------------------------------------------------------- fig 1: cohort

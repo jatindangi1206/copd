@@ -24,7 +24,7 @@ def _setup(y, t, period, high):
     w = 2 * np.pi / period
     rot = np.array([[1, 0, 0], [0, np.cos(w), -np.sin(w)], [0, np.sin(w), np.cos(w)]])
     hx = lambda x: np.array([LOW + (high - LOW) / (1 + np.exp(-(x[0] + x[1])))])
-    pts = MerweScaledSigmaPoints(3, alpha=0.3, beta=2.0, kappa=0.0)
+    pts = MerweScaledSigmaPoints(3, alpha=1.0, beta=2.0, kappa=0.0)
     ukf = UnscentedKalmanFilter(3, 1, 1.0, hx=hx, fx=lambda x, dt: rot @ x, points=pts)
     ok = ~np.isnan(y)
     p = np.clip((y[ok] - LOW) / (high - LOW), 1e-3, 1 - 1e-3)
@@ -40,7 +40,25 @@ def _setup(y, t, period, high):
     ukf.P = np.diag([v, amp ** 2 + 1e-3, amp ** 2 + 1e-3])
     ukf.Q = np.diag([Q_LEVEL * v, Q_CYCLE * v, Q_CYCLE * v])
     ukf.R = np.array([[R_SHARE * max(np.var(np.diff(y[ok])) if ok.sum() > 2 else 1.0, 1.0)]])
+    # alpha=1, kappa=0 gives mean weights Wm = [0, 1/6, ...]: all >= 0, so the mean of the bounded
+    # reading stays inside (LOW, HIGH). alpha=0.3 gave Wm[0] = -10 and negative HRV (H1 broken).
     return ukf, hx, pts
+
+
+def _batch_filter(ukf, y):
+    """The loop filterpy's batch_filter runs, without its input validation.
+
+    batch_filter documents None for a missing reading, but then calls z.ndim on
+    zs[0] and np.size on the whole list, so any blank raises before the loop is
+    reached. Predict, then update only where a reading exists (H8).
+    """
+    n = len(ukf.x)
+    mu, cov = np.zeros((len(y), n)), np.zeros((len(y), n, n))
+    for i, v in enumerate(y):
+        ukf.predict()
+        ukf.update(None if np.isnan(v) else np.array([v]))
+        mu[i], cov[i] = ukf.x, ukf.P
+    return mu, cov
 
 
 def _mean_reading(hx, pts, x, P):
@@ -57,7 +75,7 @@ def impute(series, ctx):
     for s in series:
         y = s.x.hrv.to_numpy(float)
         ukf, hx, pts = _setup(y, s.x.t.to_numpy(), ctx["period"], high)
-        mu, cov = ukf.batch_filter([None if np.isnan(v) else np.array([v]) for v in y])
+        mu, cov = _batch_filter(ukf, y)
         xs, ps, _ = ukf.rts_smoother(mu, cov)
         pred = np.array([_mean_reading(hx, pts, xs[i], ps[i]) for i in range(len(y))])
         out.append(np.where(np.isnan(y), pred, y))
@@ -69,7 +87,7 @@ def forecast(history, horizons, ctx):
     for s, h in zip(history, horizons):
         y = s.x.hrv_obs.to_numpy(float)
         ukf, hx, pts = _setup(y, s.x.t.to_numpy(), ctx["period"], high)
-        mu, cov = ukf.batch_filter([None if np.isnan(v) else np.array([v]) for v in y])
+        mu, cov = _batch_filter(ukf, y)
         ukf.x, ukf.P = mu[-1], cov[-1]
         preds = []
         for _ in range(h):

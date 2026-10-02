@@ -1,5 +1,5 @@
 test,available,normal,abnormal,coded_0,blank
-CXR (PA view),10,4,4,23,2
-CT chest,16,2,11,17,3
-ECG,10,8,0,23,2
-2D echo,9,9,0,24,0
+CXR (PA view),11,4,4,30,2
+CT chest,16,2,11,25,3
+ECG,11,9,0,30,2
+2D echo,10,10,0,31,0

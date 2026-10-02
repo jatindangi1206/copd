@@ -5,8 +5,8 @@
 The light report embeds figs/, the dark one figs_dark/ (same scripts, THEME=dark).
 Every figure in the report is a PNG in that folder, and every PNG in the folder
 is in the report - the script stops if one is left out. Numbers in the text are
-read from numbers/ and the data, not typed in. Sections 11-12 are empty slots
-for the imputation and forecasting results.
+read from numbers/ and the data, not typed in. Sections 13-15 read the model
+results from numbers/ (12_model_results.py, from the GPU run).
 """
 import base64
 import html
@@ -14,8 +14,8 @@ import json
 
 import pandas as pd
 
-from common import HERE, NUMBERS, master, patients
-from codings import load_baseline, load_exacerbations, clean
+from common import HERE, NUMBERS, VITALS, master, patients
+from codings import load_baseline, load_exacerbations, clean, wearable_pids
 
 CADENCE, MIN_READINGS, WINDOW = 10, 200, 14
 
@@ -59,7 +59,7 @@ n = dict(
     mmrc25=int((X.mmrc == 2.5).sum()), no_exac=int((X.exac_dated == 0).sum()),
     hr=int(P.hr.sum()), hrv=int(P.hrv.sum()), temp=int(P.temp.sum()), spo2=int(P.spo2.sum()),
     steps=int(P.steps.sum()), hrv_pts=int((P.hrv > 0).sum()),
-    no_hrv=", ".join(P.patient[P.hrv == 0]), rich=len(rich),
+    no_hrv=", ".join(P.patient[(P.hrv == 0) & (P.minutes > 0)]), rich=len(rich),
     gap10=100 * (gap == CADENCE).mean(), gap_hour=100 * (gap > 60).mean(),
     cov_med=cov.median(), cov50=int((cov >= 50).sum()), cov_n=len(cov),
     top=100 * (H.hrv >= 120).mean(), hrv_max=H.hrv.max(),
@@ -82,6 +82,38 @@ n = dict(
     spo2_med=lung["MIN_SPO2_0"].median(),
 )
 age7 = X.pid[X.age < 18].tolist()
+no_watch = sorted(set(X.pid) - wearable_pids())        # in the sheet, no watch file
+n_watch = len(X) - len(no_watch)
+nw = f" {', '.join(no_watch)} {'has' if len(no_watch) == 1 else 'have'} no watch data at all." if no_watch else ""
+# clinical captions: computed, so a rerun on new data keeps them true
+PLAIN = dict(age="age", bmi="BMI", mmrc="breathlessness grade", cat="CAT", bode="BODE",
+             exac_12m="exacerbations in the past year", exac_dated="dated exacerbations",
+             smoke_index="smoking index", pulse="clinic pulse", spo2="resting SpO2", rr="breathing rate",
+             bp_sys="systolic BP", walk_dist="walk distance", walk_hr_avg="walk-test heart rate",
+             walk_spo2_min="the lowest walk-test SpO2", fev1_pct="lung function (FEV1)", hb="haemoglobin",
+             hba1c="HbA1c")
+sp = X[list(PLAIN)].corr(method="spearman")
+both = X[list(PLAIN)].notna().astype(int)
+both = both.T.dot(both)
+top = sorted(((a, b) for i, a in enumerate(PLAIN) for b in list(PLAIN)[i + 1:] if both.loc[a, b] >= 10),
+             key=lambda ab: -abs(sp.loc[ab]))[:3]
+top_pairs = ", ".join(f"{PLAIN[a]} with {PLAIN[b]} ({sp.loc[a, b]:+.2f}, {both.loc[a, b]} patients)" for a, b in top)
+whr = pd.Series({p: master(p, ["hr"]).hr.median() for p in X.pid if p not in no_watch})
+pw = pd.DataFrame({"clinic": X.set_index("pid").pulse, "watch": whr}).dropna()
+pulse_r, pulse_diff = pw.clinic.corr(pw.watch), (pw.watch - pw.clinic).median()
+assert pulse_diff < 0, "the caption says the watch reads lower than the clinic pulse"
+D0 = pd.read_csv(NUMBERS / "exacerbation_day0.csv")
+day0 = {k: (int((D0[f"{k}_day0"] > D0[f"{k}_usual"]).sum()), int(D0[f"{k}_day0"].notna().sum()))
+        for k in ("hrv", "steps", "sleep")}
+en_dates = pd.to_datetime(P.enrolment)
+en = dict(
+    end=f"{pd.to_datetime(P.last_reading).max():%d %B %Y}",
+    first=f"{en_dates.min():%d %B}", last=f"{en_dates.max():%d %B %Y}",
+    fallback=", ".join(P.patient[P.enrolment_source != "smart watch date"]),
+    before_pts=int((P.minutes_before_enrolment > 0).sum()), before_min=int(P.minutes_before_enrolment.sum()),
+    worn_med=(100 * P.days_with_data / P.days_since_enrolment).median(),
+    since=int(sum(P[f"{v}_since"].sum() for v in VITALS)), total=int(sum(P[v].sum() for v in VITALS)),
+)
 gp = {t: 100 * (gap <= t).mean() for t in (10, 20, 60, 180, 360)}
 
 # ------------------------------------------------------------------ modelling data
@@ -103,12 +135,99 @@ m = dict(
     no_seg=", ".join(PT.pid[PT.segments == 0]),
 )
 
+# ------------------------------------------------------------------ model results (12_model_results.py)
+R = pd.read_csv(NUMBERS / "model_results.csv")
+R["note"] = R.note.fillna("")
+
+
+def nm(name):
+    """Model name for mid-sentence: 'Hidden Markov model' -> 'hidden Markov model', 'XGBoost' kept."""
+    w = name.split()[0]
+    return name if any(c.isupper() for c in w[1:]) else name[0].lower() + name[1:]
+
+
+def failed(t):
+    return " and ".join(f"{'' if r.name[:2].isupper() else 'the '}{nm(r.name)} {r.note}"
+                        for r in t["d"][~t["d"].usable].itertuples())
+
+
+def best(test):
+    d = R[R.test == test]
+    ok = d[d.usable].sort_values("mae")
+    ref = ok[ok.reference].iloc[0]
+    models = ok[~ok.reference & (ok.model != "last_value")]
+    return dict(d=d, ok=ok, ref=ref, top=ok.iloc[0], gain=100 * (1 - ok.mae.iat[0] / ref.mae),
+                beat=models[models.mae < ref.mae], worse=models[models.mae >= ref.mae])
+
+
+rr, rb, rf, rd = (best(t) for t in ("Random test", "Block test", "Every 10 minutes", "Daily"))
+last10 = R[(R.test == "Every 10 minutes") & (R.model == "last_value")].mae.iat[0]
+imp_ok = R[(R.task == "impute") & R.usable]
+assert (imp_ok.mae_120_up > imp_ok.mae_below_120).all(), "text says every method misses the top group more"
+NOTE = {"timesfm3": "used as released, not trained on this data"}
+
+
+def f1(v):
+    return "–" if pd.isna(v) else f"{v:.1f}"
+
+
+def one(model, test):
+    return R[(R.model == model) & (R.test == test)].iloc[0]
+
+
+imp_rows = []
+for mdl in R[R.test == "Block test"].sort_values(["usable", "mae"], ascending=[False, True]).model:
+    a, b = one(mdl, "Random test"), one(mdl, "Block test")
+    imp_rows.append((a["name"], f1(a.mae), f1(a.rmse), f1(b.mae),
+                     "reference" if a.reference else (a.note or b.note or NOTE.get(mdl, ""))))
+fc_rows = []
+for mdl in R[R.test == "Every 10 minutes"].sort_values(["usable", "mae"], ascending=[False, True]).model:
+    a, b = one(mdl, "Every 10 minutes"), one(mdl, "Daily")
+    note = ("reference" if a.reference or mdl == "last_value" else
+            "; ".join(x for x in (f"every 10 minutes: {a.note}" if a.note else "",
+                                  f"daily: {b.note}" if b.note else "",
+                                  NOTE.get(mdl, "")) if x))
+    fc_rows.append((a["name"], f1(a.mae), f1(b.mae), note))
+XM = pd.read_csv(NUMBERS / "exac_models.csv")
+XP = pd.read_csv(NUMBERS / "exac_permutation.csv").set_index("feature_set")
+XM_real = XM[XM.model != "dummy"]
+undated = E.attrs["undated_patients"]
+nodata = sorted(P.patient[P.minutes == 0])
+xc = dict(n=int(XP.n_patients.iat[0]), yes=int(XP.n_yes.iat[0]), no=int(XP.n_no.iat[0]),
+          methods=XM_real.model.nunique(), below=int((XM_real.auc < .5).sum()), scores=len(XM_real),
+          n_all=int(XM[XM.feature_set == "all"].n_features.iat[0]),
+          n_red=int(XM[XM.feature_set == "reduced"].n_features.iat[0]),
+          complete_all=int(XP.n_complete["all"]), complete_red=int(XP.n_complete["reduced"]),
+          perm=int(XP.permutations.iat[0]))
+XI = pd.read_csv(NUMBERS / "exac_inputs.csv").set_index("group").n
+xc_inputs = [
+    ("Lung function", "Spirometry (FVC, FEV1, FEV1/FVC, PEF, FEF25–75, before and after bronchodilator) and oscillometry (R5, R20, R5–R20, X5, AX)", XI["spiro"] + XI["impul"]),
+    ("Six-minute walk test", "Distance walked; average, lowest and highest SpO2 and heart rate during the walk", XI["six_m"]),
+    ("Age", "As recorded", XI["age"]), ("Sex", "As recorded", XI["sex_male"]),
+    ("BODE", "As recorded in the sheet", XI["bode"]), ("CAT", "Symptom score", XI["cat"]),
+    ("Follow-up days", f"How many days the patient was monitored ({int(XP.followup_min.iat[0])} to {int(XP.followup_max.iat[0])})", XI["followup_days"]),
+]
+xc_methods = [(r.name, r.what) for r in XM[XM.feature_set == "all"].sort_values("order").itertuples()]
+
+
+def xc_one(r):
+    """AUC and test-set counts per round, worked out from the shares of yes / no patients found."""
+    tp, tn = r.sens * xc["yes"], r.spec * xc["no"]
+    fn, fp = xc["yes"] - tp, xc["no"] - tn
+    return [r.name, f"{r.auc:.2f}", f"{tp:.1f}", f"{fn:.1f}", f"{fp:.1f}", f"{tn:.1f}",
+            f"{tp / (tp + fp):.2f}" if tp + fp > 0 else "–"]
+
+
+xc_tab = {fs: [xc_one(r) for r in XM[XM.feature_set == fs].sort_values("auc", ascending=False).itertuples()]
+          for fs in ("all", "reduced")}
+XC_HEAD = ["Method", "AUC", "True positive", "False negative", "False positive", "True negative", "PPV"]
+xc_best = {fs: XM_real[XM_real.feature_set == fs].sort_values("auc").iloc[-1] for fs in ("all", "reduced")}
+xc_shuffled = {fs: round(XP.p_value[fs] * xc["perm"]) for fs in ("all", "reduced")}
+FOLDS, INNER, REPEATS = 5, 3, 20        # the cross-validation design set in 12_exac_classify.py (OUTER, INNER, 20 repeats)
+
+
 
 # ------------------------------------------------------------------ helpers
-def slot(label, height=180):
-    return f'<div class="slot" style="min-height:{height}px"><span>{label}</span></div>'
-
-
 def table(rows, head):
     th = "".join(f"<th>{h}</th>" for h in head)
     tr = "".join("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>" for r in rows)
@@ -136,10 +255,10 @@ def page(figdir):
 <header>
 <h1>COPD pilot cohort: clinical and wearable data</h1>
 </header>
-<p class="abstract"><span class="lead">Summary.</span> {n['patients']} patients with COPD have both a clinical record from enrolment and smartwatch data. The watch gave {n['hrv']:,} HRV readings from {n['hrv_pts']} patients and {n['hr']:,} heart-rate readings; the clinical team dated {n['ep']} exacerbations in {n['ep_pts']} patients. This report describes what the cohort holds and what the data look like, then sets out the modelling data: HRV cut into segments at gaps longer than {CFG['x_minutes']} minutes, used first for imputation and then for forecasting.</p>
+<p class="abstract"><span class="lead">Summary.</span> {n['patients']} patients with COPD have a clinical record from enrolment, and {n_watch} of them have smartwatch data.{nw} The watch gave {n['hrv']:,} HRV readings from {n['hrv_pts']} patients and {n['hr']:,} heart-rate readings; the clinical team dated {n['ep']} exacerbations in {n['ep_pts']} patients. This report describes what the cohort holds and what the data look like, then sets out the modelling data: HRV cut into segments at gaps longer than {CFG['x_minutes']} minutes, used first for imputation and then for forecasting. The models were then run: sections 13 to 15 list what each one gave back.</p>
 
 <h2>1&ensp;The data</h2>
-<p>The data come from two sources joined by patient ID. The clinical datasheet has one row per patient at enrolment (symptoms, history, examination, blood tests, imaging, lung tests, walk test, questionnaires and treatment) and a separate list of exacerbation dates. It covers 41 patients; the 33 who also have watch data (c001&ndash;c033) are analysed here. The smartwatch export holds time-stamped readings for each patient, which we combined into one row per recorded minute. Nothing is filled in, so a missing reading stays missing.</p>
+<p>The data come from two sources joined by patient ID. The clinical datasheet has one row per patient at enrolment (symptoms, history, examination, blood tests, imaging, lung tests, walk test, questionnaires and treatment) and a separate list of exacerbation dates. It covers {n['patients']} patients, and all are included here; {n_watch} of them also have watch data.{nw} Where a patient lacks a kind of data, the report says so. The smartwatch export holds time-stamped readings for each patient, which we combined into one row per recorded minute. Nothing is filled in, so a missing reading stays missing.</p>
 {table([
     ("Heart rate", f"{n['hr']:,}", "about every minute", "beats per minute"),
     ("HRV", f"{n['hrv']:,}", "about every 10 minutes", "not given in the export"),
@@ -156,22 +275,22 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
 
 <h2>2&ensp;What the datasheet holds</h2>
 {fig("09a-datasheet-completeness", "Completeness of each datasheet section",
-     "For each section of the clinical datasheet, the share of its cells that hold a value across the 33 patients.",
+     f"For each section of the clinical datasheet, the share of its cells that hold a value across the {n['patients']} patients.",
      f"Nearly complete: {n['sec_full']}. Partly filled: {n['sec_part']}. Almost empty: {n['sec_empty']}.")}
 
 <h2>3&ensp;Who the patients are</h2>
 {fig("clin_cohort", "Cohort at enrolment",
-     "Age, sex, body-mass index, GOLD group, breathlessness grade (mMRC) and smoking index for the 33 patients.",
-     f"{n['men']} men and {n['women']} women. Ages {n['age_lo']:.0f}–{n['age_hi']:.0f} as recorded, median {n['age_med']:.0f}. GOLD groups A {n['gold']['A']}, B {n['gold']['B']}, E {n['gold']['E']}. The most common breathlessness grade is II–III ({n['mmrc25']} of 33).")}
+     f"Age, sex, body-mass index, GOLD group, breathlessness grade (mMRC) and smoking index for the {n['patients']} patients.",
+     f"{n['men']} men and {n['women']} women. Ages {n['age_lo']:.0f}–{n['age_hi']:.0f} as recorded, median {n['age_med']:.0f}. GOLD groups A {n['gold']['A']}, B {n['gold']['B']}, E {n['gold']['E']}. The most common breathlessness grade is II–III ({n['mmrc25']} of {n['patients']}).")}
 {fig("09b-symptoms-and-history", "Symptoms, history and examination",
      "Left: patients recorded as yes for each symptom, history item and examination finding. Right: etiotype (the cause recorded for the COPD), current smoking, and symptom control.",
-     "Cough and breathlessness are the most common current symptoms, but neither is universal. Most patients smoked and have since stopped; cigarette smoking is the recorded cause for most, pollution for the rest. Most examination findings are rare.")}
+     "Cough and breathlessness are the most common current symptoms, but neither is universal. Most patients smoked and have since stopped; cigarette smoking is the recorded cause for most, pollution for the others with a cause recorded. Most examination findings are rare.")}
 <h3>Comorbidities</h3>
 <p>Conditions named in the datasheet's diagnosis and comorbidity text, counted per patient (a patient can have several):</p>
 {table([(r.condition, r.patients) for r in COM.itertuples()], ["Condition", "Patients"])}
 {fig("clin_severity", "Severity and exacerbations",
      "Symptom score (CAT) against BODE score; breathlessness grade against walk distance; how many dated exacerbations each patient had.",
-     f"Neither pair moves together (r close to 0). {n['no_exac']} of 33 patients have no dated exacerbation.")}
+     f"Neither pair moves together (r {X.cat.corr(X.bode):+.2f} and {X.mmrc.corr(X.walk_dist):+.2f}). {n['no_exac']} of {n['patients']} patients have no dated exacerbation.")}
 
 <h2>4&ensp;Lung function, tests and treatment</h2>
 {fig("09c-lung-and-walk", "Lung function and walk test",
@@ -191,18 +310,28 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
 <h2>5&ensp;How clinical measures relate</h2>
 {fig("clin_corr", "Clinical measures against each other",
      "Correlation between each pair of baseline measures. Red means both rise together, blue means one rises as the other falls, white means no link. Blank cells have fewer than 10 patients with both values.",
-     "Most pairs are weak. The clearest: resting SpO2 with the lowest SpO2 during the walk test (+0.61), lung function (FEV1) with the lowest walk-test SpO2 (+0.60), and lung function with BODE (−0.63). These describe this group only and do not show cause.")}
+     f"Most pairs are weak. The clearest: {top_pairs}. These describe this group only and do not show cause.")}
 {fig("clin_vs_wearable", "Clinic readings against the watch",
      "Each dot is a patient: a value measured in clinic (horizontal) against the median of that patient's watch readings (vertical). On the dashed line the two are equal.",
-     "Clinic pulse and watch heart rate agree only loosely (r +0.36), and the watch is usually lower, as expected for weeks of daily life against one clinic visit. The SpO2 panel rests on very few watch readings.")}
+     f"Clinic pulse and watch heart rate agree only loosely (r {pulse_r:+.2f}), and the watch is usually lower (median {pulse_diff:+.0f} per minute), as expected for weeks of daily life against one clinic visit. The SpO2 panel rests on very few watch readings.")}
 
 <h2>6&ensp;How much watch data there is</h2>
 {fig("03b-totals-and-days", "Total readings and recording span",
      "Left: total readings per signal. Right: days from each patient's first to last reading of any signal.",
-     f"Heart rate dominates ({n['hr']:,}); SpO2 is almost absent ({n['spo2']:,}). Spans run from about a week to eleven months.")}
+     f"Heart rate dominates ({n['hr']:,}); SpO2 is almost absent ({n['spo2']:,}). Spans run from {P.days[P.minutes > 0].min()} to {P.days.max()} days.")}
 {fig("03a-readings-per-patient", "Readings per patient, per signal",
      "Readings per patient for each signal, on a log scale (each step is ten times the one below).",
-     f"Volume differs widely between patients. {n['no_hrv']} have no HRV.")}
+     f"Volume differs widely between patients. {n['no_hrv']} have watch data but no HRV.{nw}")}
+<p>Enrolment is taken as the date the smartwatch was provided, from the wearables section of the datasheet; the sheet has no separate enrolment date. For {en['fallback']} that entry is not a readable date, so the treatment-plan date recorded beside it is used. Patients were enrolled between {en['first']} and {en['last']}. {en['before_pts']} patients have watch data dated before their enrolment ({en['before_min']:,} recorded minutes); the next three figures leave it out and run to {en['end']}, the last reading in the export.</p>
+{fig("03c-time-since-enrolment", "Time since enrolment",
+     f"Grey: days from each patient's enrolment to {en['end']}, both days counted. Blue: days on which the watch sent any reading.",
+     f"The watch sent data on a median {en['worn_med']:.0f}% of enrolled days.")}
+{fig("03d-readings-since-enrolment", "Readings per patient since enrolment",
+     "The same as the readings-per-patient figure, counting only readings from the enrolment date on (log scale).",
+     f"{en['since']:,} of {en['total']:,} readings fall on or after enrolment.")}
+{fig("03e-readings-per-day-since-enrolment", "Watch readings per day since enrolment",
+     "One panel per patient. Each line is one signal's readings per day, on a log scale; a break in a line is a day without readings of that signal.",
+     "For many patients recording is densest in the weeks after enrolment, then becomes patchy or stops.")}
 {fig("05c-readings-per-day", "HRV readings per day",
      "Each row is a patient, each dot a day; the colour scale on the right gives that day's readings (144 is one every 10 minutes).",
      "Recording is dense from mid-May to early July, then thinner or absent for many patients.")}
@@ -247,7 +376,7 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
      "For each patient, median HRV inside and outside the sleep blocks the watch reports.",
      f"HRV is lower during recorded sleep for {n['sleep_lower']} of {n['sleep_n']} patients.")}
 {fig("08a-sleep-stage-split", "Sleep stages per patient",
-     f"For each patient, how their scored sleep minutes split into deep, light and almost awake ({n['stage_pts']} patients, {n['blocks']:,} blocks). Top bar: all patients together.",
+     f"For each patient, how their scored sleep minutes split into deep, light and almost awake ({n['stage_pts']} patients with sleep data, {n['blocks']:,} blocks). Top bar: all patients together.",
      f"Overall {n['deep']:.0f}% deep, {n['light']:.0f}% light, {n['awake']:.0f}% almost awake. Light sleep is the largest share overall; the deep share ranges from {n['deep_lo']:.0f}% to {n['deep_hi']:.0f}%.")}
 {fig("08b-hrv-deep-vs-light", "HRV in deep vs light sleep",
      "For each patient, the median HRV of blocks that are mostly (70% or more) deep sleep and of blocks that are mostly light sleep. Only blocks with at least 3 HRV readings.",
@@ -256,9 +385,9 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
 <h2>10&ensp;Exacerbations</h2>
 <p>The datasheet lists {n['ep']} dated exacerbations in {n['ep_pts']} patients (date only, no time or duration). {n['undated']} have an event with no date.
 {n['ep_ok']} of the {n['ep']} dates have HRV readings within two weeks, from a patient with at least {MIN_READINGS} readings.</p>
-{fig("07b-hrv-around-exacerbations", "HRV around each exacerbation",
-     "HRV from two weeks before to two weeks after each dated exacerbation. Grey: readings; blue: daily median; dashed: the patient's usual median.",
-     "Several dates have no HRV nearby. Where there is data, the daily median swings from day to day, and no single change around the date repeats across events.")}
+{fig("07b-hrv-around-exacerbations", "HRV, steps and sleep around each exacerbation",
+     "From two weeks before to two weeks after each dated exacerbation. Top: HRV readings (grey) and their daily median (blue). Middle: the median of the day's step readings, each a 10-minute step count. Bottom: hours of recorded sleep that day. Dashed: the patient's usual median of each.",
+     f"Several dates have no data nearby, and where there is data the daily values swing from day to day. On the recorded date itself, HRV is above the patient's usual median in {day0['hrv'][0]} of {day0['hrv'][1]} events with HRV that day, the step count in {day0['steps'][0]} of {day0['steps'][1]}, and sleep in {day0['sleep'][0]} of {day0['sleep'][1]}. With this few events, several from the same patient, these counts describe the data; they do not show an effect.")}
 
 <h2>11&ensp;Modelling data</h2>
 <p>The modelling plan has two steps, in this order: <b>first imputation</b> (fill in missing HRV), <b>then forecasting</b> (predict later HRV). Both run on one prepared table, built by <code>11_model_data.py</code>:</p>
@@ -323,37 +452,93 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
     ("Foundation model", "TimesFM 3"),
 ], ["Family", "Models"])}
 
-<h2>13&ensp;Imputation</h2>
-<h3>Design</h3>
-<p>In every segment, {CFG['mask_pct']}% of the HRV readings that exist are hidden at random ({m['m_rand']:,} of {m['obs_in']:,}; column <code>mask_random</code>). Models then reconstruct the hidden readings from the HRV before and after them (bidirectional) and from the other signals in the same slots: heart rate, temperature, steps and sleep. Each filled value is scored against the real value that was hidden.</p>
-<p>The hidden readings are fixed by a random seed ({CFG['seed']}), so every method is scored on exactly the same readings. Real gaps come as runs rather than single readings, so a second, harder test (<code>mask_block</code>) hides {m['m_block']:,} readings in whole runs whose lengths are drawn from the real gaps inside segments. Straight-line filling between neighbouring readings is the reference that any model should beat.</p>
-<h3>Method</h3>{slot("Method", 90)}
-<h3>Results</h3>
-{table([("", "", "", "", "")] * 8, ["Method", "Random: MAE", "Random: RMSE", "Block: MAE", "Notes"])}
-<p class="small">MAE is the average distance between filled and real value. RMSE: the same, but large misses count more. Both in HRV as reported by the watch; lower is better.</p>
-{slot("Figure")}
-<h3>Takeaway</h3>{slot("Takeaway", 70)}
-
-<h2>14&ensp;Forecasting</h2>
-<h3>Design</h3>
-<p>Forecasting always predicts the later part of the data, never the middle. In every segment the first {CFG['train_pct']}% is used for training and the last {100 - CFG['train_pct']}% for testing ({m['train']:,} and {m['test']:,} slots; column <code>split</code>). The day-level table <code>model_daily.csv</code> is split the same way per patient: the first {CFG['train_pct']}% of days train and the last {100 - CFG['train_pct']}% test ({m['d_train']:,} and {m['d_test']:,} days).</p>
-<p>Gaps in the training part are filled by the chosen imputation model first; the test part is scored only on real readings. Two references set the bar any model should beat: the last observed value, and the patient's own median.</p>
-<h3>Method</h3>{slot("Method", 90)}
-<h3>Results</h3>
-{table([("", "", "", "", "")] * 8, ["Model", "Level", "Horizon", "MAE", "Notes"])}
-{slot("Figure")}
-<h3>Takeaway</h3>{slot("Takeaway", 70)}
-
-<h2>15&ensp;Conclusions</h2>
+<h2>13&ensp;Imputation: filling in missing HRV</h2>
+<h3>What we did</h3>
+<p>We took real HRV readings inside the segments (section 11) and hid {CFG['mask_pct']}% of them on purpose. Each method was asked to fill the hidden readings back in, and each filled value was compared with the real value we had hidden. The hidden readings were the same for every method. We did this in two ways:</p>
 <ul>
-<li>{n['patients']} patients, almost all men, mostly GOLD groups A and B, with a detailed clinical record at enrolment and weeks to months of watch data.</li>
+<li>Random test: readings hidden one at a time, at random.</li>
+<li>Block test: readings hidden in whole runs, with run lengths taken from the real gaps in the data.</li>
+</ul>
+<p>The models were run on the modelling data of section 11. The random test hid {rr['top'].n:,} readings and the block test {rb['top'].n:,}.</p>
+<h3>Input and output</h3>
+<ul>
+<li>Input: the HRV readings that were not hidden, on both sides of each gap. Some methods also used heart rate, temperature, steps and sleep at the same times.</li>
+<li>Output: a value for every hidden reading.</li>
+<li>Score: average error (MAE), the average distance between the filled value and the real one. Lower is better.</li>
+<li>Reference: a straight line between the readings on either side of the gap.</li>
+</ul>
+<h3>Results</h3>
+{table(imp_rows, ["Method", "Random: MAE", "Random: RMSE", "Block: MAE", "Notes"])}
+<p class="small">MAE: average distance between filled and real value. RMSE: the same, but large misses count more. Both in HRV as reported by the watch. Sorted by the block test.</p>
+{fig("12a-imputation-results", "Filling hidden HRV readings",
+     "Average error of each method in the two tests, lowest at the top. Orange and dashed: the straight-line reference.",
+     "")}
+<p>Lowest average error: random test, {rr['top']['name']} {rr['top'].mae:.1f} (straight line {rr['ref'].mae:.1f}); block test, {nm(rb['top']['name'])} {rb['top'].mae:.1f} (straight line {rb['ref'].mae:.1f}). {failed(rb)}, so there is no result for {'it' if (~rb['d'].usable).sum() == 1 else 'them'}.</p>
+
+<h2>14&ensp;Forecasting: predicting later HRV</h2>
+<h3>What we did</h3>
+<p>In every segment we kept the first {CFG['train_pct']}% of the readings and removed the last {100 - CFG['train_pct']}%. Each method learned from the first {CFG['train_pct']}% and then predicted the last {100 - CFG['train_pct']}%, which it had not seen. The predictions were compared with the real readings. Gaps inside the first {CFG['train_pct']}% were filled with a straight line before the methods used it.</p>
+<p>We did the same a second time with one value per day, the day's median HRV: each method learned from the first {CFG['train_pct']}% of a patient's days and predicted the last {100 - CFG['train_pct']}%.</p>
+<p>Same run and data as section 13: {rf['top'].n:,} readings to predict every 10 minutes, and {rd['top'].n:,} patient-days.</p>
+<h3>Input and output</h3>
+<ul>
+<li>Input: the first {CFG['train_pct']}% of the segment (or of the patient's days). Some methods also used heart rate, temperature, steps and sleep.</li>
+<li>Output: a predicted HRV value for every 10-minute slot (or every day) in the last {100 - CFG['train_pct']}%.</li>
+<li>Score: the same average error as in section 13. Lower is better.</li>
+<li>References: the patient's median (of their real readings in the first {CFG['train_pct']}%), and the last reading repeated.</li>
+</ul>
+<h3>Results</h3>
+{table(fc_rows, ["Method", "Every 10 minutes: MAE", "Daily: MAE", "Notes"])}
+<p class="small">Same error measure as section 13. Sorted by the 10-minute test.</p>
+{fig("12b-forecasting-results", "Forecasting HRV",
+     "Average error of each method, every 10 minutes and daily, lowest at the top. Orange: the two references; dashed: the patient's median.",
+     "")}
+<p>Lowest average error: every 10 minutes, {rf['top']['name']} {rf['top'].mae:.1f} (patient's median {rf['ref'].mae:.1f}, last reading {last10:.1f}); daily, {rd['top']['name']} {rd['top'].mae:.1f} (patient's median {rd['ref'].mae:.1f}, last reading {one('last_value', 'Daily').mae:.1f}). When forecasting every 10 minutes, {failed(rf)}; for daily forecasting, {failed(rd)}. These have no result for that test.</p>
+
+<h2>15&ensp;Exacerbation from enrolment tests</h2>
+<h3>What we did</h3>
+<p>We wanted to see whether six things measured at enrolment can sort patients into those who had a COPD exacerbation during monitoring and those who did not. Each method was also given how many days the patient was monitored, because this ranged from {int(XP.followup_min.iat[0])} to {int(XP.followup_max.iat[0])} days. Each classification method was given these inputs for a patient and gave back yes or no (as how likely a yes is).</p>
+<p>The yes / no answer: whether the patient has a dated exacerbation in the datasheet's exacerbation list (section 10). {xc['n']} patients were used: {xc['yes']} yes and {xc['no']} no. Left out were {' and '.join([', '.join(undated[:-1]), undated[-1]] if len(undated) > 1 else undated)}, who have an exacerbation recorded with no date, and {' and '.join(nodata)}, who {'has' if len(nodata) == 1 else 'have'} no watch data.</p>
+<p>Where a patient's test value was missing, the middle value of the training patients was filled in; {xc['complete_all']} of the {xc['n']} patients have every one of the {xc['n_all']} values. The whole procedure was then repeated {xc['perm']} times with the yes / no answers shuffled between patients.</p>
+<h3>Training and test sets</h3>
+<p>There is no single split. The {xc['n']} patients were divided into {FOLDS} groups of about {xc['n'] / FOLDS:.0f}. Each group took a turn as the test set (about {xc['n'] / FOLDS:.0f} patients, {xc['yes'] // FOLDS} or {xc['yes'] // FOLDS + 1} of them yes), while the method was fitted on the other {xc['n'] - round(xc['n'] / FOLDS)} or so, the training set. Inside the training set, a further {INNER}-way split was used to choose each method's settings; test patients were never used for fitting or for choosing settings. After {FOLDS} turns every patient had been in the test set once, so one round tests all {xc['n']} patients ({xc['yes']} yes, {xc['no']} no). This was repeated {REPEATS} times with different groupings, {FOLDS * REPEATS} training / test splits in all, and the scores are averaged over them.</p>
+<h3>Input and output</h3>
+{table(xc_inputs, ["Input", "What it includes", "Values"])}
+<ul>
+<li>Output: yes or no, did the patient have a dated exacerbation during monitoring.</li>
+<li>AUC (area under the ROC curve): take one patient who had an exacerbation and one who did not. AUC is the chance that the method gives the patient with the exacerbation the higher chance of yes. 0.5 is a coin toss; 1 means it always ranks that patient higher; below 0.5 means it ranks them the wrong way round more often than not. For example, an AUC of 0.64 means that in 64 of 100 such pairs the patient with the exacerbation was ranked higher.</li>
+<li>True positive: had an exacerbation, called yes. False negative: had one, called no. False positive: did not have one, called yes. True negative: did not have one, called no.</li>
+<li>PPV (positive predictive value): of the patients the method called yes, the share who really had an exacerbation (true positives ÷ all yes calls). For example, a PPV of 0.55 means about 55 of every 100 yes calls were right. If a method called every patient yes, its PPV would be {xc['yes']} ÷ {xc['n']} = {xc['yes'] / xc['n']:.2f}.</li>
+<li>Two versions of the inputs: all {xc['n_all']} values, and a reduced set of {xc['n_red']} that leaves out spirometry after bronchodilator and the oscillometry values that describe the reference population or are worked out from other values ({xc['complete_red']} of the {xc['n']} patients have every one).</li>
+</ul>
+<h3>Methods</h3>
+{table(xc_methods, ["Method", "In simple terms"])}
+<h3>Results</h3>
+<p>Counts are in the test set, per round of {xc['n']} test patients ({xc['yes']} yes, {xc['no']} no). The run saved the share of yes patients and of no patients each method got right, not each patient's prediction, so the counts are worked out from those shares ({xc['yes']} × share of yes found, {xc['no']} × share of no found) and are averages over the {REPEATS} repeats; PPV is worked out from these counts. Sorted by AUC.</p>
+<p class="small">All {xc['n_all']} values</p>
+{table(xc_tab['all'], XC_HEAD)}
+<p class="small">Reduced set, {xc['n_red']} values</p>
+{table(xc_tab['reduced'], XC_HEAD)}
+{fig("12c-exacerbation-results", "Exacerbation during monitoring from enrolment tests",
+     "AUC of each method with all the inputs (left) and the reduced set (right), highest at the top. Dashed: 0.5, a coin toss. Grey: the check that always gives the same answer.",
+     "")}
+{table([(f"All {xc['n_all']} values", xc_best['all']['name'], f"{XP.auc['all']:.2f}", f"{xc_shuffled['all']} of {xc['perm']}"),
+        (f"Reduced set, {xc['n_red']} values", xc_best['reduced']['name'], f"{XP.auc['reduced']:.2f}", f"{xc_shuffled['reduced']} of {xc['perm']}")],
+       ["Inputs", "Highest-scoring method", "AUC", "Shuffled answers that scored as high or higher"])}
+<p>Highest AUC: {XP.auc['all']:.2f} with all {xc['n_all']} values ({nm(xc_best['all']['name'])}) and {XP.auc['reduced']:.2f} with the reduced set ({nm(xc_best['reduced']['name'])}). {xc['below']} of the {xc['scores']} AUCs ({xc['methods']} methods, two input sets) are below 0.5.</p>
+
+<h2>16&ensp;Conclusions</h2>
+<ul>
+<li>{n['patients']} patients, almost all men, mostly GOLD groups A and B, with a detailed clinical record at enrolment; {n_watch} of them have weeks to months of watch data.</li>
 <li>The datasheet is nearly complete for symptoms, history, examination, imaging, walk test and spirometry before bronchodilator; blood tests and post-bronchodilator spirometry are about half filled.</li>
 <li>The watch records HRV on a steady 10-minute schedule when it records, but coverage is incomplete (median {n['cov_med']:.0f}%).</li>
 <li>HRV readings fall into a low group and a top group at 120–{n['hrv_max']:.0f} for every patient; levels differ between patients and drop during sleep, but not between deep and light sleep.</li>
 <li>{n['ep_ok']} of {n['ep']} dated exacerbations have HRV data around them.</li>
 <li>For modelling, HRV is cut into {m['segs']} segments ({m['seg_pts']} patients) wherever more than {CFG['x_minutes']} minutes are missing; imputation is tested on {CFG['mask_pct']}% hidden readings, forecasting on the last {100 - CFG['train_pct']}% of each segment.</li>
+<li>Filling in hidden HRV, lowest average error: random test {rr['top']['name']} {rr['top'].mae:.1f} (straight line {rr['ref'].mae:.1f}); block test {nm(rb['top']['name'])} {rb['top'].mae:.1f} (straight line {rb['ref'].mae:.1f}).</li>
+<li>Forecasting HRV, lowest average error: every 10 minutes {rf['top']['name']} {rf['top'].mae:.1f} (patient's median {rf['ref'].mae:.1f}); daily {rd['top']['name']} {rd['top'].mae:.1f} (patient's median {rd['ref'].mae:.1f}).</li>
+<li>Exacerbation during monitoring from enrolment tests, highest AUC: {XP.auc['reduced']:.2f} (reduced set); shuffled answers scored as high or higher in {xc_shuffled['reduced']} of {xc['perm']} tries.</li>
 </ul>
-{slot("Model results", 90)}
 
 <h2>Terms</h2>
 {table([
@@ -369,7 +554,12 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
     ("6MWT", "Six-minute walk test: distance walked in six minutes."),
     ("r", "Correlation, from −1 to +1. 0 means no link; closer to ±1 means the two move together more consistently."),
     ("Coverage", "Share of expected 10-minute HRV slots that hold a reading."),
+    ("Enrolment", "The date the smartwatch was provided, from the wearables section of the datasheet."),
     ("Segment", "A stretch of HRV with no run of missing readings longer than x; models run inside segments."),
+    ("Random / block test", "The two imputation tests: real readings hidden one at a time at random, or in whole runs like real gaps."),
+    ("AUC", "Chance that a method ranks a patient with an exacerbation above one without: 0.5 is a coin toss, 1 always right."),
+    ("PPV", "Of the patients a method called yes, the share who really had an exacerbation."),
+    ("Reference", "A simple method any model should beat: a straight line between readings, the last reading, or the patient's median."),
     ("MAE / RMSE", "Average error between predicted and real HRV; RMSE weighs large misses more. Lower is better."),
     ("Sleep block", "One stretch of sleep reported by the watch, with its minutes of deep, light and almost-awake sleep."),
 ], ["Term", "Meaning"])}
@@ -408,8 +598,6 @@ td{font-variant-numeric:tabular-nums}
 td:empty{height:30px}
 .two{display:grid;grid-template-columns:1fr 1.4fr;gap:28px;align-items:start}
 @media (max-width:700px){.two{grid-template-columns:1fr}}
-.slot{border:1px solid var(--rule);background:var(--slot);margin:10px 0;padding:6px 10px}
-.slot span{font-size:13px;color:var(--ink2);font-style:italic}
 .small{font-size:14.5px;color:var(--ink2)}
 footer{margin-top:56px;padding-top:12px;border-top:1px solid var(--rule);color:var(--ink2);font-size:13.5px}
 """

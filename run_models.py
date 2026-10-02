@@ -83,14 +83,13 @@ def run(task, name, quick):
 if a.task == "check":
     ok, bad = [], []
     for name, (_, _, tasks, _) in REGISTRY.items():
-        if name == "timesfm3":
-            print("skip timesfm3: needs its weights (run it on the workstation)")
-            continue
         for task in tasks:
             try:
                 P, m, _, _ = run(task, name, True)
                 assert m["n_missing_pred"] == 0, "some scored positions have no prediction"
-                assert (P.pred > 0).all(), "non-positive prediction"
+                assert m["n_nonfinite"] == 0 and m["n_nonpositive"] == 0, "infinite or non-positive prediction"
+                assert m["pct_above_max"] <= 5, f"{m['pct_above_max']:.0f}% of predictions above the watch's maximum"
+                assert m["mae"] < 100, f"MAE {m['mae']:.3g} is not a plausible HRV error"
                 ok.append(f"{name}/{task}")
                 print(f"ok   {name:16s} {task:9s} MAE {m['mae']:.1f}")
             except Exception as e:  # report every failure, keep going

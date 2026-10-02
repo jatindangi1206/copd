@@ -60,6 +60,7 @@ def _filter(y, G, F, m, C, nu):
             C = R - np.outer(RF, RF) * (1 - q2 / q) / q
         else:
             m, C = a, R
+        C = (C + C.T) / 2                                # keep it symmetric: rounding made it singular
         ms[t], Cs[t] = m, C
     return ms, Cs, As, Rs
 
@@ -67,7 +68,7 @@ def _filter(y, G, F, m, C, nu):
 def _smooth(G, ms, Cs, As, Rs):
     sm, sC = ms.copy(), Cs.copy()
     for t in range(len(ms) - 2, -1, -1):
-        B = Cs[t] @ G.T @ np.linalg.inv(Rs[t + 1])
+        B = Cs[t] @ G.T @ np.linalg.pinv(Rs[t + 1])      # pinv: R can be (near) singular on long segments
         sm[t] = ms[t] + B @ (sm[t + 1] - As[t + 1])
         sC[t] = Cs[t] + B @ (sC[t + 1] - Rs[t + 1]) @ B.T
     return sm, sC

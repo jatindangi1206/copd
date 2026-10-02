@@ -38,6 +38,12 @@ import numpy as np
 import pandas as pd
 
 SHEET = Path(__file__).resolve().parent / "data" / "COPDAI_DATASHEET_01.xls"
+WEAR = Path(__file__).resolve().parent / "data" / "wearable"
+
+
+def wearable_pids():
+    """Patients with a 1-minute watch file: the analysed cohort."""
+    return {f.name.split(".")[0] for f in WEAR.glob("*.csv.gz")}
 MISSING = {"ND", "NK", "NA", "NIL", "-", ""}          # per the sheet's universal coding
 
 # raw code -> meaning, for the columns whose codes are not self-evident
@@ -88,7 +94,7 @@ def duration_days(s):
     return out
 
 
-def load_baseline(sheet=SHEET, wearable_only=True):
+def load_baseline(sheet=SHEET):
     """The Baseline sheet, with a lowercase `pid` and the known errors repaired."""
     B = pd.ExcelFile(sheet).parse("Baseline", header=None)
     d = B.iloc[3:].reset_index(drop=True)
@@ -108,8 +114,6 @@ def load_baseline(sheet=SHEET, wearable_only=True):
     bad = d.pid[(a < 18) | (a > 100)].tolist()
     d["age_clean"] = a.where((a >= 18) & (a <= 100))
     d.attrs["implausible_age"] = bad
-    if wearable_only:
-        d = d[d.pid.str.match(r"^c0(0[1-9]|1\d|2\d|3[0-3])$")].copy()
     return d
 
 
@@ -123,6 +127,22 @@ def load_exacerbations(sheet=SHEET):
     long = long.dropna(subset=["date"])[["pid", "date"]].sort_values(["pid", "date"])
     long.attrs["undated_patients"] = sorted(set(E.pid) - set(long.pid))
     return long.reset_index(drop=True)
+
+
+def load_enrolment(sheet=SHEET):
+    """-> pid, enrolment, source. The sheet has no enrolment-date field, so enrolment is
+    the date the smart watch was provided (the DATE after SMART_WATCH_PRV_0). One entry
+    is not a date (c022: "01-06-20260"); there the treatment-plan date beside it is used."""
+    d = load_baseline(sheet)
+    cols = list(d.columns)
+
+    def date_after(name):
+        return pd.to_datetime(d.iloc[:, cols.index(name) + 1], dayfirst=True,
+                              format="mixed", errors="coerce")
+
+    watch, plan = date_after("SMART_WATCH_PRV_0"), date_after("TRTMNT_PLAN_0")
+    return pd.DataFrame({"pid": d.pid.values, "enrolment": watch.fillna(plan).values,
+                         "source": np.where(watch.notna(), "smart watch date", "treatment plan date")})
 
 
 def bode_reconstructed(d):

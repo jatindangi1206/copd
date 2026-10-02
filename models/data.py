@@ -27,6 +27,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MD = ROOT / "model_data"
 RESULTS = ROOT / "results"
 COVS = ["hr", "temp", "steps", "sleep_frac", "steps_active_frac"]
+HRV_MAX = 129      # the watch's ceiling (fig 06); a prediction above it, or at or below 0, is impossible
 DAILY_COVS = {"hr_mean": "hr", "temp_mean": "temp", "steps_total": "steps", "sleep_hours": "sleep_frac"}
 
 
@@ -46,6 +47,11 @@ def _t(frame, daily):
     return (frame.time.dt.hour * 6 + frame.time.dt.minute // 10).to_numpy()
 
 
+def _quick(series):
+    """The 6 longest series for --quick / check (the first 6 were all short, so long-segment failures never showed)."""
+    return sorted(series, key=lambda s: len(s.x), reverse=True)[:6]
+
+
 def load_impute(mask="random", quick=False):
     T = pd.read_csv(MD / "model_10min.csv.gz", parse_dates=["time"])
     T = T[T.segment.notna()]
@@ -59,7 +65,7 @@ def load_impute(mask="random", quick=False):
         x["hrv_obs"] = x.hrv
         x["t"] = _t(g, False)
         out.append(Series(sid, g.pid.iat[0], x, truth, hidden))
-    return out[:6] if quick else out
+    return _quick(out) if quick else out
 
 
 def load_forecast(quick=False):
@@ -73,7 +79,7 @@ def load_forecast(quick=False):
         x["t"] = _t(tr, False)
         truth = te.hrv.to_numpy(float)
         hist.append(Series(sid, g.pid.iat[0], x, truth, ~np.isnan(truth)))
-    return hist[:6] if quick else hist
+    return _quick(hist) if quick else hist
 
 
 def load_daily(quick=False):
@@ -92,7 +98,7 @@ def load_daily(quick=False):
         x["t"] = _t(tr, True)
         truth = te.hrv_median.to_numpy(float)
         hist.append(Series(pid, pid, x, truth, ~np.isnan(truth)))
-    return hist[:6] if quick else hist
+    return _quick(hist) if quick else hist
 
 
 # ------------------------------------------------------------------ helpers for models
@@ -167,7 +173,9 @@ def score(task, series, preds, horizons=None):
              rmse=float(np.sqrt((e ** 2).mean())),
              mae_below_120=float(e[P.truth[e.index] < 120].abs().mean()),
              mae_120_up=float(e[P.truth[e.index] >= 120].abs().mean()),
-             mae_per_patient_median=float(e.abs().groupby(P.pid[e.index]).mean().median()))
+             mae_per_patient_median=float(e.abs().groupby(P.pid[e.index]).mean().median()),
+             n_nonfinite=int(np.isinf(P.pred).sum()), n_nonpositive=int((P.pred <= 0).sum()),
+             pct_above_max=float(100 * (P.pred > HRV_MAX).mean()))
     return P, m
 
 

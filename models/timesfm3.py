@@ -9,11 +9,14 @@ impute  : TimesFM only forecasts, so each run of blanks is forecast forward from
           the readings before it and backward (reversed series) from the readings
           after it; the two are blended by position in the run (both sides).
 """
+import os
+
 import numpy as np
 
 from .data import lin_fill, phase
 
-CHECKPOINT = "google/timesfm-3.0-pytorch"
+# TIMESFM_CHECKPOINT can point at an already-downloaded weights directory.
+CHECKPOINT = os.environ.get("TIMESFM_CHECKPOINT", "google/timesfm-3.0-pytorch")
 CONTEXT, GAP_CONTEXT, BATCH = 2048, 512, 32
 USE_TIME_COVARIATE = False
 

@@ -12,3 +12,5 @@ hmmlearn          # HMM
 filterpy          # nonlinear state-space model (UKF + RTS smoother)
 particles         # particle filter and smoother
 timesfm[torch]    # TimesFM 3.0; weights download from Hugging Face on first run (non-commercial licence)
+scikit-learn      # exacerbation classification (12_exac_classify.py)
+joblib

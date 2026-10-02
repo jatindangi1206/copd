@@ -45,8 +45,10 @@ class Field(torch.nn.Module):
 def _solve(f, x0, t0, gap, u, grid):
     from torchdiffeq import odeint
     f.t0, f.gap, f.u = t0, gap, u
-    step = float(grid[1] - grid[0]) if len(grid) > 2 else 0.25
-    return odeint(f, x0[:, None], grid, method="rk4", options={"step_size": min(step, 0.25)})[..., 0]
+    # The field is scaled by the gap, so a step of h in s is h * gap slots. Keep it to at most one slot,
+    # else an 18-slot gap is crossed in 4-slot steps and rk4 diverges (it did: MAE 1e60).
+    step = min(float(grid[1] - grid[0]) if len(grid) > 2 else 1.0, 1.0 / max(float(gap.abs().max()), 1.0))
+    return odeint(f, x0[:, None], grid, method="rk4", options={"step_size": step})[..., 0]
 
 
 def _pairs(zs, us, ts):

@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 HERE = Path(__file__).resolve().parent
 DATA = HERE / "data"
-RAW = DATA / "raw"                       # per-vital export tree
+RAW = DATA / "copd"                      # per-vital export tree (the latest export)
 WEAR = DATA / "wearable"                 # 1-minute masters, one per patient
 SHEET = DATA / "COPDAI_DATASHEET_01.xls"
 THEME = os.environ.get("THEME", "light")

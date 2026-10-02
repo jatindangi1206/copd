@@ -13,6 +13,7 @@ import numpy as np
 from .data import lin_fill
 
 RANK, ITERS, WINDOWS = 3, 30, 4
+NU2_MAX = 0.95      # above this the forecast recurrence is not trusted
 
 
 def _embed_len(n, period):
@@ -38,9 +39,10 @@ def impute(series, ctx):
         miss = np.isnan(ly)
         z = lin_fill(ly)
         L = _embed_len(len(z), ctx["period"])
+        lo, hi = np.nanmin(ly), np.nanmax(ly)
         for _ in range(3 if ctx["quick"] else ITERS):
             rec, _ = _reconstruct(z, L, min(RANK, L))
-            z = np.where(miss, rec, ly)
+            z = np.where(miss, np.clip(rec, lo, hi), ly)      # H1: stay inside the observed range
         out.append(np.exp(z))
     return out
 
@@ -51,12 +53,16 @@ def forecast(history, horizons, ctx):
         ly = np.log(s.x.hrv.to_numpy(float))[-WINDOWS * ctx["period"]:]
         L = _embed_len(len(ly), ctx["period"])
         r = min(RANK, L - 1)
+        lo, hi = np.nanmin(ly), np.nanmax(ly)
         rec, U = _reconstruct(ly, L, r)
         pi = U[-1, :r]
         nu2 = float(pi @ pi)
-        R = (U[:-1, :r] @ pi) / (1 - nu2) if nu2 < 1 else np.zeros(L - 1)   # linear recurrence
+        if nu2 >= NU2_MAX:                  # the recurrence divides by 1 - nu2 and explodes as nu2 -> 1
+            out.append(np.full(h, np.exp(rec.mean())))     # fall back to the window's level
+            continue
+        R = (U[:-1, :r] @ pi) / (1 - nu2)   # linear recurrence
         z = list(rec)
         for _ in range(h):
-            z.append(float(R @ np.array(z[-(L - 1):])))
+            z.append(float(np.clip(R @ np.array(z[-(L - 1):]), lo, hi)))   # H1: stay inside the observed range
         out.append(np.exp(np.array(z[-h:])))
     return out

@@ -1,7 +1,7 @@
 # Handoff: everything from the first Claude session (28-29 Sep 2026)
 
 This project was built in one long Claude Code session on the user's Mac
-(`~/Desktop/TSB:KCDH/analysis_final/copd_clinical`, then moved to `~/Desktop/copd-hrv`).
+(`analysis_final/copd_clinical`, then `~/Desktop/copd-hrv`, now `analysis_final/copd-clinical`).
 That session cannot be opened on the GPU workstation, so this file carries what it knew.
 CLAUDE.md has the rules. This file has the history, the reasons behind them, and the details.
 
@@ -9,12 +9,10 @@ CLAUDE.md has the rules. This file has the history, the reasons behind them, and
 
 ## 1. The project in one paragraph
 
-This is a COPD pilot cohort of 33 patients, c001–c033, with a clinical datasheet from enrolment and a smartwatch
+This is a COPD pilot cohort of 41 patients (c001–c041 in the datasheet; export of 29 Sep 2026; c034 has no watch data), with a clinical datasheet from enrolment and a smartwatch
 (GOQii device) worn for weeks to months. The target signal is HRV: the watch reports SDNN about
 every 10 minutes, with no unit. The EDA and the HTML report (light and dark) are finished. The
-modelling data is built. 14 models plus 3 references are coded behind one runner. **None of the
-real models has been run yet.** The next step is on the GPU workstation: `python run_models.py check`,
-fix what fails, then run imputation, then forecasting, then write the results into the report.
+modelling data is built. 14 models plus 3 references are coded behind one runner. The models ran once on the GPU workstation on 29 Sep; those results were deleted on 2 Oct and the code fixed (see CLAUDE.md Status), so the next step is a full rerun.
 
 This cohort is separate from the other cohorts in the parent `analysis_final/` repo (AIIMS a/p-series,
 and the GOQii cohort the user calls "ACHE Cohort"). Two findings from comparing them:
@@ -91,7 +89,8 @@ Nothing here is in git. Copy `data/`, `model_data/` and `clinical_table.csv` by 
 
 ```
 data/COPDAI_DATASHEET_01.xls     sheets: Baseline, Coding, exacerbation
-data/raw/<pid>/<vital>/...       per-vital exports, 33 patients
+data/copd/<pid>/<vital>/...      per-vital export of 29 Sep 2026, 40 patients (the one in use)
+data/raw/<pid>/<vital>/...       older export (to 18 Sep), 33 patients, no longer used
 data/wearable/<pid>.csv.gz       1-minute master per patient (one row per recorded minute)
 clinical_table.csv               written by 02; one row per patient, values as recorded
 ```
@@ -110,8 +109,17 @@ clinical_table.csv               written by 02; one row per patient, values as r
 | AVG_DUR_EACH_EP_DAYS mixes minutes and days | Minute entries dropped |
 | Constant or empty columns | Constant: SMART_WATCH_PRV_0, TRTMNT_PLAN_0. Empty: AEC_0, EBC_0, INTRPTN_SPIROMETRY_0 |
 
-- Patients c034–c041 are in the sheet but have no watch data, so they are excluded.
-- No HRV at all for c002, c019, c031, c032 and c033, which leaves 28 patients with HRV.
+- **Cohort = every patient in the datasheet (41).** The user was explicit: report the full cohort,
+  never shrink the headline to those with data; list what is missing per patient instead. Watch
+  analyses use the 40 with a watch file (`codings.wearable_pids()`); c034 has no export folder and is
+  shown as "no watch data" (data-presence figures, HRV grid, text). data/copd holds 41 entries, but
+  one is processed_users.txt.
+- data/wearable/ is rebuilt from the export with `curate_dataset.master(pid, folder)` from the parent
+  analysis_final repo (the same function that built the first files; verified to reproduce them).
+- The 29 Sep export moved c001's and c027's sleep blocks 5 h 30 min earlier than the 18 Sep export
+  (same blocks); the new times fall at night far more often, so they look corrected. Nothing else moved.
+- No HRV at all for c002, c019, c031–c033 and c035–c041, which leaves 28 patients with HRV.
+  c035–c041 send very little of anything (2–116 heart-rate readings each).
 - **Exacerbations:** 17 dated episodes in 12 patients. 3 more patients (c005, c032, c037) have an event
   with no date. 12 of the 17 dates have HRV within 2 weeks, and 16 of 17 fall inside watch coverage.
 
@@ -120,18 +128,24 @@ clinical_table.csv               written by 02; one row per patient, values as r
 because post-BD is only 48% filled, but that edit never landed. The model data already uses
 pre-BD FEV1 (`c_fev1_pre`). Ask the user before changing 02.
 
+**Enrolment** (added 29 Sep): the sheet has no enrolment-date field, so
+`codings.load_enrolment()` uses the date the smart watch was provided (the DATE after
+`SMART_WATCH_PRV_0`). c022's entry is `01-06-20260`, so the treatment-plan date beside it is used
+(1 Jun 2026). Figures 03c-03e count only data from enrolment to the export end (18 Sep 2026). Figure 07b
+also shows the day's median step count and hours of recorded sleep around each exacerbation.
+
 ## 4. Key numbers (from results.md, and they match the report)
 
-- **Readings:** HR 1,276,237 · HRV 101,955 · temperature 181,405 · steps 56,468 · SpO2 1,698 (too few to use).
-- **Cohort:** 31 men and 2 women. Age 7–83 as recorded, median 65. GOLD A 15, B 15, E 3.
+- **Readings (29 Sep export):** HR 1,332,839 · HRV 106,457 · temperature 189,815 · steps 56,468 · SpO2 2,044 (too few to use).
+- **Cohort:** 37 men and 4 women. Age 7–83 as recorded, median 65. GOLD A 19, B 19, E 3.
 - **HRV values** have two groups: a peak in the low 30s, and a block at 120–129, where 129 is the
   device maximum and 23% of readings are ≥ 120. Per-patient medians run from 41 to 107.
-- **Gaps between HRV readings:** 86.9% are exactly 10 min. 98.7% are ≤ 3 h and 99.4% are ≤ 6 h.
-  Median coverage is 36%.
-- **Sleep:** HRV is lower inside recorded sleep for 20 of 27 patients. Deep vs light sleep blocks
-  show no consistent effect (HRV lower in deep for 12 of 25). Sleep stages come per block, not per
+- **Gaps between HRV readings:** 86.7% are exactly 10 min. 98.7% are ≤ 3 h and 99.4% are ≤ 6 h.
+  Median coverage is 35%.
+- **Sleep:** HRV is lower inside recorded sleep for 21 of 27 patients. Deep vs light sleep blocks
+  show no consistent effect (HRV lower in deep for 13 of 25). Sleep stages come per block, not per
   minute, so this analysis is block-level.
-- **Clinic vs watch:** clinic pulse against watch median HR, r = +0.36, with the watch about 9 bpm lower.
+- **Clinic vs watch:** clinic pulse against watch median HR, r = +0.40, with the watch about 10 bpm lower.
 
 ## 5. Modelling data (`11_model_data.py` → `model_data/`)
 
@@ -150,21 +164,21 @@ Setting `X = None` writes everything that doesn't depend on x and leaves the seg
 columns blank.
 
 **Outputs:**
-- `model_10min.csv.gz`: 314,128 rows, one per patient per 10-min slot from the first to the last HRV reading.
+- `model_10min.csv.gz`: 339,350 rows, one per patient per 10-min slot from the first to the last HRV reading.
   - Watch columns: pid, time, hour, hrv (blank = no reading, **nothing is filled**), hrv_n, hr, hr_n,
     temp, spo2, steps, sleep_frac, steps_active_frac.
   - Labels: exac_day, missing_run, segment, split (train/test), mask_random, mask_block.
   - Clinical columns (as recorded): c_age, c_sex, c_bmi, c_mmrc, c_gold, c_cat, c_fev1_pre,
     c_walk_dist, c_spo2, c_exac_12m.
-- `model_daily.csv`: one row per patient-day, split 80/20 per patient: 1,160 train and 301 test days.
+- `model_daily.csv`: one row per patient-day, split 80/20 per patient: 1,233 train and 319 test days.
 - `segments.csv`, `patients.csv`, `threshold_scan.csv`.
 
 **Results of the build:**
-- 249 segments across 25 patients. 61% of HRV readings fall inside segments, and 29% of slots
+- 259 segments across 26 patients. 60% of HRV readings fall inside segments, and 29% of slots
   inside segments are missing.
-- `mask_random` hides 12,384 of 61,917 observed readings inside segments. `mask_block` hides
-  13,192, in whole runs whose lengths are drawn from the real gaps.
-- The forecast split gives 69,454 train and 17,483 test slots. Test always comes after train.
+- `mask_random` hides 12,677 of 63,381 observed readings inside segments. `mask_block` hides
+  13,478, in whole runs whose lengths are drawn from the real gaps.
+- The forecast split gives 71,206 train and 17,926 test slots. Test always comes after train.
 - The script's self-checks assert three things: masks only fall on observed HRV inside segments,
   test comes after train, and no run longer than X exists inside a segment.
 
@@ -247,7 +261,7 @@ is written but has never run end to end. Expect some shape and API bugs.
 ## 9. Report (`10_report.py`)
 
 - **Output:** `COPD_EDA_Report.html` (light, from `figs/`) and `COPD_EDA_Report_dark.html` (from `figs_dark/`).
-  Figures are embedded as base64. 25 figures each.
+  Figures are embedded as base64. 28 figures each.
 - **The 1:1 rule:** the script asserts that the set of figures used equals the set of PNGs in the
   folder. A new figure therefore needs a PNG in **both** `figs/` and `figs_dark/`
   (made with `THEME=dark`), plus a `fig(...)` call.
@@ -283,19 +297,27 @@ is written but has never run end to end. Expect some shape and API bugs.
   no footer. Captions give the title, what the figure shows and the takeaway. HRV numbers never
   carry "ms".
 
+## 9b. Model results
+
+The 29 Sep run (18 Sep model data, 25 patients, classification on 31 patients) was deleted on 2 Oct on
+the user's instruction; everything is rerun from scratch. Its findings that drove the fixes: pinode
+imputation and cd_gamma_dglm imputation unusable, nlssm 10-min forecast negative, ossa daily infinite, rnn/lstm/gast
+forecasts drifting (all fixed in code, untested), and `check` too weak (hardened). Only block-mask
+imputation clearly beat its reference. The user wants report sections 13-15 written as process / input /
+output / results only: no interpretation, no claims, no '% better'. Section 16 is the conclusions.
+
 ## 10. What to do next, in order
 
 1. Copy `data/`, `model_data/` and `clinical_table.csv` into the repo on the workstation.
 2. Set up the environment: `python -m venv .venv && source .venv/bin/activate`, install torch for
    the workstation's CUDA, then `pip install -r requirements.txt -r requirements-models.txt`.
-3. Run `python run_models.py check` and fix failures one model at a time, keeping each fix
-   minimal and in the model's own file.
-4. Download the TimesFM weights (fine on the workstation) and run
-   `python run_models.py impute timesfm3 --quick`.
+3. Run `python run_models.py check` (now fails on impossible predictions) and fix failures one model at a time,
+   keeping each fix minimal and in the model's own file.
+4. TimesFM: weights are already on the workstation; `export TIMESFM_CHECKPOINT=<dir>` so nothing downloads.
 5. **Imputation:** `impute all`, then `impute all --mask block`.
 6. **Forecasting:** `forecast all` (train gaps filled by `linear`, or by the best imputer via
    `--imputer`), then `daily all`.
-7. Write the results into `results.md` and report sections 13, 14 and 15. Rebuild both themes.
+7. `python 12_exac_classify.py`, then `12_model_results.py` and `10_report.py` (both themes); write the results into `results.md`.
 8. Later: the user's gast architecture; per-patient x; review of x = 180 with physiology experts.
 
 ## 11. The original session

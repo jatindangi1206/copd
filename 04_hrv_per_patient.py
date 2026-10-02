@@ -9,16 +9,18 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from common import BLUE, INK2, master, patients, save
+from codings import load_baseline
 
-pids = patients()
+pids = sorted(load_baseline().pid)          # every patient in the sheet
+have = set(patients())
 ncol, nrow = 4, int(np.ceil(len(pids) / 4))
 fig, axes = plt.subplots(nrow, ncol, figsize=(4.2 * ncol, 2.5 * nrow))
 axes = np.atleast_1d(axes).ravel()
 for ax, pid in zip(axes, pids):
-    m = master(pid, ["time", "hrv"])
-    d = m[m.hrv.notna()]
-    if d.empty:
-        ax.text(.5, .5, "no HRV readings", transform=ax.transAxes, ha="center", va="center", color=INK2)
+    d = master(pid, ["time", "hrv"]).dropna(subset=["hrv"]) if pid in have else None
+    if d is None or d.empty:
+        ax.text(.5, .5, "no watch data" if d is None else "no HRV readings", transform=ax.transAxes,
+                ha="center", va="center", color=INK2)
         ax.set(title=pid, xticks=[], yticks=[])
         continue
     ax.scatter(d.time, d.hrv, s=1.2, color=BLUE, alpha=.5, rasterized=True)
