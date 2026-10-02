@@ -165,6 +165,15 @@ last10 = R[(R.test == "Every 10 minutes") & (R.model == "last_value")].mae.iat[0
 imp_ok = R[(R.task == "impute") & R.usable]
 assert (imp_ok.mae_120_up > imp_ok.mae_below_120).all(), "text says every method misses the top group more"
 NOTE = {"timesfm3": "used as released, not trained on this data"}
+hrv_lo, hrv_hi, share120 = H.hrv.min(), H.hrv.max(), 100 * (H.hrv >= 120).mean()
+tie_b = int((rb['ok'][~rb['ok'].reference & (rb['ok'].model != 'last_value')].mae <= rb['top'].mae + 1).sum())
+tie_r = int((rr['ok'][~rr['ok'].reference & (rr['ok'].model != 'last_value')].mae <= rr['top'].mae + 1).sum())
+imp_fail = (f"{failed(rb)}, so there is no result for {'it' if (~rb['d'].usable).sum() == 1 else 'them'}."
+            if (~rb['d'].usable).any() else "Every method gave usable values in both tests.")
+fc_parts = [f"{lab}, {failed(t)}" for lab, t in (("every 10 minutes", rf), ("daily", rd)) if (~t['d'].usable).any()]
+fc_fail = ("When forecasting " + "; for daily forecasting, ".join(p.replace("daily, ", "") if p.startswith("daily") else p for p in fc_parts)
+           + ". These have no result for that test.") if fc_parts else "Every method gave usable values in both tests."
+n_rf = int((~rf['ok'].reference & (rf['ok'].model != 'last_value')).sum())
 
 
 def f1(v):
@@ -451,6 +460,11 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
     ("Hybrid / research", "Physiology-informed neural ODE; gap-aware state-space transformer (our design)"),
     ("Foundation model", "TimesFM 3"),
 ], ["Family", "Models"])}
+<h3>How each family works</h3>
+<p>Every model gets the same kind of input and gives back the same kind of output, so all are scored the same way. The figure shows, for each family, what goes in, the idea behind it, and what comes out. The three references at the bottom are not models: they are the simple bars a model has to clear.</p>
+{fig("13d-model-families", "What goes in, how each family works, what comes out",
+     "One row per family of models: the input box, a sketch of the idea, the output box, and a note on how it is used for imputation and for forecasting.",
+     "Imputation lets a model read both sides of a gap. Forecasting never lets it look past the present.")}
 
 <h2>13&ensp;Imputation: filling in missing HRV</h2>
 <h3>What we did</h3>
@@ -460,6 +474,9 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
 <li>Block test: readings hidden in whole runs, with run lengths taken from the real gaps in the data.</li>
 </ul>
 <p>The models were run on the modelling data of section 11. The random test hid {rr['top'].n:,} readings and the block test {rb['top'].n:,}.</p>
+{fig("13a-imputation-flow", "How the imputation test works",
+     "One real stretch of two days. 1: the data, with blanks. 2: chunks of real readings are hidden and kept aside as the answer key. 3: the model fills them using both sides of each gap. 4: every filled value is compared with its real value.",
+     "The score is the average length of the grey lines: the average distance between filled and real values.")}
 <h3>Input and output</h3>
 <ul>
 <li>Input: the HRV readings that were not hidden, on both sides of each gap. Some methods also used heart rate, temperature, steps and sleep at the same times.</li>
@@ -473,13 +490,23 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
 {fig("12a-imputation-results", "Filling hidden HRV readings",
      "Average error of each method in the two tests, lowest at the top. Orange and dashed: the straight-line reference.",
      "")}
-<p>Lowest average error: random test, {rr['top']['name']} {rr['top'].mae:.1f} (straight line {rr['ref'].mae:.1f}); block test, {nm(rb['top']['name'])} {rb['top'].mae:.1f} (straight line {rb['ref'].mae:.1f}). {failed(rb)}, so there is no result for {'it' if (~rb['d'].usable).sum() == 1 else 'them'}.</p>
+<p>Lowest average error: random test, {rr['top']['name']} {rr['top'].mae:.1f} (straight line {rr['ref'].mae:.1f}); block test, {nm(rb['top']['name'])} {rb['top'].mae:.1f} (straight line {rb['ref'].mae:.1f}). {imp_fail}</p>
+<h3>What the numbers mean</h3>
+<ul>
+<li>The score is a distance in HRV units. HRV in this cohort runs from {hrv_lo:.0f} to {hrv_hi:.0f}, so an error of {rb['top'].mae:.0f} is large next to the signal itself. Nothing here is accurate enough to read off a single filled value.</li>
+<li>What matters is the gap to the reference. A model is only worth using if it scores clearly below the straight line ({rr['ref'].mae:.1f} in the random test, {rb['ref'].mae:.1f} in the block test). {tie_r} methods are within 1.0 of the best in the random test and {tie_b} in the block test; differences that small are ties.</li>
+<li>The two tests answer different questions. In the random test a real reading is usually 10 minutes away on both sides, so a straight line already does well. The block test hides whole runs, like the watch really coming off, and is the closer match to real missing data.</li>
+<li>{share120:.0f}% of readings are at 120 or above (the watch tops out at {hrv_hi:.0f}). For the best block-test method the error is {rb['top'].mae_below_120:.1f} below 120 and {rb['top'].mae_120_up:.1f} at 120 and above: those high readings are the hardest to fill.</li>
+</ul>
 
 <h2>14&ensp;Forecasting: predicting later HRV</h2>
 <h3>What we did</h3>
 <p>In every segment we kept the first {CFG['train_pct']}% of the readings and removed the last {100 - CFG['train_pct']}%. Each method learned from the first {CFG['train_pct']}% and then predicted the last {100 - CFG['train_pct']}%, which it had not seen. The predictions were compared with the real readings. Gaps inside the first {CFG['train_pct']}% were filled with a straight line before the methods used it.</p>
 <p>We did the same a second time with one value per day, the day's median HRV: each method learned from the first {CFG['train_pct']}% of a patient's days and predicted the last {100 - CFG['train_pct']}%.</p>
 <p>Same run and data as section 13: {rf['top'].n:,} readings to predict every 10 minutes, and {rd['top'].n:,} patient-days.</p>
+{fig("13b-forecasting-flow", "How the forecasting test works",
+     "One real segment. 1: the data. 2: the first 80% is kept for learning and the last 20% is held back as the answer key. 3: the model predicts the held-back part using only what came before. 4: predictions are compared with the real readings. Bottom: the same idea with one value per day.",
+     "The model never sees the held-back part, and never looks ahead of 'now'.")}
 <h3>Input and output</h3>
 <ul>
 <li>Input: the first {CFG['train_pct']}% of the segment (or of the patient's days). Some methods also used heart rate, temperature, steps and sleep.</li>
@@ -493,12 +520,21 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
 {fig("12b-forecasting-results", "Forecasting HRV",
      "Average error of each method, every 10 minutes and daily, lowest at the top. Orange: the two references; dashed: the patient's median.",
      "")}
-<p>Lowest average error: every 10 minutes, {rf['top']['name']} {rf['top'].mae:.1f} (patient's median {rf['ref'].mae:.1f}, last reading {last10:.1f}); daily, {rd['top']['name']} {rd['top'].mae:.1f} (patient's median {rd['ref'].mae:.1f}, last reading {one('last_value', 'Daily').mae:.1f}). When forecasting every 10 minutes, {failed(rf)}; for daily forecasting, {failed(rd)}. These have no result for that test.</p>
+<p>Lowest average error: every 10 minutes, {rf['top']['name']} {rf['top'].mae:.1f} (patient's median {rf['ref'].mae:.1f}, last reading {last10:.1f}); daily, {rd['top']['name']} {rd['top'].mae:.1f} (patient's median {rd['ref'].mae:.1f}, last reading {one('last_value', 'Daily').mae:.1f}). {fc_fail}</p>
+<h3>What the numbers mean</h3>
+<ul>
+<li>Forecasting is harder than imputation: the model has no readings on the far side of the gap, and the further ahead it predicts the less the recent readings say. The two references are the bar: the patient's median ({rf['ref'].mae:.1f} every 10 minutes, {rd['ref'].mae:.1f} daily) and the last reading repeated ({last10:.1f} every 10 minutes).</li>
+<li>A forecasting model only adds something if it scores below both references. Of the {n_rf} methods run every 10 minutes, {len(rf['beat'])} beat the patient's median and {len(rf['worse'])} did not.</li>
+<li>The daily test has only {rd['top'].n:,} patient-days, so small differences between methods can be chance.</li>
+</ul>
 
 <h2>15&ensp;Exacerbation from enrolment tests</h2>
 <h3>What we did</h3>
 <p>We wanted to see whether six things measured at enrolment can sort patients into those who had a COPD exacerbation during monitoring and those who did not. Each method was also given how many days the patient was monitored, because this ranged from {int(XP.followup_min.iat[0])} to {int(XP.followup_max.iat[0])} days. Each classification method was given these inputs for a patient and gave back yes or no (as how likely a yes is).</p>
 <p>The yes / no answer: whether the patient has a dated exacerbation in the datasheet's exacerbation list (section 10). {xc['n']} patients were used: {xc['yes']} yes and {xc['no']} no. Left out were {' and '.join([', '.join(undated[:-1]), undated[-1]] if len(undated) > 1 else undated)}, who have an exacerbation recorded with no date, and {' and '.join(nodata)}, who {'has' if len(nodata) == 1 else 'have'} no watch data.</p>
+{fig("13c-classification-flow", "How the exacerbation test works",
+     "Step by step: one row per patient with the answer; five groups that each take a turn as the test group; the method gives each test patient a chance of yes; AUC scores the ranking; shuffled answers show what luck alone scores.",
+     "Test patients are never used for learning or for choosing settings.")}
 <p>Where a patient's test value was missing, the middle value of the training patients was filled in; {xc['complete_all']} of the {xc['n']} patients have every one of the {xc['n_all']} values. The whole procedure was then repeated {xc['perm']} times with the yes / no answers shuffled between patients.</p>
 <h3>Training and test sets</h3>
 <p>There is no single split. The {xc['n']} patients were divided into {FOLDS} groups of about {xc['n'] / FOLDS:.0f}. Each group took a turn as the test set (about {xc['n'] / FOLDS:.0f} patients, {xc['yes'] // FOLDS} or {xc['yes'] // FOLDS + 1} of them yes), while the method was fitted on the other {xc['n'] - round(xc['n'] / FOLDS)} or so, the training set. Inside the training set, a further {INNER}-way split was used to choose each method's settings; test patients were never used for fitting or for choosing settings. After {FOLDS} turns every patient had been in the test set once, so one round tests all {xc['n']} patients ({xc['yes']} yes, {xc['no']} no). This was repeated {REPEATS} times with different groupings, {FOLDS * REPEATS} training / test splits in all, and the scores are averaged over them.</p>
@@ -513,6 +549,9 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
 </ul>
 <h3>Methods</h3>
 {table(xc_methods, ["Method", "In simple terms"])}
+{fig("13e-classification-methods", "How each kind of method decides",
+     "One row per kind of method: the input (one patient's tests), a sketch of how the method turns it into a chance of yes, and the output.",
+     "All methods give the same kind of output, a chance of yes, so they are scored the same way.")}
 <h3>Results</h3>
 <p>Counts are in the test set, per round of {xc['n']} test patients ({xc['yes']} yes, {xc['no']} no). The run saved the share of yes patients and of no patients each method got right, not each patient's prediction, so the counts are worked out from those shares ({xc['yes']} × share of yes found, {xc['no']} × share of no found) and are averages over the {REPEATS} repeats; PPV is worked out from these counts. Sorted by AUC.</p>
 <p class="small">All {xc['n_all']} values</p>
@@ -526,6 +565,12 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
         (f"Reduced set, {xc['n_red']} values", xc_best['reduced']['name'], f"{XP.auc['reduced']:.2f}", f"{xc_shuffled['reduced']} of {xc['perm']}")],
        ["Inputs", "Highest-scoring method", "AUC", "Shuffled answers that scored as high or higher"])}
 <p>Highest AUC: {XP.auc['all']:.2f} with all {xc['n_all']} values ({nm(xc_best['all']['name'])}) and {XP.auc['reduced']:.2f} with the reduced set ({nm(xc_best['reduced']['name'])}). {xc['below']} of the {xc['scores']} AUCs ({xc['methods']} methods, two input sets) are below 0.5.</p>
+<h3>What the numbers mean</h3>
+<ul>
+<li>An AUC of {XP.auc['reduced']:.2f} sounds better than a coin toss, but the shuffled answers scored as high or higher {xc_shuffled['reduced']} times in {xc['perm']} with the reduced set and {xc_shuffled['all']} in {xc['perm']} with all {xc['n_all']} values. If luck alone often reaches the same score, the real score is not evidence of a link.</li>
+<li>Only {xc['yes']} of the {xc['n']} patients had an exacerbation. With so few yes patients each test group holds two or three of them, so one patient can move a score a long way. A score below 0.5 on unseen patients usually means the method has learned noise.</li>
+<li>These tests were taken at enrolment, so this asks whether the starting picture separates patients who later had a dated exacerbation from those who did not. It does not show cause, and it says nothing about patients whose exacerbation date is unknown.</li>
+</ul>
 
 <h2>16&ensp;Conclusions</h2>
 <ul>

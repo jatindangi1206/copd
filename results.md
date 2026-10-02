@@ -192,7 +192,13 @@ python 12_model_results.py
 
 - reads results/summary.csv (run_models.py) and results/exac_monitoring/ (12_exac_classify.py); writes numbers/model_results.csv, numbers/exac_*.csv, figs 12a, 12b, 12c (light and dark)
 - a run is not usable if it never finished, its error is not finite, any prediction is <= 0, or more than 5% are above 129 (the watch's maximum). run_models.py records those counts, nothing is flagged by hand
-- the earlier results (29 sep run, 18 sep model data, 31 patients) were deleted. nothing here until the models are rerun on the 29 sep model_data
+- rerun on 2 oct on the 29 sep model_data (259 segments, 26 patients; 28 patients have any hrv). every model gave usable values in all four tests
+- random test (12,677 hidden): xgboost 26.3, rnn 26.3, lstm 26.4, catboost 26.4, timesfm3 26.5, gast 26.6, nlssm 27.0; straight line 27.1; hmm 32.2
+- block test (13,478 hidden): lstm 27.7, rnn 28.0, gast 28.1, xgboost 28.9, catboost 28.9 ... straight line 30.9, hmm 32.4. 3 methods within 1.0 of the best
+- 10-min forecast (13,254): xgboost 30.3, catboost 30.4, lstm 30.5, rnn 30.7, pinode 30.8, rsdpf 30.9; patient median 31.5; 9 of 14 methods beat the median; ossa 34.8; last reading 41.1
+- daily (318 patient-days): gru_ode_bayes 17.7, catboost 17.8, timesfm3 17.9, xgboost 18.1; patient median 19.2; last reading 19.5; ossa 26.3
+- fixes that mattered: rnn/lstm/gast forecast 30.5-31.3 (was 56-73, direct multi-step); pinode impute 28.2 / 30.2 (reversed-time pass); dglm impute and ossa no longer blow up; nlssm forecast 32.8 with no negative values
+- gast forecast gave all NaN on its first run and worked when rerun unchanged (31.3); cause not found. the NaN row is still in results/summary.csv, 12_model_results.py uses the last row
 
 ## 10_report.py
 
@@ -235,12 +241,28 @@ research doc: https://docs.google.com/document/d/1V8rGaJFxRt5ccTJUKq4JcynNGbu9lq
 
 ## imputation
 
-not run yet on the 29 sep model_data (259 segments, 26 patients). `run_models.py impute <model> --mask random|block`. the 29 sep results were deleted
+`run_models.py impute <model> --mask random|block`, one process per model (logs/sweep.sh). numbers are in 12_model_results.py above
 
 ## forecasting
 
-not run yet. `run_models.py forecast <model>` and `daily <model>`
+`run_models.py forecast <model>` and `daily <model>`, training gaps filled by the straight line first
 
 ## exacerbation classification
 
-not run yet. `python 12_exac_classify.py` (needs numbers/data_presence.csv from 03). target = dated exacerbation during monitoring; left out: c005, c032, c037 (event with no date) and c034 (no watch data). c035-c041 now have a few watch readings each, so they are included as monitored
+`12_exac_classify.py` (needs numbers/data_presence.csv from 03). target = dated exacerbation during monitoring
+
+- 37 patients, 12 yes, 25 no. left out: c005, c032, c037 (event with no date) and c034 (no watch data). c035-c041 have a few watch readings each so they count as monitored negatives
+- followup days 25 to 419 (recording span; stray old timestamps stretch some)
+- all 44 values: xgboost 0.63, naive bayes 0.62, random forest 0.61. shuffled answers as high or higher 39 of 200
+- reduced 27: xgboost 0.68, random forest 0.65, naive bayes 0.65. shuffled 23 of 200
+- 5 of 24 scores below 0.5; always-no check 0.50
+
+## 13_method_figures.py
+
+```
+THEME=light python 13_method_figures.py; THEME=dark python 13_method_figures.py
+```
+
+- figs 13a (imputation flow), 13b (forecasting flow), 13c (classification flow), 13d (model families: input, idea, output), 13e (classification methods)
+- 13a and 13b are drawn on a real segment with the best usable model's real predictions (read from results/summary.csv), so rerun after the models
+- report: 13d in section 12, 13a in section 13, 13b in section 14, 13c and 13e in section 15; each of 13-15 has a short "what the numbers mean" list

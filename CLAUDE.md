@@ -42,23 +42,24 @@ is there before running anything.
 
 ## Status (2026-10-02)
 
-- Old model results (29 Sep run, 18 Sep data, 31 patients) were deleted on purpose: everything is to be rerun
-  from scratch on the current model_data (29 Sep export: 259 segments, 26 patients; 28 patients have any
-  HRV, and only those can be modelled - c034 and the 12 patients with watch data but no HRV are left out).
-  No model has been run since the fixes below.
-- Fixes made in this copy (not yet run): the four workstation fixes (seq.py `_windows`, nlssm.py
-  `_batch_filter`, run_models.py, timesfm3.py `TIMESFM_CHECKPOINT`) plus the six failures from the 29 Sep run:
-  pinode step size, cd_gamma_dglm singular smoother, nlssm sigma-point weights (negative HRV), ossa
-  recurrence and range clamp, and rnn/lstm/gast forecast drift (seq.py `fit_forecast` is now direct
-  multi-step, no feedback). `run_models.py check` now also fails on non-finite / <= 0 predictions, more than 5%
-  above 129, or MAE >= 100, and uses the 6 longest series. It is still only a smoke test.
-- 12_exac_classify.py is now in this repo. It includes every datasheet patient with a dated outcome
-  (all except c005, c032, c037 and c034) and writes results/exac_monitoring/.
-- To rerun: use /home/kcdha/timesfm3/.venv/bin/python (the default python cannot import pandas) and
+- 2 Oct: everything was rerun from scratch on the current model_data (259 segments, 26 patients; only the
+  28 patients with any HRV can be modelled - c034 and the 12 patients with watch data but no HRV are left out).
+  Old results were deleted. Results are in results/ (gitignored), tables in numbers/, report rebuilt.
+- Fixes made before the rerun: seq.py `_windows`, nlssm `_batch_filter`, timesfm3 `TIMESFM_CHECKPOINT`, plus pinode
+  (reversed-time pass, one-slot steps), cd_gamma_dglm (pinv smoother), nlssm (sigma-point weights), ossa
+  (range clamp, safe fallback) and rnn/lstm/gast forecasting (seq.py `fit_forecast` is direct multi-step).
+  `run_models.py check` also fails on non-finite / <= 0 predictions, more than 5% above 129, or MAE >= 100.
+  Still only a smoke test: it passed 45 of 47 at 20 training steps, and the two it flagged were fine at full training.
+- gast forecast gave all NaN once and worked on an identical rerun; cause unknown. If NaNs return, look there first.
+- 12_exac_classify.py is in this repo and covers every datasheet patient with a dated outcome
+  (all except c005, c032, c037 and c034). It writes results/exac_monitoring/.
+- To rerun (the commands that were used): use /home/kcdha/timesfm3/.venv/bin/python (the default python cannot import pandas) and
   `export TIMESFM_CHECKPOINT=/home/kcdha/timesfm3/timesfm-3.0-pytorch` (local weights, no download). Then
   `run_models.py check`, `impute all` (random, then `--mask block`), `forecast all`, `daily all`,
   `12_exac_classify.py`, `12_model_results.py` (light and dark), `10_report.py`.
-- COPD_EDA_Report*.html in git still hold the old results until 10_report.py is rerun.
+- 13_method_figures.py draws the flow diagrams (imputation, forecasting, classification) and the model-family
+  figures; run it in both themes after the models and before 10_report.py (the report asserts every PNG is used).
+- logs/sweep.sh runs one task for every model, one process each, so a crash does not stop the rest.
 - On macOS, xgboost crashed if torch was imported first (two OpenMP runtimes); run_models.py
   imports xgboost first.
 - Patient data (data/, model_data/, results/, clinical_table.csv) is gitignored; copy it separately.

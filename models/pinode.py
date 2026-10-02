@@ -7,7 +7,7 @@ x lives in log space, so exp(x) stays positive (H1). Time is in slots.
 
 Training: every pair of consecutive real readings (up to MAX_GAP slots apart) is
 one initial-value problem, x(t_i) -> x(t_j). All pairs are solved together by
-rescaling each pair's time to s in [0, 1] (dx/ds = gap * dx/dt).
+rescaling each pair's time to s in [0, 1] (dx/ds = |gap| * dx/dt).
 
 impute  : integrate forward from the reading before a blank and backward from the
           reading after it, weight the two by closeness (both sides).
@@ -39,7 +39,11 @@ class Field(torch.nn.Module):
         set_point = self.c[0] + self.c[1] * cs + self.c[2] * sn
         dx = (-torch.exp(self.log_k) * (x[:, 0] - set_point)
               + self.g(torch.cat([x, sn[:, None], cs[:, None], self.u], 1))[:, 0])
-        return (self.gap * dx)[:, None]
+        # |gap|: a backward pass (gap < 0) must relax toward the set point too. Scaling by the signed gap
+        # integrated -k(x - c) in reverse time, which grows like exp(k * gap) (MAE 1e41). Time t below
+        # still runs backward, so the daily rhythm stays right. A mean-reverting process looks the same
+        # in either direction, so this is the reversed-time version of the same model.
+        return (self.gap.abs() * dx)[:, None]
 
 
 def _solve(f, x0, t0, gap, u, grid):

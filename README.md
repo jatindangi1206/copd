@@ -20,7 +20,9 @@ common.py                   paths and plot style
 08_sleep_stages.py          deep / light / almost-awake sleep and HRV (per sleep block)
 09_clinical_profile.py      datasheet completeness, symptoms/history, lung tests, imaging, treatment
 11_model_data.py            model_data/: 10-min modelling table, segments, imputation masks, splits (self-checks)
-12_model_results.py         GPU model results -> numbers/model_results.csv, figs 12a/12b
+12_exac_classify.py         exacerbation classification from enrolment tests -> results/exac_monitoring/
+12_model_results.py         results/ -> numbers/model_results.csv, figs 12a-c
+13_method_figures.py        diagrams: how imputation, forecasting and classification work, one row per model family (needs results/)
 10_report.py                COPD_EDA_Report.html (light) + COPD_EDA_Report_dark.html
 results.md                  what each script found, script by script
 run_models.py               runs the imputation and forecasting models (see below)
@@ -48,6 +50,7 @@ done; done
 # models, in this order (see Models below), then:
 python 12_exac_classify.py                                                       # exacerbation classification
 THEME=light python 12_model_results.py; THEME=dark python 12_model_results.py   # results/ -> numbers/, figs 12a-c
+THEME=light python 13_method_figures.py;  THEME=dark python 13_method_figures.py    # figs 13a-e (uses the best model of each test)
 python 10_report.py
 ```
 
