@@ -6,7 +6,7 @@ one section per script, in run order. figures go to figs/ (figs_dark/ with THEME
 
 ```
 # data/copd/<pid>/<vital>/<pid>_<vital>.csv  ->  data/wearable/<pid>.csv.gz (1-minute file per patient)
-cd .. && .venv/bin/python -c "import curate_dataset as cd; ..."   # cd.master(pid, folder), same function that built the old files
+python 01_build_wearable.py --check   # rebuilds every patient from data/copd and compares: 40 of 40 identical
 ```
 
 - sheet: 41 patients, c001-c041
@@ -241,7 +241,7 @@ research doc: https://docs.google.com/document/d/1V8rGaJFxRt5ccTJUKq4JcynNGbu9lq
 
 ## imputation
 
-`run_models.py impute <model> --mask random|block`, one process per model (logs/sweep.sh). numbers are in 12_model_results.py above
+`run_models.py impute <model> --mask random|block`, one process per model (scripts/sweep.sh). numbers are in 12_model_results.py above
 
 ## forecasting
 
@@ -297,3 +297,17 @@ python shap_analysis.py all --tuned ; THEME=dark python shap_analysis.py figures
 - only xgboost, catboost, rnn, lstm, gast, pinode use vitals; the rest read hrv and time of day
 - classification shap (refit on all 37 patients, descriptive only): xgboost reduced set leans on six-minute walk 49%, spirometry 25%
 - figs 14a-e, 12d (default vs tuned), 13f (tuning flow); report sections 16 and 17, conclusions now 18
+
+## 01_build_wearable.py, run_pipeline.sh (4 oct)
+
+```
+python 01_build_wearable.py --check
+./run_pipeline.sh eda modeldata      # twice, outputs compared
+```
+
+- the 1-minute builder used to live in another repo (curate_dataset.master). rebuilt here from the export; rules found by
+  comparing with the old files: floor to the minute, average point readings in a minute, intervals flag start..end inclusive,
+  duplicate intervals: sleep summed, steps max; every minute from first to last reading; drop readings before 2025-01-01
+  (c016 has 48 dated 2022-07-20). 40 of 40 patients identical
+- reruns: xgboost and lstm block imputation repeated on the gpu gave the official mae to every digit
+- run-to-run: gz written with mtime 0, two sorts given tie-breaks (hrv_sleep.csv, treatment.csv); see docs/REPRODUCE.md

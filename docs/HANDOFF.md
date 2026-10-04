@@ -114,7 +114,7 @@ clinical_table.csv               written by 02; one row per patient, values as r
   analyses use the 40 with a watch file (`codings.wearable_pids()`); c034 has no export folder and is
   shown as "no watch data" (data-presence figures, HRV grid, text). data/copd holds 41 entries, but
   one is processed_users.txt.
-- data/wearable/ is rebuilt from the export with `curate_dataset.master(pid, folder)` from the parent
+- data/wearable/ is rebuilt from the export by `01_build_wearable.py` (same output as the old `curate_dataset.master(pid, folder)` from the parent
   analysis_final repo (the same function that built the first files; verified to reproduce them).
 - The 29 Sep export moved c001's and c027's sleep blocks 5 h 30 min earlier than the 18 Sep export
   (same blocks); the new times fall at night far more often, so they look corrected. Nothing else moved.

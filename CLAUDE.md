@@ -66,7 +66,10 @@ is there before running anything.
   `12_exac_classify.py`, `12_model_results.py` (light and dark), `10_report.py`.
 - 13_method_figures.py draws the flow diagrams (imputation, forecasting, classification) and the model-family
   figures; run it in both themes after the models and before 10_report.py (the report asserts every PNG is used).
-- logs/sweep.sh runs one task for every model, one process each, so a crash does not stop the rest.
+- scripts/sweep.sh runs one task for every model, one process each, so a crash does not stop the rest.
+- 4 Oct: run_pipeline.sh runs everything; 01_build_wearable.py replaces the external curate_dataset step (40/40
+  identical). docs/MODELS.md (maths, every setting) and docs/REPRODUCE.md (setup, stages, new cohort). Keep both in
+  step with the code: a new setting needs a row in MODELS.md and in tune_models.py DEFAULTS/SPACES.
 - On macOS, xgboost crashed if torch was imported first (two OpenMP runtimes); run_models.py
   imports xgboost first.
 - Patient data (data/, model_data/, results/, clinical_table.csv) is gitignored; copy it separately.

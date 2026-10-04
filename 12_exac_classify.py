@@ -54,7 +54,7 @@ import pandas as pd
 from joblib import Parallel, delayed
 
 warnings.filterwarnings("ignore")
-from codings import MISSING, SHEET, clean, load_baseline, load_exacerbations, yes_no
+from codings import MISSING, PID, SHEET, clean, load_baseline, load_exacerbations, yes_no
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.dummy import DummyClassifier
@@ -94,7 +94,7 @@ def feature_table():
     names = raw.iloc[2].astype(str).str.strip()
     d = raw.iloc[3:]
     pid = d[names[names == "PARTCPNT_ID"].index[0]].astype(str).str.strip().str.lower()
-    keep = pid.str.match(r"^c0(0[1-9]|[1-3]\d|4[01])$")
+    keep = pid.str.match(PID)
     d, pid = d[keep], pid[keep]
 
     out, seen = {}, {}

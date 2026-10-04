@@ -32,6 +32,7 @@ p.add_argument("--cores", type=int)
 p.add_argument("--device", choices=["cpu", "cuda"])
 p.add_argument("--seed", type=int, default=0)
 p.add_argument("--tuned", action="store_true", help="use the settings found by tune_models.py (results/tuning/)")
+p.add_argument("--params", help='change settings, as JSON: \'{"K": 8, "lr": 0.1}\' (names: docs/MODELS.md)')
 p.add_argument("--quick", action="store_true", help="6 series, tiny training: checks the code runs")
 p.add_argument("--list", action="store_true")
 a = p.parse_args()
@@ -69,6 +70,9 @@ def run(task, name, quick):
             sys.exit(f"no tuned settings at {f}; run tune_models.py {task} {name} first")
         ctx["params"] = json.loads(f.read_text())["params"]
         print(f"tuned settings: {ctx['params']}")
+    if a.params:
+        ctx["params"] = {**ctx.get("params", {}), **json.loads(a.params)}
+        print(f"settings: {ctx['params']}")
     np.random.seed(a.seed)
     t0 = time.time()
     if task == "impute":
@@ -85,9 +89,9 @@ def run(task, name, quick):
     P, m = data.score(task, series, preds)
     extra.update(model=name, seconds=round(time.time() - t0, 1), cores=n_cores, device=device,
                  seed=a.seed, quick=quick)
-    if a.tuned:
-        run_name += "__tuned"
-        extra.update(tuned=True, params=json.dumps(ctx["params"]))
+    if a.tuned or a.params:
+        run_name += "__tuned" if not a.params else "__custom"
+        extra.update(tuned=bool(a.tuned), custom=bool(a.params), params=json.dumps(ctx["params"]))
     return P, m, run_name, extra
 
 

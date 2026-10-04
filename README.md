@@ -1,60 +1,38 @@
 # COPD clinical + wearable analysis
 
-Self-contained. Everything it reads is under `data/`, everything it writes goes to
-`figs/` (and `figs_dark/` when run with THEME=dark) and `numbers/`.
+From a raw smartwatch export and a clinical datasheet to a report: data checks, HRV imputation and
+forecasting with 14 models, exacerbation classification, tuning and SHAP.
+
+* **Run it:** `./run_pipeline.sh` (every stage, in order) - [docs/REPRODUCE.md](docs/REPRODUCE.md) has setup,
+  stage times, what is repeatable, and how to run another cohort.
+* **Understand a model or change a setting:** [docs/MODELS.md](docs/MODELS.md) - the maths of every model as
+  implemented, and each setting's name, default and tuning range. One run with other settings:
+  `python run_models.py impute xgboost --mask block --params '{"K": 8}'`.
+* **What each script found:** [results.md](results.md). **The report:** `COPD_EDA_Report.html` (and `_dark`).
 
 ```
-data/
+run_pipeline.sh             the whole pipeline (stages: provenance wearable eda modeldata models classify tune tuned explain report)
+data/                       patient data, not in git
   COPDAI_DATASHEET_01.xls   clinical datasheet: Baseline, Coding, exacerbation
-  copd/<pid>/<vital>/...    per-vital export (29 Sep 2026), 40 patients (no c034)
-  raw/<pid>/<vital>/...     older export (18 Sep), 33 patients, not used
-  wearable/<pid>.csv.gz     1-minute master per patient, one row per recorded minute
+  copd/<pid>/<vital>/...    raw watch export (29 Sep 2026), 40 patients (no c034)
+  wearable/<pid>.csv.gz     1-minute table per patient, every minute from first to last reading (built by 01)
+common.py                   where the data is (COHORT_* env vars), patient-ID pattern, plot style
 codings.py                  the datasheet's coding scheme and its repairs  (--check)
-common.py                   paths and plot style
-02_clinical_eda.py          baseline clinical EDA
-03_data_presence.py         how much data each vital has, and since enrolment
-04_hrv_per_patient.py       raw HRV over time, per patient
-05_missingness.py           HRV gaps and coverage
-06_hrv_distributions.py     HRV distributions
-07_sleep_and_events.py      HRV in sleep; HRV, steps and sleep around each exacerbation
-08_sleep_stages.py          deep / light / almost-awake sleep and HRV (per sleep block)
-09_clinical_profile.py      datasheet completeness, symptoms/history, lung tests, imaging, treatment
-11_model_data.py            model_data/: 10-min modelling table, segments, imputation masks, splits (self-checks)
+01_build_wearable.py        raw export -> data/wearable/  (--check: rebuild equals the files on disk)
+02-09_*.py                  EDA: clinical, data presence, HRV per patient, gaps, distributions, sleep, datasheet profile
+11_model_data.py            model_data/: 10-min table, segments, imputation masks, splits (self-checks)
+run_models.py               one model on one test (--tuned, --params); scripts/sweep.sh runs every model
+models/                     one file per model; models/data.py: shared inputs, scoring, saving
 12_exac_classify.py         exacerbation classification from enrolment tests -> results/exac_monitoring/
-12_model_results.py         results/ -> numbers/model_results.csv, figs 12a-c
-tune_models.py              hyperparameter tuning (Optuna) on a practice set cut from the training data -> results/tuning/
-shap_analysis.py            SHAP for the tree models and classifiers, drop-a-vital ablation for the rest -> figs 14a-e
-13_method_figures.py        diagrams: how imputation, forecasting and classification work, one row per model family (needs results/)
-10_report.py                COPD_EDA_Report.html (light) + COPD_EDA_Report_dark.html
-results.md                  what each script found, script by script
-run_models.py               runs the imputation and forecasting models (see below)
-models/                     one file per model + shared data/scoring (models/data.py)
+tune_models.py              tuning (Optuna) on a practice set cut from the training data -> results/tuning/
+shap_analysis.py            SHAP for the tree models and classifiers, drop-a-vital ablation -> figs 14a-e
+12_model_results.py         results/ -> numbers/model_results*.csv, figs 12a-d
+13_method_figures.py        diagrams of how each test and model family works, figs 13a-f
+10_report.py                COPD_EDA_Report.html + COPD_EDA_Report_dark.html
+requirements-lock.txt       exact package versions behind the committed results
 ```
 
-`data/`, `model_data/`, `results/` and `clinical_table.csv` hold patient-level data
-and are in `.gitignore`: copy them to a new machine separately.
-
-Setup (Python >= 3.10):
-
-```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt           # EDA and report
-pip install -r requirements-models.txt    # models (on a GPU box, install torch for its CUDA first)
-```
-
-Run in order:
-
-```bash
-python codings.py --check
-for T in light dark; do for s in 02_clinical_eda 03_data_presence 04_hrv_per_patient 05_missingness 06_hrv_distributions 07_sleep_and_events 08_sleep_stages 09_clinical_profile 11_model_data; do
-  THEME=$T python $s.py
-done; done
-# models, in this order (see Models below), then:
-python 12_exac_classify.py                                                       # exacerbation classification
-THEME=light python 12_model_results.py; THEME=dark python 12_model_results.py   # results/ -> numbers/, figs 12a-c
-THEME=light python 13_method_figures.py;  THEME=dark python 13_method_figures.py    # figs 13a-e (uses the best model of each test)
-python 10_report.py
-```
+`data/`, `model_data/`, `results/` and `clinical_table.csv` hold patient-level data and are in `.gitignore`.
 
 ## What the data is
 

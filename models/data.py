@@ -191,6 +191,6 @@ def save(task, name, P, m, extra):
     m = {**m, **extra, "finished": time.strftime("%Y-%m-%d %H:%M")}
     (out / "metrics.json").write_text(json.dumps(m, indent=1))
     row = pd.DataFrame([{"task": task, "run": name, **m}])
-    summ = RESULTS / ("summary_tuned.csv" if extra.get("tuned") else "summary.csv")
+    summ = RESULTS / ("summary_custom.csv" if extra.get("custom") else "summary_tuned.csv" if extra.get("tuned") else "summary.csv")
     row.to_csv(summ, mode="a", header=not summ.exists(), index=False)
     return out

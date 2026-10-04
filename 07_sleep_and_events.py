@@ -34,7 +34,7 @@ for pid, d in H.groupby("pid"):
                          n_sleep=len(a), n_outside=len(b)))
 S = pd.DataFrame(rows)
 S["diff"] = S.sleep - S.outside
-S = S.sort_values("diff").reset_index(drop=True)
+S = S.sort_values(["diff", "patient"], kind="stable").reset_index(drop=True)   # ties by patient: same order every run
 S.to_csv(NUMBERS / "hrv_sleep.csv", index=False)
 
 fig, ax = plt.subplots(figsize=(13, 5))

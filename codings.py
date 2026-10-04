@@ -37,8 +37,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-SHEET = Path(__file__).resolve().parent / "data" / "COPDAI_DATASHEET_01.xls"
-WEAR = Path(__file__).resolve().parent / "data" / "wearable"
+from common import PID, SHEET, WEAR   # noqa: E402  (paths and the patient-ID pattern live in common.py)
 
 
 def wearable_pids():

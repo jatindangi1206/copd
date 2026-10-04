@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from common import BLUE, ORANGE, INK2, NUMBERS, SHEET, save
+from common import BLUE, ORANGE, INK2, NUMBERS, PID, SHEET, save
 from codings import MISSING, clean
 
 raw = pd.ExcelFile(SHEET).parse("Baseline", header=None)
@@ -26,7 +26,7 @@ section = raw.iloc[1].ffill().astype(str).str.strip().str.rstrip(":").str.strip(
 names = raw.iloc[2].astype(str).str.strip()
 d = raw.iloc[3:]
 pid = d[names[names == "PARTCPNT_ID"].index[0]].astype(str).str.strip().str.lower()
-d = d[pid.str.match(r"^c\d{3}$")]          # every patient row in the sheet
+d = d[pid.str.match(PID)]          # every patient row in the sheet
 N = len(d)
 
 
@@ -167,7 +167,8 @@ pd.DataFrame(img).to_csv(NUMBERS / "imaging.csv", index=False)
 tr = pd.concat([txt(col("TRTMNT_0", k)) for k in range(5)] + [txt(col("TRTMNT_5"))], axis=1)
 n_listed = (~tr.isin(["NAN", "", "0"])).sum(axis=1)
 first = txt(col("TRTMNT_0", 0))
-pd.DataFrame({"first_listed": first.value_counts().index, "patients": first.value_counts().values}) \
+vc = first.value_counts().sort_index().sort_values(ascending=False, kind="stable")       # ties by name: same order every run
+pd.DataFrame({"first_listed": vc.index, "patients": vc.values}) \
     .to_csv(NUMBERS / "treatment.csv", index=False)
 n_listed.value_counts().sort_index().rename("patients").rename_axis("treatments_listed") \
     .to_csv(NUMBERS / "treatment_count.csv")

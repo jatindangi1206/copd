@@ -41,6 +41,9 @@ per = H.groupby("pid").size()
 rich = per[per >= MIN_READINGS].index
 med = H[H.pid.isin(rich)].groupby("pid").hrv.median()
 
+daily = H.set_index("time").hrv.resample("D").count()
+dense_end = daily.rolling(56, min_periods=1).sum().idxmax()             # the 8 weeks with the most HRV readings
+dense = f"{dense_end - pd.Timedelta(days=55):%d %B} to {dense_end:%d %B}"
 ep_ok = 0
 for _, e in E.iterrows():
     h = H[H.pid == e.pid]
@@ -424,7 +427,7 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
      "For many patients recording is densest in the weeks after enrolment, then becomes patchy or stops.")}
 {fig("05c-readings-per-day", "HRV readings per day",
      "Each row is a patient, each dot a day; the colour scale on the right gives that day's readings (144 is one every 10 minutes).",
-     "Recording is dense from mid-May to early July, then thinner or absent for many patients.")}
+     f"Recording is densest from {dense}, then thinner or absent for many patients.")}
 
 <h2>7&ensp;Gaps in HRV</h2>
 {fig("04-hrv-over-time-per-patient", "Every HRV reading over time",
@@ -511,7 +514,7 @@ The sheet's systolic and diastolic blood-pressure labels are swapped (the "systo
      f"Small x keeps almost nothing; large x keeps everything but fills segments with gaps. At x = {CFG['x_minutes']} minutes, {m['kept']:.0f}% of HRV is kept and {m['miss_in']:.0f}% of segment slots are missing. Patients differ a lot in how much a given x keeps.")}
 {fig("11b-segments", "Segments for each patient",
      f"Each row is a patient. Grey: the span of their HRV data. Coloured: segments, split into the first {CFG['train_pct']}% (train) and last {100 - CFG['train_pct']}% (test).",
-     f"{m['segs']} segments in {m['seg_pts']} patients, {m['seg_h_min']:.0f} to {m['seg_h_max']:.0f} hours long (median {m['seg_h_med']:.0f}). {m['no_seg']} have no segment. Segments cluster where recording was dense (mid-May to early July).")}
+     f"{m['segs']} segments in {m['seg_pts']} patients, {m['seg_h_min']:.0f} to {m['seg_h_max']:.0f} hours long (median {m['seg_h_med']:.0f}). {m['no_seg']} have no segment. Segments cluster where recording was dense ({dense}).")}
 <p>This is a pilot threshold for a sparse cohort. It is one setting in <code>11_model_data.py</code>, to be reviewed with physiology experts and, as more data arrives, set per patient rather than for the whole cohort.</p>
 
 <h2>12&ensp;Models</h2>

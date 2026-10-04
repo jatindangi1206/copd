@@ -181,7 +181,7 @@ T = T.join(static.add_prefix("c_"), on="pid")
 cols = ["pid", "time", "hour", "hrv", "hrv_n", "hr", "hr_n", "temp", "spo2", "steps", "sleep_frac",
         "steps_active_frac", "exac_day", "missing_run", "segment", "split", "mask_random", "mask_block"] \
     + [f"c_{c}" for c in STATIC]
-T[cols].to_csv(OUT / "model_10min.csv.gz", index=False, float_format="%.4g")
+T[cols].to_csv(OUT / "model_10min.csv.gz", index=False, float_format="%.4g", compression={"method": "gzip", "mtime": 0})   # mtime 0: same bytes every run
 SEG = pd.DataFrame(seg_rows)
 if X:
     SEG.to_csv(OUT / "segments.csv", index=False)

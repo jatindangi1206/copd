@@ -13,10 +13,12 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 HERE = Path(__file__).resolve().parent
-DATA = HERE / "data"
-RAW = DATA / "copd"                      # per-vital export tree (the latest export)
-WEAR = DATA / "wearable"                 # 1-minute masters, one per patient
-SHEET = DATA / "COPDAI_DATASHEET_01.xls"
+# Where the cohort's data lives. Another cohort: set these, or keep the same names under its own data/.
+DATA = Path(os.environ.get("COHORT_DATA", HERE / "data"))
+RAW = DATA / os.environ.get("COHORT_EXPORT", "copd")                       # per-vital export tree
+WEAR = DATA / "wearable"                                                    # 1-minute tables (01_build_wearable.py)
+SHEET = DATA / os.environ.get("COHORT_SHEET", "COPDAI_DATASHEET_01.xls")   # clinical datasheet
+PID = r"^c\d{3}$"                                                          # what a patient ID looks like
 THEME = os.environ.get("THEME", "light")
 DARK = THEME == "dark"
 FIGS = HERE / ("figs_dark" if DARK else "figs")
