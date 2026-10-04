@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite it as below."
+title: "COPD-HRV: imputing and forecasting smartwatch heart-rate variability in a COPD cohort"
+authors:
+  - family-names: Dangi
+    given-names: Jatin
+    email: jatin@ashoka.edu.in
+license: MIT
+repository-code: "https://github.com/jatindangi1206/copd"
+date-released: 2026-10-04
+keywords:
+  - COPD
+  - heart-rate variability
+  - wearables
+  - time-series imputation
+  - forecasting
+  - reproducibility
