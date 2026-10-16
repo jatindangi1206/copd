@@ -123,6 +123,8 @@ python run_models.py forecast xgboost --tuned                  # with its tuned 
 python run_models.py impute xgboost --mask block --params '{"K": 8, "lr": 0.1}'   # your own settings
 python tune_models.py impute xgboost                           # tune one model
 python shap_analysis.py all --tuned                            # what the models rely on
+python 14_exac_data.py                                         # exacerbation data: labelled patient-days, COPD + AIIMS
+python run_exac.py all --seed 0 1 2 3 4                        # exacerbation classifiers, train:test 80:20 ... 50:50
 ```
 
 Modelling code never takes the whole machine: it shows the free cores and leaves two for the desktop (`--cores N` to set it).
@@ -233,12 +235,31 @@ common.py · codings.py   where the data is and what a patient ID looks like · 
 run_models.py            one model on one test (--tuned, --params);  scripts/ runs every model
 models/                  one file per model; models/data.py holds the shared inputs, scoring and saving
 12_exac_classify.py      exacerbation classification (nested cross-validation, permutation test)
+14_exac_data.py          exacerbation data: one row per labelled patient-day with HRV, COPD + AIIMS (self-checks)
+run_exac.py              exacerbation classifiers on patient-days, split by patient (references, GBMs, RNN/LSTM, gast)
 tune_models.py           tuning on a practice set (Optuna)
 shap_analysis.py         SHAP, ablation
 12_model_results.py · 13_method_figures.py · 10_report.py     tables, diagrams, the HTML report
 docs/                    MODELS.md (maths) · REPRODUCE.md (setup, stages, new cohort) · HANDOFF.md (project history)
 results.md               what each script found, script by script
 ```
+
+---
+
+## 🩺 Exacerbation classification
+
+Is a patient-day an exacerbation day? `14_exac_data.py` builds one row per labelled patient-day with HRV, for COPD and
+the AIIMS asthma cohort (a-series adults, p-series children), from the datasheet and the AIIMS exacerbation sheets.
+`run_exac.py` trains and scores the classifiers on splits by patient, train:test 80:20, 90:10, 70:30, 60:40 and 50:50.
+
+| | |
+|---|---|
+| sets | `combined` (COPD + AIIMS, watch data) · `copd` (watch data) · `copd_clinical` (watch data + the clinical table) |
+| models | always-no and logistic regression (references) · XGBoost · CatBoost · RNN · LSTM · gast |
+| inputs | the day and the 6 before it: daily summaries (tabular models) or 10-minute slots (sequence models), also as change from the patient's own 28-day past baseline |
+| scores | per day: accuracy, balanced accuracy, sensitivity, specificity, PPV, NPV, F1, AUROC, AUPRC · per episode: episodes caught, false alarms per 30 days |
+
+The labelling rules and the sheets' quirks are in the docstring of `14_exac_data.py`; the design is in `run_exac.py`.
 
 ---
 
