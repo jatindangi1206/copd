@@ -19,6 +19,35 @@ from .data import hp, lin_fill, phase
 CHECKPOINT = os.environ.get("TIMESFM_CHECKPOINT", "google/timesfm-3.0-pytorch")
 CONTEXT, GAP_CONTEXT, BATCH = 2048, 512, 32
 USE_TIME_COVARIATE = False
+DIM = 1280                 # TimesFM 3 transformer width (config.json model_dims)
+_FROZEN = {}
+
+
+def embed(v, device, batch=4):
+    """Frozen TimesFM 3 read-out for exacerbation detection / onset (run_exac.py; decided 17 Oct 2026).
+
+    v: (n, M, C) raw minutes of the window, NaN = no reading, M a multiple of the patch length (32).
+    Every signal is one variate, values as recorded (TimesFM normalises each series itself); a blank is
+    masked with TimesFM's own masks, nothing is filled. Returns (n, C * DIM) float32: each variate's
+    transformer output at the last patch. Attention is causal, so it has seen the whole window."""
+    import torch
+    from timesfm3.torch.model import TimesFM3Torch
+    if device not in _FROZEN:      # local weights only: never downloads
+        _FROZEN[device] = TimesFM3Torch.from_pretrained(CHECKPOINT, local_files_only=True).to(device).eval()
+    m = _FROZEN[device]
+    n, M, C = v.shape
+    p = m.input_patch_len
+    out = []
+    with torch.no_grad():
+        for k in range(0, n, batch):
+            x = torch.as_tensor(np.ascontiguousarray(v[k:k + batch].transpose(0, 2, 1)), device=device)
+            x = x.reshape(len(x), C, M // p, p)
+            mask = torch.isnan(x)
+            o = m({"values": x, "masks": mask, "patch_is_target": torch.ones(x.shape[:3], dtype=torch.bool, device=device)},
+                  return_aux_outputs=True)["__call__:transformer_output"]
+            assert o.shape[-1] == DIM, o.shape
+            out.append(o[:, :, -1].reshape(len(x), C * DIM).float().cpu().numpy())
+    return np.concatenate(out)
 
 
 def _model(ctx):

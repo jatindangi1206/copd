@@ -22,6 +22,9 @@ Input     every minute of the day and the 6 before it (--days, GAST only): 7 sig
   networks  RNN, LSTM: each minute's values (divided by the training maximum) + "reading present"
             flags -> a learned 1-D convolution over 10-minute blocks -> models/rnn.Net, forward only,
             read at the last step.
+  TimesFM 3 models/timesfm3.embed: frozen, every minute of the 7 signals as 7 variates, blanks as its
+            own masks; each variate's output at the last patch -> a learned logistic layer (trained as
+            the networks). The frozen outputs are cached per day in model_data_exac/timesfm3_out.npy.
   GAST v1   models/gast_v1.py: one token per minute with heart rate at its real time; gap-aware state
             space; hourly causal attention; variants for the ablations; gast2 has two heads.
   Networks train on half-exacerbation batches (Adam, 0.001, batches of 32) and stop early on 20% of
@@ -59,6 +62,7 @@ MODELS = {   # name -> (family, library)
     "gast_nogap": ("GAST v1 ablation: no gap features", "torch"),
     "gast_maskonly": ("GAST v1 control: masks and times, no values", "torch"),
     "gast2": ("GAST v1, two heads: both tasks", "torch"),
+    "timesfm3": ("TimesFM 3, frozen, + a learned logistic layer", "timesfm3"),
 }
 GAST = {"gast": "full", "gast2": "full", "gast_ssm": "ssm", "gast_attn": "attn", "gast_nogap": "nogap",
         "gast_maskonly": "maskonly"}
@@ -75,6 +79,7 @@ p.add_argument("--seed", type=int, nargs="+", default=[0, 1, 2, 3, 4])
 p.add_argument("--days", type=int, default=7, help="history in days, the classified day included (GAST only)")
 p.add_argument("--cores", type=int)
 p.add_argument("--device", choices=["cpu", "cuda"])
+p.add_argument("--gpu-gb", type=float, help="cap this process's torch GPU memory, GB (parallel runs)")
 p.add_argument("--quick", action="store_true", help="tiny training on a small subset: checks the code runs")
 p.add_argument("--list", action="store_true")
 a = p.parse_args()
@@ -101,6 +106,8 @@ try:
     import torch
     cores.apply_torch(n_cores)
     device = a.device or ("cuda" if torch.cuda.is_available() else "cpu")
+    if device == "cuda" and a.gpu_gb:
+        torch.cuda.set_per_process_memory_fraction(a.gpu_gb * 1e9 / torch.cuda.get_device_properties(0).total_memory)
 except ImportError:
     torch, device = None, a.device or "cpu"
 print(f"device: {device}")
@@ -172,6 +179,9 @@ def scales(train):
 def net_inputs(name, T, rows, sc):
     v, (scale, sscale) = window(rows), sc
     st = np.nan_to_num(S.reindex(T.pid).to_numpy(np.float32) / sscale) if S is not None else None
+    if name == "timesfm3":
+        x = np.asarray(TFM[rows[:, -1]])
+        return [torch.as_tensor(np.concatenate([x, st], 1) if st is not None else x, device=device)]
     if name in GAST:
         from models import gast_v1
         args = list(gast_v1.tokens(v, scale, GAST[name])) + ([st] if st is not None else [])
@@ -185,6 +195,9 @@ def net_inputs(name, T, rows, sc):
 # ------------------------------------------------------------------ models
 def make_net(name, n_out):
     n_static = S.shape[1] if S is not None else 0
+    if name == "timesfm3":
+        from models import timesfm3
+        return torch.nn.Linear(X.shape[2] * timesfm3.DIM + n_static, n_out)    # the learned logistic layer
     if name in GAST:
         from models import gast_v1
         return gast_v1.GAST(gast_v1.n_features(GAST[name]), n_out, n_static, GAST[name], window_minutes=M)
@@ -201,6 +214,26 @@ def make_net(name, n_out):
     return Compressed()
 
 
+TFM = None
+
+
+def tfm_fill(rows):
+    """Frozen TimesFM 3 outputs for the windows `rows` (n, W), cached by the classified day's row of minutes.npy
+    (NaN = not computed yet). The weights never change, so a day's output is the same in every split."""
+    global TFM
+    from models import timesfm3
+    f = MD / "timesfm3_out.npy"
+    if not f.exists():
+        np.lib.format.open_memmap(f, "w+", np.float32, (len(X), X.shape[2] * timesfm3.DIM))[:] = np.nan
+    TFM = np.load(f, mmap_mode="r+")
+    rows = np.unique(rows, axis=0)
+    todo = rows[np.isnan(TFM[rows[:, -1], 0])]
+    for k in range(0, len(todo), 256):
+        TFM[todo[k:k + 256, -1]] = timesfm3.embed(window(todo[k:k + 256]), device)
+        TFM.flush()
+        print(f"    timesfm3: {min(k + 256, len(todo)):,} of {len(todo):,} new days", flush=True)
+
+
 def fit_tree(name, tr, te, ytr, ctx):
     Xtr, Xte, n, gpu = tree_matrix(tr), tree_matrix(te), (20 if ctx["quick"] else 400), device == "cuda"
     if name == "xgboost":
@@ -212,7 +245,9 @@ def fit_tree(name, tr, te, ytr, ctx):
         from catboost import CatBoostClassifier
         m = CatBoostClassifier(iterations=n, depth=4, learning_rate=0.05, auto_class_weights="Balanced",
                                thread_count=n_cores, task_type="GPU" if gpu else "CPU", random_seed=ctx["seed"],
-                               verbose=0, allow_writing_files=False)
+                               verbose=0, allow_writing_files=False,
+                               **({"gpu_ram_part": a.gpu_gb * 1e9 / torch.cuda.get_device_properties(0).total_memory}
+                                  if gpu and a.gpu_gb else {}))      # CatBoost takes 95% of the GPU otherwise
     m.fit(Xtr, ytr)
     return m.predict_proba(Xte)[:, 1:], {}
 
@@ -223,6 +258,8 @@ def fit_net(name, tr, held, te, outputs, ctx):
     rng, sc = np.random.default_rng(ctx["seed"]), scales(set(tr.pid))
     net = make_net(name, len(outputs)).to(device)
     R = {k: window_rows(T) for k, T in (("tr", tr), ("held", held), ("te", te))}
+    if name == "timesfm3":
+        tfm_fill(np.concatenate(list(R.values())))
     labels = lambda T: np.stack([np.where(T[v] if v else True, T[c], np.nan) for c, v in outputs], 1).astype(np.float32)
     ytr, yheld = labels(tr), labels(held)
     pos, neg = np.flatnonzero(np.nan_to_num(ytr) .max(1) == 1), np.flatnonzero(np.nan_to_num(ytr).max(1) == 0)

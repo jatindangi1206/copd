@@ -179,14 +179,30 @@ change.
 - **Scoring:** per day as in section 5, plus calibration; an onset counts as **caught** if any of the 3
   days before it was flagged; false alarms per 30 days.
 
+### 6.8 TimesFM 3 (locked 17 Oct 2026, workstation session)
+Answers: frozen weights + a learned head; all 7 signals as variates; run after the other models.
+
+- **Input:** the 7-day window, every minute, each of the 7 signals one TimesFM variate (7 x 10,080
+  minutes = 315 patches of 32), values as recorded (TimesFM normalises each series itself). A blank is
+  masked with TimesFM's own per-point masks: nothing is filled.
+- **Network:** TimesFM 3.0 (331 M parameters, local weights `TIMESFM_CHECKPOINT`), frozen. Its
+  attention is causal, so the last patch has seen the whole window.
+- **Read-out:** each variate's transformer output at the last patch (7 x 1,280 numbers) -> one learned
+  logistic layer (+ the scaled clinical values for `copd_clinical`).
+- **Training:** only the logistic layer learns, exactly as 6.4: half-exacerbation batches, Adam 0.001,
+  early stopping on held-back patients, flag at 0.5. The frozen outputs are computed once per day and
+  cached (`model_data_exac/timesfm3_out.npy`); they are the same in every split.
+- **Order:** the user's instruction (17 Oct 2026): run always_no, XGBoost, CatBoost, RNN and LSTM first
+  on every set and both tasks, then GAST and TimesFM 3.
+
 ### Not in this task
-hmm, nlssm, pf, rsdpf, gru_ode_bayes, cd_gamma_dglm, ossa, pinode, timesfm3: they rebuild or forecast
+hmm, nlssm, pf, rsdpf, gru_ode_bayes, cd_gamma_dglm, ossa, pinode: they rebuild or forecast
 HRV values and give no exacerbation output. The logistic-regression reference was dropped (it means
 little on 70,560 raw columns).
 
 ## 7. Still open
 
-- The other 9 models: left out of the first runs; the user designs them after the first results
+- The other 8 models (TimesFM 3 was added on 17 Oct 2026, 6.8): left out of the first runs; the user designs them after the first results
   (locked 17 Oct 2026).
 - Class balance and threshold were decided per model: weight up / 0.5 for the tree models;
   half-exacerbation batches / 0.5 for the networks.

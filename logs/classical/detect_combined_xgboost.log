@@ -1,0 +1,37 @@
+CPU: 40 cores, about 1 busy, 39 free. Default leaves 2 for the UI: 38.
+using 18 core(s)
+device: cuda
+combined / aiims_adult: 110 patients | detect 9,338 days, 125 positive | onset 9,009 days, 97 positive
+combined / aiims_paed: 54 patients | detect 4,981 days, 8 positive | onset 4,881 days, 25 positive
+combined / copd: 27 patients | detect 1,372 days, 11 positive | onset 1,306 days, 29 positive
+
+== combined xgboost (detect) days 7, train 80: test 20, seed 0
+/home/kcdha/Desktop/JD/prediction/copd/.venv/lib/python3.12/site-packages/xgboost/core.py:569: UserWarning: [15:59:23] WARNING: /__w/xgboost/xgboost/src/common/error_msg.cc:62: Falling back to prediction using DMatrix due to mismatched devices. This might lead to higher memory usage and slower performance. XGBoost is running on: cuda:0, while the input data is on: cpu.
+Potential solutions:
+- Use a data structure that matches the device ordinal in the booster.
+- Set the device for booster before call to inplace_predict.
+
+This warning will only be shown once.
+
+  return func(**kwargs)
+  detect all          AUROC 0.444 [0.25-0.56]  PPV nan  sens 0.000  spec 1.000  events 0/9  false alarms 0.0/30 d  Brier 0.013
+  detect copd         AUROC 0.085 [0.04-0.12]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.006
+  detect aiims_adult  AUROC 0.501 [0.34-0.61]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.019
+  detect aiims_paed   AUROC 0.189 [0.13-0.23]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.002
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/combined/xgboost/test20_seed0
+
+== combined xgboost (detect) days 7, train 80: test 20, seed 1
+  detect all          AUROC 0.501 [0.33-0.61]  PPV nan  sens 0.000  spec 1.000  events 0/8  false alarms 0.0/30 d  Brier 0.011
+  detect copd         AUROC 0.219 [0.19-0.28]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.018
+  detect aiims_adult  AUROC 0.519 [0.40-0.63]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.014
+  detect aiims_paed   AUROC 0.120 [0.09-0.24]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.001
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/combined/xgboost/test20_seed1
+
+== combined xgboost (detect) days 7, train 80: test 20, seed 2
+  detect all          AUROC 0.518 [0.36-0.70]  PPV nan  sens 0.000  spec 1.000  events 0/13  false alarms 0.0/30 d  Brier 0.005
+  detect copd         AUROC 0.803 [0.70-0.95]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.012
+  detect aiims_adult  AUROC 0.465 [0.34-0.59]  PPV nan  sens 0.000  spec 1.000  events 0/9  false alarms 0.0/30 d  Brier 0.006
+  detect aiims_paed   AUROC 0.233 [0.16-0.36]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.001
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/combined/xgboost/test20_seed2
+
+== combined xgboost (detect) days 7, train 80: test 20, seed 3

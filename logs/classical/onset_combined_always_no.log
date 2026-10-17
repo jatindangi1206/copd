@@ -1,0 +1,226 @@
+CPU: 40 cores, about 0 busy, 40 free. Default leaves 2 for the UI: 38.
+using 18 core(s)
+device: cuda
+combined / aiims_adult: 110 patients | detect 9,338 days, 125 positive | onset 9,009 days, 97 positive
+combined / aiims_paed: 54 patients | detect 4,981 days, 8 positive | onset 4,881 days, 25 positive
+combined / copd: 27 patients | detect 1,372 days, 11 positive | onset 1,306 days, 29 positive
+
+== combined always_no (onset) days 7, train 80: test 20, seed 0
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/10  false alarms 0.0/30 d  Brier 0.009
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.018
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.007
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.008
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test20_seed0
+
+== combined always_no (onset) days 7, train 80: test 20, seed 1
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/10  false alarms 0.0/30 d  Brier 0.008
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.058
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.006
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.006
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test20_seed1
+
+== combined always_no (onset) days 7, train 80: test 20, seed 2
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/13  false alarms 0.0/30 d  Brier 0.011
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.020
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/9  false alarms 0.0/30 d  Brier 0.015
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.003
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test20_seed2
+
+== combined always_no (onset) days 7, train 80: test 20, seed 3
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/9  false alarms 0.0/30 d  Brier 0.008
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.028
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.009
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.003
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test20_seed3
+
+== combined always_no (onset) days 7, train 80: test 20, seed 4
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/12  false alarms 0.0/30 d  Brier 0.008
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.012
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.007
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.007
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test20_seed4
+
+== combined always_no (onset) days 7, train 90: test 10, seed 0
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/8  false alarms 0.0/30 d  Brier 0.014
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.025
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.013
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.012
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test10_seed0
+
+== combined always_no (onset) days 7, train 90: test 10, seed 1
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/7  false alarms 0.0/30 d  Brier 0.010
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.077
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.007
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.007
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test10_seed1
+
+== combined always_no (onset) days 7, train 90: test 10, seed 2
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/9  false alarms 0.0/30 d  Brier 0.015
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.069
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.017
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.005
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test10_seed2
+
+== combined always_no (onset) days 7, train 90: test 10, seed 3
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.011
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.065
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.009
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.005
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test10_seed3
+
+== combined always_no (onset) days 7, train 90: test 10, seed 4
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/8  false alarms 0.0/30 d  Brier 0.010
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.019
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.008
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.009
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test10_seed4
+
+== combined always_no (onset) days 7, train 70: test 30, seed 0
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/20  false alarms 0.0/30 d  Brier 0.011
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.029
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/12  false alarms 0.0/30 d  Brier 0.010
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.008
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test30_seed0
+
+== combined always_no (onset) days 7, train 70: test 30, seed 1
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/17  false alarms 0.0/30 d  Brier 0.009
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.032
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/10  false alarms 0.0/30 d  Brier 0.009
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.006
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test30_seed1
+
+== combined always_no (onset) days 7, train 70: test 30, seed 2
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/19  false alarms 0.0/30 d  Brier 0.011
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.024
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/11  false alarms 0.0/30 d  Brier 0.012
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.006
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test30_seed2
+
+== combined always_no (onset) days 7, train 70: test 30, seed 3
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/18  false alarms 0.0/30 d  Brier 0.010
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.032
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/13  false alarms 0.0/30 d  Brier 0.012
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.003
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test30_seed3
+
+== combined always_no (onset) days 7, train 70: test 30, seed 4
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/17  false alarms 0.0/30 d  Brier 0.008
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.016
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/9  false alarms 0.0/30 d  Brier 0.007
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.006
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test30_seed4
+
+== combined always_no (onset) days 7, train 60: test 40, seed 0
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/22  false alarms 0.0/30 d  Brier 0.009
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.020
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/14  false alarms 0.0/30 d  Brier 0.010
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.005
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test40_seed0
+
+== combined always_no (onset) days 7, train 60: test 40, seed 1
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/19  false alarms 0.0/30 d  Brier 0.008
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.022
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/12  false alarms 0.0/30 d  Brier 0.009
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.004
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test40_seed1
+
+== combined always_no (onset) days 7, train 60: test 40, seed 2
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/24  false alarms 0.0/30 d  Brier 0.011
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.020
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/15  false alarms 0.0/30 d  Brier 0.012
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.005
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test40_seed2
+
+== combined always_no (onset) days 7, train 60: test 40, seed 3
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/21  false alarms 0.0/30 d  Brier 0.009
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.030
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/15  false alarms 0.0/30 d  Brier 0.011
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.003
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test40_seed3
+
+== combined always_no (onset) days 7, train 60: test 40, seed 4
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/19  false alarms 0.0/30 d  Brier 0.006
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.016
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/11  false alarms 0.0/30 d  Brier 0.006
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.004
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test40_seed4
+
+== combined always_no (onset) days 7, train 50: test 50, seed 0
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/30  false alarms 0.0/30 d  Brier 0.010
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.022
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/19  false alarms 0.0/30 d  Brier 0.011
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.005
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test50_seed0
+
+== combined always_no (onset) days 7, train 50: test 50, seed 1
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/30  false alarms 0.0/30 d  Brier 0.011
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.021
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/19  false alarms 0.0/30 d  Brier 0.011
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.006
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test50_seed1
+
+== combined always_no (onset) days 7, train 50: test 50, seed 2
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/34  false alarms 0.0/30 d  Brier 0.012
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.025
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/22  false alarms 0.0/30 d  Brier 0.013
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.005
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test50_seed2
+
+== combined always_no (onset) days 7, train 50: test 50, seed 3
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/32  false alarms 0.0/30 d  Brier 0.012
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.028
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/21  false alarms 0.0/30 d  Brier 0.013
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.005
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test50_seed3
+
+== combined always_no (onset) days 7, train 50: test 50, seed 4
+  onset  all          AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/25  false alarms 0.0/30 d  Brier 0.008
+  onset  copd         AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.019
+  onset  aiims_adult  AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/14  false alarms 0.0/30 d  Brier 0.007
+  onset  aiims_paed   AUROC 0.500 [0.50-0.50]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.005
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/always_no/test50_seed4
+
+onset accuracy, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct      10     20    30     40    50
+model                                     
+always_no  0.988  0.991  0.99  0.991  0.99
+
+onset ppv, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+Empty DataFrame
+Columns: []
+Index: []
+
+onset sensitivity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct    10   20   30   40   50
+model                             
+always_no  0.0  0.0  0.0  0.0  0.0
+
+onset specificity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct    10   20   30   40   50
+model                             
+always_no  1.0  1.0  1.0  1.0  1.0
+
+onset auroc, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct    10   20   30   40   50
+model                             
+always_no  0.5  0.5  0.5  0.5  0.5
+
+onset auprc, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct      10     20    30     40    50
+model                                     
+always_no  0.012  0.009  0.01  0.009  0.01
+
+onset brier, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct      10     20    30     40    50
+model                                     
+always_no  0.012  0.009  0.01  0.009  0.01
+
+onset event_sensitivity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct    10   20   30   40   50
+model                             
+always_no  0.0  0.0  0.0  0.0  0.0
+
+onset false_alarms_per_30_days, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct    10   20   30   40   50
+model                             
+always_no  0.0  0.0  0.0  0.0  0.0

@@ -4,6 +4,7 @@ model_data/
 results/
 clinical_table.csv
 model_data_exac/
+model_data_exac.zip
 # AIIMS exacerbation sheets (patient ids and dates)
 drive-download-*/
 
