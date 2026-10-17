@@ -1,22 +1,28 @@
-"""Exacerbation classification data: one row per labelled patient-day, and each patient's 10-minute grid.
+"""Exacerbation data for both experiments: every minute as exported, and the labels per patient-day.
 
-    python 14_exac_data.py --check     # date-parser self-test on literal cells, no data
+    python 14_exac_data.py --check     # date-parser self-test on made-up cells, no data
     python 14_exac_data.py             # writes model_data_exac/ (read by run_exac.py)
+
+Every decision behind this file: docs/EXAC_DESIGN.md.
 
 Cohorts: COPD (data/wearable, this repo) and AIIMS = a-series (adults) + p-series (children), 1-minute
 masters in ../final_data/aiims (or $FINAL_DATA/aiims). ACHE is left out: it has no exacerbation record.
-An exacerbation is an episode of one or more days that can come back in the same patient, so every
-positive day carries its episode id.
 
-Labels, per calendar day as exported (no clock change):
-  COPD   datasheet "exacerbation" sheet (codings.load_exacerbations): each dated day = 1.
-  AIIMS  adult sheet (a-series): every day of each episode (one date, or a range) = 1.
-         paediatric sheet (p-series): the onset day ("Exacerbation From") and the day after = 1
-         (PAED_DAYS; the user, 16 Oct 2026, for now). The visit date only checks the reading.
-         An a- or p-series patient in neither sheet had no exacerbation recorded: every day = 0.
-  Every other day = 0. A patient with an event whose date cannot be read (COPD: undated in the
-  datasheet; AIIMS: a sheet entry in dropped.csv) is left out: some of their 0s would be wrong.
-A patient-day is a sample if it has at least one HRV reading.
+Minutes (pass 1): only minutes with a heart-rate reading of 0-300; every other signal is kept only on
+those minutes, as exported - nothing averaged, filled or moved. Every day with at least one such minute
+is stored, so days without HRV still serve as context for the days after them.
+
+Episodes, per calendar day as exported:
+  COPD      each dated exacerbation in the datasheet (codings.load_exacerbations) is one day.
+  adults    every day of each episode in the adult sheet (one date, or a range).
+  children  the onset day ("Exacerbation From") only (PAED_DAYS). The visit date only checks the reading.
+  An episode with no recorded end is that one day. An a- or p-series patient in neither sheet had no
+  exacerbation. A patient with an event whose date cannot be read is left out (some of their normal
+  days would be wrong).
+Detection:  sample = a day with at least one HRV reading (pass 2); label = the day is inside an episode.
+Prediction: sample = a detection sample that is not inside an episode and not among the last HORIZON
+            days of the patient's watch data; label = an episode begins on d+1 ... d+HORIZON (the onset
+            is each episode's first recorded day).
 
 Sheet traps (adult sheet of 14 Sep 2026, paediatric of 23 May 2026):
   adult text    dd-mm-yyyy; episodes split by ";" or ","; a range is two dates ("a to b", "a - b",
@@ -28,9 +34,9 @@ Sheet traps (adult sheet of 14 Sep 2026, paediatric of 23 May 2026):
                 patient above. A row is kept only if onset <= visit <= onset + MAX_VISIT_DAYS.
 
 model_data_exac/
-  grid.csv.gz    pid, cohort, time (10-min slot), hrv, hr, temp, steps, sleep_frac, steps_active_frac
-  days.csv       pid, cohort, group (copd | aiims_adult | aiims_paed), date, hrv_n (HRV readings that
-                 day), label, episode (pid_startdate on exacerbation days)
+  minutes.npy    float32 (stored days, 1440 minutes, 7 signals: CH), blank = NaN
+  days.csv       one row per stored day, in the order of minutes.npy: pid, cohort, group, date,
+                 hr_minutes, hrv_minutes, sample, label, episode, onset_valid, onset_label, onset_id
   static.csv     COPD clinical table as recorded (clinical_table.csv) minus exac_dated (the target);
                  sex as 1 = male, GOLD one-hot (not ordinal)
   episodes.csv   every parsed episode with its sheet text, to check against the sheets
@@ -54,10 +60,11 @@ PAED = SHEETS / "Peadiatric_Exacerbation_LastUpdated(23052026).xlsx"
 AIIMS = Path(os.environ.get("FINAL_DATA", HERE.parent / "final_data")) / "aiims"
 COPD = HERE / "data" / "wearable"
 OUT = HERE / "model_data_exac"
+CH = ["hrv", "hr", "temp", "spo2", "steps", "sleep_active", "steps_active"]   # per minute, as exported
+HORIZON = 3                       # prediction: an onset on d+1 ... d+3 (locked 17 Oct 2026)
+PAED_DAYS = 1                     # children: the onset day only (locked 17 Oct 2026)
 MAX_VISIT_DAYS = 45               # paediatric: a visit later than this after the onset is not trusted
-PAED_DAYS = 2                     # paediatric episode: the onset day and the next day (user, 16 Oct 2026)
 YEARS = (2025, 2026)              # a date outside these years is a typo, not an event
-COLS = ["time", "hr", "hrv", "temp", "steps", "sleep_active", "steps_active"]
 DMY = re.compile(r"(\d{1,2})-(\d{1,2})-(\d{4})")
 
 
@@ -159,25 +166,25 @@ def paed_sheet():
                              why=f"read as onset {onset.date() if pd.notna(onset) else '?'}, visit "
                                  f"{visit.date() if pd.notna(visit) else '?'}: not onset <= visit <= onset + {MAX_VISIT_DAYS} d"))
             continue
-        eps.append(dict(source="paediatric", pid=pid, start=onset, end=onset + pd.Timedelta(days=PAED_DAYS - 1), text=text,
-                        remark="" if pd.isna(r[5]) else str(r[5]).strip()))
+        eps.append(dict(source="paediatric", pid=pid, start=onset, end=onset + pd.Timedelta(days=PAED_DAYS - 1),
+                        text=text, remark="" if pd.isna(r[5]) else str(r[5]).strip()))
     return eps, drop
 
 
-def grid(path, pid, cohort):
-    """10-minute slots from the first to the last HRV reading, as 11_model_data.py does."""
-    m = pd.read_csv(path, usecols=COLS)
+def patient_minutes(path):
+    """-> (days, minutes (days, 1440, CH), HR minutes per day, HRV minutes per day), or None.
+    Only minutes with heart rate 0-300 (pass 1); the other signals only on those minutes; as exported."""
+    m = pd.read_csv(path, usecols=["time"] + CH)
     m["time"] = pd.to_datetime(m.time, format="ISO8601")  # the exports mix ":59" and ":59.000"
-    m.loc[~m.hr.between(0, 300), "hr"] = np.nan          # heart rate kept if 0-300 bpm
-    h = m.time[m.hrv.notna()]
-    if h.empty:
+    m = m[m.hr.between(0, 300)]
+    if m.empty:
         return None
-    m = m[(m.time >= h.min().floor("10min")) & (m.time <= h.max())].set_index("time")
-    r = m.resample("10min")
-    g = pd.DataFrame({"hrv": r.hrv.mean(), "hr": r.hr.mean(), "temp": r.temp.mean(),
-                      "steps": r.steps.sum(min_count=1), "sleep_frac": r.sleep_active.mean().fillna(0),
-                      "steps_active_frac": r.steps_active.mean().fillna(0)})
-    return g.reset_index().assign(pid=pid, cohort=cohort)
+    day = m.time.dt.normalize()
+    days = pd.DatetimeIndex(day.unique()).sort_values()
+    i = days.get_indexer(day)
+    a = np.full((len(days), 1440, len(CH)), np.nan, np.float32)
+    a[i, (m.time.dt.hour * 60 + m.time.dt.minute).to_numpy()] = m[CH].to_numpy(np.float32)
+    return days, a, np.bincount(i, minlength=len(days)), np.bincount(i[m.hrv.notna().to_numpy()], minlength=len(days))
 
 
 if __name__ == "__main__":
@@ -192,56 +199,83 @@ if __name__ == "__main__":
                     pd.DataFrame({"source": "copd datasheet", "pid": E.pid, "start": E.date.dt.normalize(),
                                   "end": E.date.dt.normalize(), "text": "", "remark": ""})],
                    ignore_index=True)
-    DROP = pd.DataFrame(ad_drop + pa_drop, columns=["source", "pid", "text", "why"])
-
     EP["episode"] = EP.pid + "_" + EP.start.dt.strftime("%Y%m%d")
+    DROP = pd.DataFrame(ad_drop + pa_drop, columns=["source", "pid", "text", "why"])
     episode = {}
     for p_, s_, e_, k_ in zip(EP.pid, EP.start, EP.end, EP.episode):
         for d_ in pd.date_range(s_, e_):
             episode.setdefault((p_, d_), k_)              # overlapping episodes: the first one
-    pos = set(episode)
+    onsets = {p_: g.sort_values("start")[["start", "episode"]].drop_duplicates("start") for p_, g in EP.groupby("pid")}
+
     left_out = set(E.attrs["undated_patients"]) | set(DROP.pid)
     listed = set(EP.pid[EP.source != "copd datasheet"]) | set(DROP.pid)
     files = {f.name.split(".")[0]: f for f in AIIMS.glob("*.csv")}
-    aiims = set(files) - left_out                         # every a- and p-series patient
-    copd = wearable_pids() - left_out
     DROP = pd.concat([DROP, pd.DataFrame([dict(source="adult/paediatric", pid=p, text="", why="no AIIMS watch file")
                                           for p in sorted(listed - set(files))])], ignore_index=True)
+    who = [("copd", p, COPD / f"{p}.csv.gz") for p in sorted(wearable_pids() - left_out)] + \
+          [("aiims", p, files[p]) for p in sorted(set(files) - left_out)]       # every a- and p-series patient
 
-    G = [grid(COPD / f"{p}.csv.gz", p, "copd") for p in sorted(copd)] + \
-        [grid(files[p], p, "aiims") for p in sorted(aiims)]
-    G = pd.concat([g for g in G if g is not None], ignore_index=True)
-    D = G.assign(date=G.time.dt.normalize()).groupby(["pid", "cohort", "date"]).hrv.count().rename("hrv_n").reset_index()
-    D = D[D.hrv_n > 0].copy()
+    rows, arrays = [], []
+    for cohort, p, path in who:
+        r = patient_minutes(path)
+        if r is not None:
+            days, a, hr_n, hrv_n = r
+            rows.append(pd.DataFrame({"pid": p, "cohort": cohort, "date": days, "hr_minutes": hr_n, "hrv_minutes": hrv_n}))
+            arrays.append(a)
+    D = pd.concat(rows, ignore_index=True)
+    X = np.lib.format.open_memmap(OUT / "minutes.npy", mode="w+", dtype=np.float32, shape=(len(D), 1440, len(CH)))
+    k = 0
+    for a in arrays:                                      # written one patient at a time: no second copy in memory
+        X[k:k + len(a)] = a
+        k += len(a)
+    X.flush()
+
     key = list(zip(D.pid, D.date))
-    D["label"] = [int(k in pos) for k in key]
-    D["episode"] = [episode.get(k, "") for k in key]
     D["group"] = np.where(D.cohort == "copd", "copd", np.where(D.pid.str.startswith("a"), "aiims_adult", "aiims_paed"))
-    D = D[["pid", "cohort", "group", "date", "hrv_n", "label", "episode"]]
+    D["sample"] = D.hrv_minutes > 0
+    inside = np.array([k_ in episode for k_ in key])
+    D["label"] = (inside & D["sample"]).astype(int)
+    D["episode"] = [episode[k_] if (k_ in episode and s_) else "" for k_, s_ in zip(key, D["sample"])]
+    last_day = D.groupby("pid").date.transform("max")
+    D["onset_valid"] = D["sample"] & ~inside & (D.date <= last_day - pd.Timedelta(days=HORIZON))
+    onset_label, onset_id = np.zeros(len(D), int), np.full(len(D), "", object)
+    for i, (p_, d_, ok) in enumerate(zip(D.pid, D.date, D.onset_valid)):
+        if ok and p_ in onsets:
+            o = onsets[p_]
+            nxt = o[(o.start > d_) & (o.start <= d_ + pd.Timedelta(days=HORIZON))]
+            if len(nxt):                                  # ponytail: the nearest onset; a second one within 3 days is rare
+                onset_label[i], onset_id[i] = 1, nxt.episode.iat[0]
+    D["onset_label"], D["onset_id"] = onset_label, onset_id
+    D = D[["pid", "cohort", "group", "date", "hr_minutes", "hrv_minutes", "sample", "label", "episode",
+           "onset_valid", "onset_label", "onset_id"]]
 
     S = pd.read_csv(HERE / "clinical_table.csv").drop(columns=["exac_dated", "mmrc_text"], errors="ignore")
     S["sex"] = S.sex.map({"male": 1.0, "female": 0.0})
-    S = pd.get_dummies(S, columns=["gold"], dtype=float).set_index("pid").apply(pd.to_numeric, errors="coerce")
+    S = pd.get_dummies(S, columns=[c for c in ["gold"] if c in S], dtype=float).set_index("pid").apply(pd.to_numeric, errors="coerce")
 
-    G.to_csv(OUT / "grid.csv.gz", index=False, float_format="%.4g")
     D.to_csv(OUT / "days.csv", index=False)
     S.to_csv(OUT / "static.csv")
     EP.to_csv(OUT / "episodes.csv", index=False)
     DROP.to_csv(OUT / "dropped.csv", index=False)
+    (OUT / "grid.csv.gz").unlink(missing_ok=True)         # the earlier 10-minute grid (replaced by minutes.npy)
 
     print(f"left out, an event without a readable date: {', '.join(sorted(left_out)) or 'nobody'}")
     for r in DROP.itertuples():
         print(f"  dropped {r.source} {r.pid}: {r.text} - {r.why}")
-    for c, g in D.groupby("group"):
-        pids, have = set(g.pid), set(zip(g.pid, g.date))
-        lost = sum(p in pids and (p, d) not in have for p, d in pos)
-        print(f"{c}: {g.pid.nunique()} patients, {len(g):,} days with HRV, {g.label.sum()} exacerbation days "
-              f"in {g[g.label == 1].episode.nunique()} episodes, {g[g.label == 1].pid.nunique()} patients "
-              f"({lost} more exacerbation days have no HRV)")
+    print(f"{len(D):,} stored days ({X.nbytes / 1e9:.2f} GB of minutes), {D['sample'].sum():,} with HRV")
+    for g, d in D.groupby("group"):
+        s, o = d[d["sample"]], d[d.onset_valid]
+        print(f"{g}: {d.pid.nunique()} patients | detection: {len(s):,} days, {s.label.sum()} exacerbation days, "
+              f"{s[s.label == 1].episode.nunique()} episodes | prediction: {len(o):,} days, {o.onset_label.sum()} "
+              f"before an onset, {o[o.onset_label == 1].onset_id.nunique()} onsets")
     print(f"-> {OUT}")
 
-    assert not D.duplicated(["pid", "date"]).any() and not G.duplicated(["pid", "time"]).any()
+    assert X.shape[0] == len(D) and not D.duplicated(["pid", "date"]).any()
     assert D[D.label == 1].pid.isin(listed | set(E.pid)).all(), "a positive day for a patient in no sheet"
     assert (D.episode != "").eq(D.label == 1).all(), "every exacerbation day, and only those, has an episode"
+    assert not (D.onset_valid & (D.label == 1)).any() and not ((D.onset_label == 1) & ~D.onset_valid).any()
     assert not D.pid.isin(left_out).any(), "a left-out patient is in the data"
-    print("ok: one row per patient-day and slot; positives only from the sheets; no left-out patient")
+    hrv_ok = [np.isfinite(X[i, :, 0]).any() for i in np.flatnonzero(D["sample"].to_numpy())[::97]]
+    assert all(hrv_ok), "a sample day without HRV in minutes.npy"
+    print("ok: one row per patient-day; labels only from the sheets; prediction days outside episodes; "
+          "no left-out patient; sample days hold HRV")

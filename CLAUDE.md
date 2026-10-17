@@ -28,16 +28,12 @@ is there before running anything.
   to forecasting only**; imputation may use both sides of a gap.
 - The model set is final for now (report section 12). `gast` (gap-aware SSM transformer) is the
   user's own design: `models/gast.py` is only a placeholder - ask for the architecture.
-- **Exacerbation classification** (16 Oct 2026, 14_exac_data.py + run_exac.py): COPD + AIIMS (a-series
-  adults + p-series children); ACHE out (no exacerbation record). A sample is a patient-day with HRV.
-  Exacerbations are episodes of one or a few days that recur (the user's asthma context), so: split by
-  patient (no patient in train and test), scores per day and per episode, inputs also relative to the
-  patient's 28-day past baseline, sleep-state features. Train:test 80:20, 90:10, 70:30, 60:40, 50:50.
-  Labels (user, 16 Oct 2026): a/p-series patients in neither sheet had no exacerbation (all days 0);
-  a paediatric episode is the onset day and the next day (`PAED_DAYS = 2`, for now). The data is built
-  on the Mac (AIIMS masters live in ../final_data) and model_data_exac/ is copied to the workstation.
-  Forecasting/imputation-only models (hmm, nlssm, pf, rsdpf, gru_ode_bayes, dglm, ossa, pinode,
-  timesfm3) have no classification output and are not in run_exac.py.
+- **Exacerbation experiments** (16-17 Oct 2026; 14_exac_data.py, run_exac.py, models/gast_v1.py): every
+  decision was asked one by one and is recorded in docs/EXAC_DESIGN.md and docs/GAST_DESIGN.md - read
+  those, and ask before changing a locked decision. In short: detection and 3-day onset prediction;
+  every minute as exported, no summaries, baselines, interpolation or segments; split by patient;
+  the user designs the other 9 models after the first results. The data is built on the Mac (AIIMS
+  masters live in ../final_data) and model_data_exac/ is copied to the workstation.
 
 ## Conventions
 
