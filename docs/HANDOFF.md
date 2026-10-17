@@ -320,6 +320,56 @@ output / results only: no interpretation, no claims, no '% better'. Section 16 i
 7. `python 12_exac_classify.py`, then `12_model_results.py` and `10_report.py` (both themes); write the results into `results.md`.
 8. Later: the user's gast architecture; per-patient x; review of x = 180 with physiology experts.
 
+## 10b. Exacerbation experiments (Mac session, 16-17 Oct 2026) - start here for that work
+
+**Read first:** `docs/EXAC_DESIGN.md` (every decision, asked one by one and locked by the user) and
+`docs/GAST_DESIGN.md` (GAST v1: papers, critique, architecture, tests). Do not change a locked decision
+without asking. Nothing in this section has been run as a real experiment yet.
+
+**What it is.** Two experiments on COPD + AIIMS (a-series adults, p-series children; asthma); ACHE is out
+(no exacerbation record): **detection** (is today an exacerbation day?) and **onset prediction** (does a
+new episode begin in the next 3 days?). The user treats all of them as patients (no disease-specific rules).
+
+**The user's rules that shaped it** (don't reopen):
+- Every data point as exported. No means, medians, baselines, hand-made features, interpolation or
+  180-minute segments (the user rejected all of these; segments suit imputation, not day labels).
+- Only minutes with heart rate 0-300 (pass 1); a sample day needs at least one HRV reading (pass 2).
+- Window = the day + the 6 before it (10,080 minutes). Calendar days as exported, no clock changes.
+- Labels: adult ranges every day; single dates, COPD dates and children's onsets are one day; a/p
+  patients in neither sheet have only normal days; patients with an unreadable date are left out.
+- Split by patient, train:test 80:20, 90:10, 70:30, 60:40, 50:50, 5 seeds each.
+- The other 9 models (hmm, nlssm, pf, rsdpf, gru_ode_bayes, dglm, ossa, pinode, timesfm3) stay out until
+  the user designs them after the first results.
+
+**Files.**
+- `14_exac_data.py` -> `model_data_exac/` (minutes.npy 0.8 GB, days.csv, static.csv, episodes.csv,
+  dropped.csv). Built on the Mac: the AIIMS minute files live in `../final_data/aiims` and the AIIMS
+  exacerbation sheets in `drive-download-*/` (both outside git). On the workstation, copy
+  `model_data_exac/` in; do not rebuild unless those inputs are there.
+- `run_exac.py`: both tasks, every model, scores, 95% intervals, calibration, slices. `--list`, `check`.
+- `models/gast_v1.py`: GAST v1 (`python -m models.gast_v1` runs its self-tests). The old
+  `models/gast.py` placeholder is still used by run_models.py for imputation/forecasting only.
+
+**Data built 17 Oct:** 20,050 stored days, 15,691 with HRV. Detection: adults 125 exacerbation days in
+38 episodes, children 8 in 8, COPD 11 in 11. Prediction: adults 97 days before 36 onsets, children 25
+before 10, COPD 29 before 10. Under 1% positive: use all 5 seeds.
+
+**Tested on the Mac:** parsers, data self-checks, AUROC/AUPRC (hand-written, equal to scikit-learn to
+1e-16), `run_exac.py check` on the COPD set for both tasks: every network model runs. **XGBoost and
+CatBoost have never run** (no working library on the Mac): the workstation `check` is their first run;
+the combined set needs ~4.6 GB of RAM for their input. A NaN bug in GAST was found and fixed (see
+GAST_DESIGN.md section 8).
+
+**To do, in order:**
+1. `pip install -r requirements.txt -r requirements-models.txt`; copy in `model_data_exac/`.
+2. `python -m models.gast_v1` then `python run_exac.py check` (and `check --task onset`). Fix failures
+   in the smallest way, in the failing function.
+3. `python run_exac.py all --task detect`, then `--task onset`; then both with `--set copd` and
+   `--set copd_clinical`; then `python run_exac.py gast2`, `gast --days 3`, `gast --days 14`.
+   Results: `results/exac/<task>/<set>/<model>/...`, `results/exac/summary_<task>.csv`.
+4. Report results as process / input / output / numbers only - no interpretation or claims (the user's
+   rule). Add them to results.md and the README results section.
+
 ## 11. The original session
 
 The full transcript is on the Mac at

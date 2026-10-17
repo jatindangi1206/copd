@@ -63,6 +63,9 @@ Average error (MAE, in the watch's HRV units; lower is better) on the official t
 **Exacerbation from enrolment tests:** best AUC **0.68** (XGBoost, 37 patients, 12 with an exacerbation) — but shuffled
 labels scored as high in 23 of 200 tries, so this is **not** evidence of a link.
 
+**Exacerbation detection and onset prediction from the watch's minutes:** built and checked, not yet run - see
+[docs/EXAC_DESIGN.md](docs/EXAC_DESIGN.md).
+
 <div align="center">
 <img src="figs/12d-tuned-results.png" width="95%" alt="Default against tuned settings on the four official tests">
 <br><sub><b>Default against tuned settings.</b> Grey: default; blue: tuned; dashed: the reference.</sub>
