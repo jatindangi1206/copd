@@ -1,0 +1,182 @@
+CPU: 40 cores, about 1 busy, 39 free. Default leaves 2 for the UI: 38.
+using 18 core(s)
+device: cuda
+copd_clinical / copd: 27 patients | detect 1,372 days, 11 positive | onset 1,306 days, 29 positive
+
+== copd_clinical xgboost (onset) days 7, train 80: test 20, seed 0
+/home/kcdha/Desktop/JD/prediction/copd/.venv/lib/python3.12/site-packages/xgboost/core.py:569: UserWarning: [17:42:54] WARNING: /__w/xgboost/xgboost/src/common/error_msg.cc:62: Falling back to prediction using DMatrix due to mismatched devices. This might lead to higher memory usage and slower performance. XGBoost is running on: cuda:0, while the input data is on: cpu.
+Potential solutions:
+- Use a data structure that matches the device ordinal in the booster.
+- Set the device for booster before call to inplace_predict.
+
+This warning will only be shown once.
+
+  return func(**kwargs)
+  onset  all          AUROC 0.847 [0.71-0.88]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.029
+  onset  copd         AUROC 0.847 [0.72-0.88]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.029
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test20_seed0
+
+== copd_clinical xgboost (onset) days 7, train 80: test 20, seed 1
+  onset  all          AUROC 0.795 [0.61-0.91]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.016
+  onset  copd         AUROC 0.795 [0.61-0.92]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.016
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test20_seed1
+
+== copd_clinical xgboost (onset) days 7, train 80: test 20, seed 2
+  onset  all          AUROC 0.307 [0.20-0.43]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.064
+  onset  copd         AUROC 0.307 [0.24-0.43]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.064
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test20_seed2
+
+== copd_clinical xgboost (onset) days 7, train 80: test 20, seed 3
+  onset  all          AUROC 0.462 [0.40-0.64]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.024
+  onset  copd         AUROC 0.462 [0.39-0.63]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.024
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test20_seed3
+
+== copd_clinical xgboost (onset) days 7, train 80: test 20, seed 4
+  onset  all          AUROC 0.322 [0.24-0.42]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.016
+  onset  copd         AUROC 0.322 [0.23-0.42]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.016
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test20_seed4
+
+== copd_clinical xgboost (onset) days 7, train 90: test 10, seed 0
+  onset  all          AUROC 0.877 [0.72-0.88]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.033
+  onset  copd         AUROC 0.877 [0.72-0.88]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.033
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test10_seed0
+
+== copd_clinical xgboost (onset) days 7, train 90: test 10, seed 1
+  onset  all          AUROC 0.904 [0.80-0.93]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.025
+  onset  copd         AUROC 0.904 [0.80-0.93]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.025
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test10_seed1
+
+== copd_clinical xgboost (onset) days 7, train 90: test 10, seed 2
+  onset  all          AUROC 0.436 [0.44-0.46]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.095
+  onset  copd         AUROC 0.436 [0.44-0.46]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.095
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test10_seed2
+
+== copd_clinical xgboost (onset) days 7, train 90: test 10, seed 3
+  onset  all          AUROC 0.535 [0.47-0.59]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.065
+  onset  copd         AUROC 0.535 [0.47-0.59]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.065
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test10_seed3
+
+== copd_clinical xgboost (onset) days 7, train 90: test 10, seed 4
+  onset  all          AUROC 0.466 [0.38-0.53]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.021
+  onset  copd         AUROC 0.466 [0.38-0.53]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.021
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test10_seed4
+
+== copd_clinical xgboost (onset) days 7, train 70: test 30, seed 0
+  onset  all          AUROC 0.599 [0.23-0.78]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.023
+  onset  copd         AUROC 0.599 [0.22-0.78]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.023
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test30_seed0
+
+== copd_clinical xgboost (onset) days 7, train 70: test 30, seed 1
+  onset  all          AUROC 0.670 [0.34-0.99]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.020
+  onset  copd         AUROC 0.670 [0.35-0.99]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.020
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test30_seed1
+
+== copd_clinical xgboost (onset) days 7, train 70: test 30, seed 2
+  onset  all          AUROC 0.626 [0.36-0.97]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.036
+  onset  copd         AUROC 0.626 [0.35-0.98]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.036
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test30_seed2
+
+== copd_clinical xgboost (onset) days 7, train 70: test 30, seed 3
+  onset  all          AUROC 0.375 [0.06-0.72]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.021
+  onset  copd         AUROC 0.375 [0.06-0.72]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.021
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test30_seed3
+
+== copd_clinical xgboost (onset) days 7, train 70: test 30, seed 4
+  onset  all          AUROC 0.584 [0.25-0.87]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.024
+  onset  copd         AUROC 0.584 [0.25-0.86]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.024
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test30_seed4
+
+== copd_clinical xgboost (onset) days 7, train 60: test 40, seed 0
+  onset  all          AUROC 0.630 [0.31-0.79]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.022
+  onset  copd         AUROC 0.630 [0.29-0.78]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.022
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test40_seed0
+
+== copd_clinical xgboost (onset) days 7, train 60: test 40, seed 1
+  onset  all          AUROC 0.625 [0.24-0.99]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.018
+  onset  copd         AUROC 0.625 [0.23-0.99]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.018
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test40_seed1
+
+== copd_clinical xgboost (onset) days 7, train 60: test 40, seed 2
+  onset  all          AUROC 0.627 [0.32-0.98]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.032
+  onset  copd         AUROC 0.627 [0.33-0.98]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.032
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test40_seed2
+
+== copd_clinical xgboost (onset) days 7, train 60: test 40, seed 3
+  onset  all          AUROC 0.404 [0.07-0.80]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.016
+  onset  copd         AUROC 0.404 [0.07-0.81]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.016
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test40_seed3
+
+== copd_clinical xgboost (onset) days 7, train 60: test 40, seed 4
+  onset  all          AUROC 0.574 [0.21-0.87]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.023
+  onset  copd         AUROC 0.574 [0.20-0.87]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.023
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test40_seed4
+
+== copd_clinical xgboost (onset) days 7, train 50: test 50, seed 0
+  onset  all          AUROC 0.406 [0.15-0.58]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.023
+  onset  copd         AUROC 0.406 [0.15-0.58]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.023
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test50_seed0
+
+== copd_clinical xgboost (onset) days 7, train 50: test 50, seed 1
+  onset  all          AUROC 0.571 [0.03-0.97]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.016
+  onset  copd         AUROC 0.571 [0.04-0.97]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.016
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test50_seed1
+
+== copd_clinical xgboost (onset) days 7, train 50: test 50, seed 2
+  onset  all          AUROC 0.459 [0.25-0.67]  PPV 0.000  sens 0.000  spec 0.997  events 0/6  false alarms 0.1/30 d  Brier 0.028
+  onset  copd         AUROC 0.459 [0.25-0.68]  PPV 0.000  sens 0.000  spec 0.997  events 0/6  false alarms 0.1/30 d  Brier 0.028
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test50_seed2
+
+== copd_clinical xgboost (onset) days 7, train 50: test 50, seed 3
+  onset  all          AUROC 0.493 [0.25-0.70]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.018
+  onset  copd         AUROC 0.493 [0.24-0.74]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.018
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test50_seed3
+
+== copd_clinical xgboost (onset) days 7, train 50: test 50, seed 4
+  onset  all          AUROC 0.692 [0.39-0.96]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.021
+  onset  copd         AUROC 0.692 [0.40-0.97]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.021
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/copd_clinical/xgboost/test50_seed4
+
+onset accuracy, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct     10    20     30     40     50
+model                                     
+xgboost   0.952  0.97  0.975  0.977  0.978
+
+onset ppv, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct   50
+model        
+xgboost   0.0
+
+onset sensitivity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct   10   20   30   40   50
+model                            
+xgboost   0.0  0.0  0.0  0.0  0.0
+
+onset specificity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct   10   20   30   40     50
+model                              
+xgboost   1.0  1.0  1.0  1.0  0.999
+
+onset auroc, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct     10     20     30     40     50
+model                                      
+xgboost   0.644  0.547  0.571  0.572  0.524
+
+onset auprc, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct     10     20     30    40     50
+model                                     
+xgboost   0.127  0.072  0.155  0.19  0.056
+
+onset brier, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct     10    20     30     40     50
+model                                     
+xgboost   0.048  0.03  0.025  0.022  0.021
+
+onset event_sensitivity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct   10   20   30   40   50
+model                            
+xgboost   0.0  0.0  0.0  0.0  0.0
+
+onset false_alarms_per_30_days, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct   10   20   30   40     50
+model                              
+xgboost   0.0  0.0  0.0  0.0  0.018

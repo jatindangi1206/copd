@@ -1,0 +1,433 @@
+CPU: 40 cores, about 1 busy, 39 free. Default leaves 2 for the UI: 38.
+using 18 core(s)
+device: cuda
+copd_clinical / copd: 27 patients | detect 1,372 days, 11 positive | onset 1,306 days, 29 positive
+
+== copd_clinical gast_nogap (detect) days 7, train 80: test 20, seed 0
+    step 100: loss 0.3615, held-back AUROC 0.349
+    step 200: loss 0.5693, held-back AUROC 0.376
+    step 300: loss 0.2034, held-back AUROC 0.222
+    step 400: loss 0.2455, held-back AUROC 0.339
+    step 500: loss 0.1698, held-back AUROC 0.339
+    step 600: loss 0.0242, held-back AUROC 0.444
+    step 700: loss 0.3580, held-back AUROC 0.651
+    step 800: loss 0.0064, held-back AUROC 0.317
+    step 900: loss 0.0005, held-back AUROC 0.423
+    step 1000: loss 0.0003, held-back AUROC 0.608
+    step 1100: loss 0.0003, held-back AUROC 0.259
+    step 1200: loss 0.1454, held-back AUROC 0.603
+  detect all          AUROC 0.861 [0.80-0.89]  PPV 0.000  sens 0.000  spec 0.981  events 0/2  false alarms 0.6/30 d  Brier 0.026
+  detect copd         AUROC 0.861 [0.79-0.89]  PPV 0.000  sens 0.000  spec 0.981  events 0/2  false alarms 0.6/30 d  Brier 0.026
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test20_seed0
+
+== copd_clinical gast_nogap (detect) days 7, train 80: test 20, seed 1
+    step 100: loss 0.3444, held-back AUROC 0.184
+    step 200: loss 0.1419, held-back AUROC 0.19
+    step 300: loss 0.0113, held-back AUROC 0.246
+    step 400: loss 0.0003, held-back AUROC 0.636
+    step 500: loss 0.0000, held-back AUROC 0.521
+    step 600: loss 0.0001, held-back AUROC 0.514
+    step 700: loss 0.0032, held-back AUROC 0.773
+    step 800: loss 0.0000, held-back AUROC 0.275
+    step 900: loss 0.0000, held-back AUROC 0.793
+    step 1000: loss 0.2755, held-back AUROC 0.907
+    step 1100: loss 0.0003, held-back AUROC 0.492
+    step 1200: loss 0.0000, held-back AUROC 0.731
+    step 1300: loss 0.0002, held-back AUROC 0.87
+    step 1400: loss 0.0000, held-back AUROC 0.851
+    step 1500: loss 0.0000, held-back AUROC 0.818
+  detect all          AUROC 0.787 [0.66-0.85]  PPV 0.000  sens 0.000  spec 0.992  events 0/2  false alarms 0.2/30 d  Brier 0.011
+  detect copd         AUROC 0.787 [0.67-0.86]  PPV 0.000  sens 0.000  spec 0.992  events 0/2  false alarms 0.2/30 d  Brier 0.011
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test20_seed1
+
+== copd_clinical gast_nogap (detect) days 7, train 80: test 20, seed 2
+    step 100: loss 0.1253, held-back AUROC 0.286
+    step 200: loss 0.1846, held-back AUROC 0.24
+    step 300: loss 0.1210, held-back AUROC 0.693
+    step 400: loss 0.1013, held-back AUROC 0.667
+    step 500: loss 0.1424, held-back AUROC 0.443
+    step 600: loss 0.0728, held-back AUROC 0.198
+    step 700: loss 0.1710, held-back AUROC 0.5
+    step 800: loss 0.0079, held-back AUROC 0.328
+  detect all          AUROC 0.462 [0.37-0.58]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.020
+  detect copd         AUROC 0.462 [0.37-0.58]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.020
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test20_seed2
+
+== copd_clinical gast_nogap (detect) days 7, train 80: test 20, seed 3
+    step 100: loss 0.2884, held-back AUROC 0.974
+    step 200: loss 0.1844, held-back AUROC 0.963
+    step 300: loss 0.0171, held-back AUROC 0.958
+    step 400: loss 0.0600, held-back AUROC 0.965
+    step 500: loss 0.2347, held-back AUROC 0.969
+    step 600: loss 0.0012, held-back AUROC 0.982
+    step 700: loss 0.0002, held-back AUROC 0.971
+    step 800: loss 0.2236, held-back AUROC 0.949
+    step 900: loss 0.1738, held-back AUROC 0.98
+    step 1000: loss 0.0010, held-back AUROC 0.969
+    step 1100: loss 0.0001, held-back AUROC 0.983
+    step 1200: loss 0.0001, held-back AUROC 0.971
+    step 1300: loss 0.0011, held-back AUROC 0.869
+    step 1400: loss 0.0011, held-back AUROC 0.976
+    step 1500: loss 0.0036, held-back AUROC 0.976
+    step 1600: loss 0.2009, held-back AUROC 0.976
+  detect all          AUROC 0.216 [0.19-0.34]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.007
+  detect copd         AUROC 0.216 [0.19-0.33]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.007
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test20_seed3
+
+== copd_clinical gast_nogap (detect) days 7, train 80: test 20, seed 4
+    step 100: loss 0.0839, held-back AUROC 0.205
+    step 200: loss 0.0062, held-back AUROC 0.491
+    step 300: loss 0.1335, held-back AUROC 0.543
+    step 400: loss 0.0025, held-back AUROC 0.513
+    step 500: loss 0.0163, held-back AUROC 0.397
+    step 600: loss 0.0004, held-back AUROC 0.457
+    step 700: loss 0.3291, held-back AUROC 0.321
+    step 800: loss 0.0002, held-back AUROC 0.312
+  detect all          AUROC 0.432 [0.20-0.60]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.010
+  detect copd         AUROC 0.432 [0.20-0.59]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.010
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test20_seed4
+
+== copd_clinical gast_nogap (detect) days 7, train 90: test 10, seed 0
+    step 100: loss 0.1679, held-back AUROC 0.902
+    step 200: loss 0.1263, held-back AUROC 0.879
+    step 300: loss 0.0026, held-back AUROC 0.898
+    step 400: loss 0.0004, held-back AUROC 0.823
+    step 500: loss 0.1310, held-back AUROC 0.79
+    step 600: loss 0.0031, held-back AUROC 0.683
+  detect all          AUROC 0.631 [0.58-0.63]  PPV 0.000  sens 0.000  spec 0.973  events 0/2  false alarms 0.8/30 d  Brier 0.036
+  detect copd         AUROC 0.631 [0.58-0.63]  PPV 0.000  sens 0.000  spec 0.973  events 0/2  false alarms 0.8/30 d  Brier 0.036
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test10_seed0
+
+== copd_clinical gast_nogap (detect) days 7, train 90: test 10, seed 1
+    step 100: loss 0.2086, held-back AUROC 0.453
+    step 200: loss 0.0337, held-back AUROC 0.406
+    step 300: loss 0.0326, held-back AUROC 0.459
+    step 400: loss 0.1529, held-back AUROC 0.382
+    step 500: loss 0.0025, held-back AUROC 0.424
+    step 600: loss 0.0001, held-back AUROC 0.435
+    step 700: loss 0.2105, held-back AUROC 0.553
+    step 800: loss 0.0000, held-back AUROC 0.565
+    step 900: loss 0.0001, held-back AUROC 0.471
+    step 1000: loss 0.2068, held-back AUROC 0.624
+    step 1100: loss 0.0000, held-back AUROC 0.435
+    step 1200: loss 0.0017, held-back AUROC 0.741
+    step 1300: loss 0.3315, held-back AUROC 0.759
+    step 1400: loss 0.0000, held-back AUROC 0.618
+    step 1500: loss 0.0000, held-back AUROC 0.653
+    step 1600: loss 0.0001, held-back AUROC 0.682
+    step 1700: loss 0.0002, held-back AUROC 0.829
+    step 1800: loss 0.0000, held-back AUROC 0.671
+    step 1900: loss 0.0000, held-back AUROC 0.688
+    step 2000: loss 0.0001, held-back AUROC 0.706
+    step 2100: loss 0.0000, held-back AUROC 0.824
+    step 2200: loss 0.0000, held-back AUROC 0.829
+  detect all          AUROC 0.035 [0.02-0.08]  PPV 0.000  sens 0.000  spec 0.979  events 0/2  false alarms 0.6/30 d  Brier 0.027
+  detect copd         AUROC 0.035 [0.02-0.08]  PPV 0.000  sens 0.000  spec 0.979  events 0/2  false alarms 0.6/30 d  Brier 0.027
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test10_seed1
+
+== copd_clinical gast_nogap (detect) days 7, train 90: test 10, seed 2
+    step 100: loss 0.0587, held-back AUROC 0.359
+    step 200: loss 0.1332, held-back AUROC 0.195
+    step 300: loss 0.0753, held-back AUROC 0.536
+    step 400: loss 0.3893, held-back AUROC 0.477
+    step 500: loss 0.1362, held-back AUROC 0.369
+    step 600: loss 0.2276, held-back AUROC 0.405
+    step 700: loss 0.0060, held-back AUROC 0.256
+    step 800: loss 0.0026, held-back AUROC 0.313
+  detect all          AUROC 0.449 [0.43-0.47]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.028
+  detect copd         AUROC 0.449 [0.43-0.47]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.028
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test10_seed2
+
+== copd_clinical gast_nogap (detect) days 7, train 90: test 10, seed 3
+    step 100: loss 0.1779, held-back AUROC 0.979
+    step 200: loss 0.3865, held-back AUROC 0.967
+    step 300: loss 0.0566, held-back AUROC 0.951
+    step 400: loss 0.0592, held-back AUROC 0.963
+    step 500: loss 0.0010, held-back AUROC 0.953
+    step 600: loss 0.0024, held-back AUROC 0.951
+  detect all          AUROC 0.633 [0.61-0.74]  PPV 0.000  sens 0.000  spec 0.980  events 0/1  false alarms 0.6/30 d  Brier 0.031
+  detect copd         AUROC 0.633 [0.61-0.74]  PPV 0.000  sens 0.000  spec 0.980  events 0/1  false alarms 0.6/30 d  Brier 0.031
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test10_seed3
+
+== copd_clinical gast_nogap (detect) days 7, train 90: test 10, seed 4
+    step 100: loss 0.1990, held-back AUROC 0.438
+    step 200: loss 0.0887, held-back AUROC 0.582
+    step 300: loss 0.0670, held-back AUROC 0.56
+    step 400: loss 0.0054, held-back AUROC 0.652
+    step 500: loss 0.0008, held-back AUROC 0.684
+    step 600: loss 0.0013, held-back AUROC 0.766
+    step 700: loss 0.0004, held-back AUROC 0.612
+    step 800: loss 0.0004, held-back AUROC 0.632
+    step 900: loss 0.0001, held-back AUROC 0.547
+    step 1000: loss 0.0000, held-back AUROC 0.679
+    step 1100: loss 0.0001, held-back AUROC 0.657
+  detect all          AUROC 0.237 [0.20-0.29]  PPV 0.000  sens 0.000  spec 0.992  events 0/3  false alarms 0.2/30 d  Brier 0.020
+  detect copd         AUROC 0.237 [0.20-0.29]  PPV 0.000  sens 0.000  spec 0.992  events 0/3  false alarms 0.2/30 d  Brier 0.020
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test10_seed4
+
+== copd_clinical gast_nogap (detect) days 7, train 70: test 30, seed 0
+    step 100: loss 0.1167, held-back AUROC 0.653
+    step 200: loss 0.2111, held-back AUROC 0.565
+    step 300: loss 0.1031, held-back AUROC 0.541
+    step 400: loss 0.0003, held-back AUROC 0.608
+    step 500: loss 0.0004, held-back AUROC 0.502
+    step 600: loss 0.0003, held-back AUROC 0.579
+  detect all          AUROC 0.411 [0.22-0.73]  PPV 0.000  sens 0.000  spec 0.990  events 0/3  false alarms 0.3/30 d  Brier 0.016
+  detect copd         AUROC 0.411 [0.21-0.74]  PPV 0.000  sens 0.000  spec 0.990  events 0/3  false alarms 0.3/30 d  Brier 0.016
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test30_seed0
+
+== copd_clinical gast_nogap (detect) days 7, train 70: test 30, seed 1
+    step 100: loss 0.3429, held-back AUROC 0.099
+    step 200: loss 0.1096, held-back AUROC 0.027
+    step 300: loss 0.0462, held-back AUROC 0.072
+    step 400: loss 0.3607, held-back AUROC 0.045
+    step 500: loss 0.0112, held-back AUROC 0.063
+    step 600: loss 0.0604, held-back AUROC 0.081
+  detect all          AUROC 0.749 [0.49-0.97]  PPV 0.061  sens 0.500  spec 0.947  events 2/4  false alarms 1.6/30 d  Brier 0.052
+  detect copd         AUROC 0.749 [0.49-0.97]  PPV 0.061  sens 0.500  spec 0.947  events 2/4  false alarms 1.6/30 d  Brier 0.052
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test30_seed1
+
+== copd_clinical gast_nogap (detect) days 7, train 70: test 30, seed 2
+    step 100: loss 0.1271, held-back AUROC 0.171
+    step 200: loss 0.1659, held-back AUROC 0.491
+    step 300: loss 0.9641, held-back AUROC 0.548
+    step 400: loss 0.0750, held-back AUROC 0.633
+    step 500: loss 0.0046, held-back AUROC 0.644
+    step 600: loss 0.1552, held-back AUROC 0.587
+    step 700: loss 0.0014, held-back AUROC 0.705
+    step 800: loss 0.0003, held-back AUROC 0.683
+    step 900: loss 0.0007, held-back AUROC 0.708
+    step 1000: loss 0.0002, held-back AUROC 0.665
+    step 1100: loss 0.0004, held-back AUROC 0.601
+    step 1200: loss 0.0714, held-back AUROC 0.633
+    step 1300: loss 0.0029, held-back AUROC 0.605
+    step 1400: loss 0.0013, held-back AUROC 0.577
+  detect all          AUROC 0.654 [0.45-0.83]  PPV 0.000  sens 0.000  spec 0.991  events 0/4  false alarms 0.3/30 d  Brier 0.019
+  detect copd         AUROC 0.654 [0.44-0.82]  PPV 0.000  sens 0.000  spec 0.991  events 0/4  false alarms 0.3/30 d  Brier 0.019
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test30_seed2
+
+== copd_clinical gast_nogap (detect) days 7, train 70: test 30, seed 3
+    step 100: loss 0.0337, held-back AUROC 0.694
+    step 200: loss 0.8295, held-back AUROC 0.596
+    step 300: loss 0.2927, held-back AUROC 0.833
+    step 400: loss 0.0852, held-back AUROC 0.508
+    step 500: loss 0.1939, held-back AUROC 0.604
+    step 600: loss 0.0016, held-back AUROC 0.563
+    step 700: loss 0.0275, held-back AUROC 0.523
+    step 800: loss 0.0003, held-back AUROC 0.531
+  detect all          AUROC 0.594 [0.53-0.68]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.007
+  detect copd         AUROC 0.594 [0.53-0.68]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.007
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test30_seed3
+
+== copd_clinical gast_nogap (detect) days 7, train 70: test 30, seed 4
+    step 100: loss 0.5667, held-back AUROC 0.455
+    step 200: loss 0.1262, held-back AUROC 0.308
+    step 300: loss 0.5777, held-back AUROC 0.308
+    step 400: loss 0.1927, held-back AUROC 0.389
+    step 500: loss 0.0002, held-back AUROC 0.566
+    step 600: loss 0.4128, held-back AUROC 0.389
+    step 700: loss 0.0003, held-back AUROC 0.444
+    step 800: loss 0.0005, held-back AUROC 0.475
+    step 900: loss 0.0008, held-back AUROC 0.586
+    step 1000: loss 0.0470, held-back AUROC 0.667
+    step 1100: loss 0.0018, held-back AUROC 0.697
+    step 1200: loss 0.0005, held-back AUROC 0.54
+    step 1300: loss 0.0011, held-back AUROC 0.505
+    step 1400: loss 0.0009, held-back AUROC 0.717
+    step 1500: loss 0.0001, held-back AUROC 0.525
+    step 1600: loss 0.0006, held-back AUROC 0.621
+    step 1700: loss 0.0004, held-back AUROC 0.778
+    step 1800: loss 0.0010, held-back AUROC 0.652
+    step 1900: loss 0.0007, held-back AUROC 0.475
+    step 2000: loss 0.0001, held-back AUROC 0.626
+    step 2100: loss 0.0000, held-back AUROC 0.742
+    step 2200: loss 0.1503, held-back AUROC 0.722
+  detect all          AUROC 0.488 [0.22-0.68]  PPV 0.000  sens 0.000  spec 0.953  events 0/5  false alarms 1.4/30 d  Brier 0.051
+  detect copd         AUROC 0.488 [0.23-0.68]  PPV 0.000  sens 0.000  spec 0.953  events 0/5  false alarms 1.4/30 d  Brier 0.051
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test30_seed4
+
+== copd_clinical gast_nogap (detect) days 7, train 60: test 40, seed 0
+    step 100: loss 0.2440, held-back AUROC 0.019
+    step 200: loss 0.2113, held-back AUROC 0.056
+    step 300: loss 0.0025, held-back AUROC 0.075
+    step 400: loss 0.0872, held-back AUROC 0.125
+    step 500: loss 0.0239, held-back AUROC 0.044
+    step 600: loss 0.1662, held-back AUROC 0.047
+    step 700: loss 0.0006, held-back AUROC 0.194
+    step 800: loss 0.0800, held-back AUROC 0.1
+    step 900: loss 0.0267, held-back AUROC 0.06
+    step 1000: loss 0.0002, held-back AUROC 0.451
+    step 1100: loss 0.0001, held-back AUROC 0.304
+    step 1200: loss 0.0003, held-back AUROC 0.138
+    step 1300: loss 0.0006, held-back AUROC 0.144
+    step 1400: loss 0.0482, held-back AUROC 0.317
+    step 1500: loss 0.7871, held-back AUROC 0.191
+  detect all          AUROC 0.403 [0.17-0.50]  PPV 0.000  sens 0.000  spec 0.991  events 0/3  false alarms 0.3/30 d  Brier 0.014
+  detect copd         AUROC 0.403 [0.15-0.50]  PPV 0.000  sens 0.000  spec 0.991  events 0/3  false alarms 0.3/30 d  Brier 0.014
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test40_seed0
+
+== copd_clinical gast_nogap (detect) days 7, train 60: test 40, seed 1
+    step 100: loss 0.2913, held-back AUROC 0.739
+    step 200: loss 0.0384, held-back AUROC 0.342
+    step 300: loss 0.4292, held-back AUROC 0.063
+    step 400: loss 0.1558, held-back AUROC 0.108
+    step 500: loss 0.0005, held-back AUROC 0.216
+    step 600: loss 0.0003, held-back AUROC 0.234
+  detect all          AUROC 0.791 [0.59-0.99]  PPV 0.030  sens 0.500  spec 0.897  events 2/4  false alarms 3.1/30 d  Brier 0.078
+  detect copd         AUROC 0.791 [0.58-0.99]  PPV 0.030  sens 0.500  spec 0.897  events 2/4  false alarms 3.1/30 d  Brier 0.078
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test40_seed1
+
+== copd_clinical gast_nogap (detect) days 7, train 60: test 40, seed 2
+    step 100: loss 0.3078, held-back AUROC 0.634
+    step 200: loss 0.1264, held-back AUROC 0.531
+    step 300: loss 0.1071, held-back AUROC 0.593
+    step 400: loss 0.0076, held-back AUROC 0.433
+    step 500: loss 0.0060, held-back AUROC 0.608
+    step 600: loss 0.1598, held-back AUROC 0.459
+  detect all          AUROC 0.904 [0.79-0.98]  PPV 0.071  sens 0.500  spec 0.932  events 2/4  false alarms 2.0/30 d  Brier 0.051
+  detect copd         AUROC 0.904 [0.78-0.98]  PPV 0.071  sens 0.500  spec 0.932  events 2/4  false alarms 2.0/30 d  Brier 0.051
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test40_seed2
+
+== copd_clinical gast_nogap (detect) days 7, train 60: test 40, seed 3
+    step 100: loss 0.1422, held-back AUROC 0.673
+    step 200: loss 0.2215, held-back AUROC 0.498
+    step 300: loss 0.1366, held-back AUROC 0.558
+    step 400: loss 0.0088, held-back AUROC 0.788
+    step 500: loss 0.1428, held-back AUROC 0.629
+    step 600: loss 0.0011, held-back AUROC 0.448
+    step 700: loss 0.0021, held-back AUROC 0.55
+    step 800: loss 0.0004, held-back AUROC 0.304
+    step 900: loss 0.0001, held-back AUROC 0.317
+  detect all          AUROC 0.651 [0.59-0.73]  PPV 0.000  sens 0.000  spec 0.998  events 0/2  false alarms 0.1/30 d  Brier 0.006
+  detect copd         AUROC 0.651 [0.58-0.74]  PPV 0.000  sens 0.000  spec 0.998  events 0/2  false alarms 0.1/30 d  Brier 0.006
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test40_seed3
+
+== copd_clinical gast_nogap (detect) days 7, train 60: test 40, seed 4
+    step 100: loss 0.2001, held-back AUROC 0.439
+    step 200: loss 0.0018, held-back AUROC 0.316
+    step 300: loss 0.0044, held-back AUROC 0.455
+    step 400: loss 0.0002, held-back AUROC 0.684
+    step 500: loss 0.0000, held-back AUROC 0.668
+    step 600: loss 0.0002, held-back AUROC 0.779
+    step 700: loss 0.0002, held-back AUROC 0.743
+    step 800: loss 0.0000, held-back AUROC 0.672
+    step 900: loss 0.0001, held-back AUROC 0.526
+    step 1000: loss 0.0000, held-back AUROC 0.68
+    step 1100: loss 0.0000, held-back AUROC 0.636
+  detect all          AUROC 0.373 [0.09-0.60]  PPV 0.000  sens 0.000  spec 0.996  events 0/5  false alarms 0.1/30 d  Brier 0.013
+  detect copd         AUROC 0.373 [0.09-0.59]  PPV 0.000  sens 0.000  spec 0.996  events 0/5  false alarms 0.1/30 d  Brier 0.013
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test40_seed4
+
+== copd_clinical gast_nogap (detect) days 7, train 50: test 50, seed 0
+    step 100: loss 0.1202, held-back AUROC 0.207
+    step 200: loss 0.1804, held-back AUROC 0.27
+    step 300: loss 0.0316, held-back AUROC 0.21
+    step 400: loss 0.0066, held-back AUROC 0.194
+    step 500: loss 0.0028, held-back AUROC 0.165
+    step 600: loss 0.0002, held-back AUROC 0.115
+    step 700: loss 0.0009, held-back AUROC 0.116
+  detect all          AUROC 0.359 [0.15-0.50]  PPV 0.000  sens 0.000  spec 0.996  events 0/4  false alarms 0.1/30 d  Brier 0.010
+  detect copd         AUROC 0.359 [0.15-0.50]  PPV 0.000  sens 0.000  spec 0.996  events 0/4  false alarms 0.1/30 d  Brier 0.010
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test50_seed0
+
+== copd_clinical gast_nogap (detect) days 7, train 50: test 50, seed 1
+    step 100: loss 0.1873, held-back AUROC 0.299
+    step 200: loss 0.1250, held-back AUROC 0.31
+    step 300: loss 0.0759, held-back AUROC 0.161
+    step 400: loss 0.0011, held-back AUROC 0.184
+    step 500: loss 0.0003, held-back AUROC 0.253
+    step 600: loss 0.0002, held-back AUROC 0.333
+    step 700: loss 0.0001, held-back AUROC 0.287
+    step 800: loss 0.0003, held-back AUROC 0.23
+    step 900: loss 0.5919, held-back AUROC 0.172
+    step 1000: loss 0.0000, held-back AUROC 0.241
+    step 1100: loss 0.0013, held-back AUROC 0.264
+  detect all          AUROC 0.509 [0.10-0.78]  PPV 0.000  sens 0.000  spec 0.989  events 0/5  false alarms 0.3/30 d  Brier 0.015
+  detect copd         AUROC 0.509 [0.11-0.78]  PPV 0.000  sens 0.000  spec 0.989  events 0/5  false alarms 0.3/30 d  Brier 0.015
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test50_seed1
+
+== copd_clinical gast_nogap (detect) days 7, train 50: test 50, seed 2
+    step 100: loss 0.1053, held-back AUROC 0.411
+    step 200: loss 0.0007, held-back AUROC 0.426
+    step 300: loss 0.0001, held-back AUROC 0.421
+    step 400: loss 0.0001, held-back AUROC 0.434
+    step 500: loss 0.0000, held-back AUROC 0.435
+    step 600: loss 0.0000, held-back AUROC 0.449
+    step 700: loss 0.0000, held-back AUROC 0.436
+    step 800: loss 0.0000, held-back AUROC 0.432
+    step 900: loss 0.0000, held-back AUROC 0.439
+    step 1000: loss 0.0000, held-back AUROC 0.444
+    step 1100: loss 0.0000, held-back AUROC 0.446
+  detect all          AUROC 0.466 [0.17-0.70]  PPV 0.000  sens 0.000  spec 0.983  events 0/6  false alarms 0.5/30 d  Brier 0.023
+  detect copd         AUROC 0.466 [0.17-0.70]  PPV 0.000  sens 0.000  spec 0.983  events 0/6  false alarms 0.5/30 d  Brier 0.023
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test50_seed2
+
+== copd_clinical gast_nogap (detect) days 7, train 50: test 50, seed 3
+    step 100: loss 0.1690, held-back AUROC 0.283
+    step 200: loss 0.3209, held-back AUROC 0.151
+    step 300: loss 0.0009, held-back AUROC 0.16
+    step 400: loss 0.0007, held-back AUROC 0.16
+    step 500: loss 0.0000, held-back AUROC 0.18
+    step 600: loss 0.0000, held-back AUROC 0.199
+  detect all          AUROC 0.413 [0.10-0.84]  PPV 0.000  sens 0.000  spec 0.988  events 0/4  false alarms 0.3/30 d  Brier 0.012
+  detect copd         AUROC 0.413 [0.11-0.83]  PPV 0.000  sens 0.000  spec 0.988  events 0/4  false alarms 0.3/30 d  Brier 0.012
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test50_seed3
+
+== copd_clinical gast_nogap (detect) days 7, train 50: test 50, seed 4
+    step 100: loss 0.2629, held-back AUROC 0.577
+    step 200: loss 0.0017, held-back AUROC 0.644
+    step 300: loss 0.0010, held-back AUROC 0.557
+    step 400: loss 0.0013, held-back AUROC 0.66
+    step 500: loss 0.0000, held-back AUROC 0.531
+    step 600: loss 0.0000, held-back AUROC 0.567
+    step 700: loss 0.0000, held-back AUROC 0.309
+    step 800: loss 0.0000, held-back AUROC 0.335
+    step 900: loss 0.0000, held-back AUROC 0.335
+  detect all          AUROC 0.463 [0.34-0.58]  PPV 0.000  sens 0.000  spec 0.991  events 0/7  false alarms 0.3/30 d  Brier 0.016
+  detect copd         AUROC 0.463 [0.35-0.58]  PPV 0.000  sens 0.000  spec 0.991  events 0/7  false alarms 0.3/30 d  Brier 0.016
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/gast_nogap/test50_seed4
+
+detect accuracy, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct       10     20     30     40     50
+model                                        
+gast_nogap  0.969  0.985  0.968  0.957  0.983
+
+detect ppv, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct     10   20     30    40   50
+model                                 
+gast_nogap  0.0  0.0  0.015  0.02  0.0
+
+detect sensitivity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct     10   20   30   40   50
+model                              
+gast_nogap  0.0  0.0  0.1  0.2  0.0
+
+detect specificity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct       10     20     30     40    50
+model                                       
+gast_nogap  0.985  0.995  0.976  0.963  0.99
+
+detect auroc, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct       10     20     30     40     50
+model                                        
+gast_nogap  0.397  0.552  0.579  0.625  0.442
+
+detect auprc, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct       10     20     30    40     50
+model                                       
+gast_nogap  0.026  0.022  0.021  0.05  0.009
+
+detect brier, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct       10     20     30     40     50
+model                                        
+gast_nogap  0.028  0.015  0.029  0.033  0.015
+
+detect event_sensitivity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct     10   20   30   40   50
+model                              
+gast_nogap  0.0  0.0  0.1  0.2  0.0
+
+detect false_alarms_per_30_days, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct      10     20     30     40     50
+model                                       
+gast_nogap  0.46  0.156  0.715  1.115  0.309

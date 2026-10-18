@@ -1,0 +1,197 @@
+CPU: 40 cores, about 1 busy, 39 free. Default leaves 2 for the UI: 38.
+using 18 core(s)
+device: cuda
+copd_clinical / copd: 27 patients | detect 1,372 days, 11 positive | onset 1,306 days, 29 positive
+
+== copd_clinical catboost (detect) days 7, train 80: test 20, seed 0
+  detect all          AUROC 0.634 [0.53-0.68]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.009
+  detect copd         AUROC 0.634 [0.53-0.68]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.009
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test20_seed0
+
+== copd_clinical catboost (detect) days 7, train 80: test 20, seed 1
+  detect all          AUROC 0.805 [0.71-0.96]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.005
+  detect copd         AUROC 0.805 [0.71-0.96]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.005
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test20_seed1
+
+== copd_clinical catboost (detect) days 7, train 80: test 20, seed 2
+Warning: less than 75% GPU memory available for training. Free: 17392.0625 Total: 24078.5625
+  detect all          AUROC 0.705 [0.63-0.74]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.019
+  detect copd         AUROC 0.705 [0.63-0.74]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.019
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test20_seed2
+
+== copd_clinical catboost (detect) days 7, train 80: test 20, seed 3
+Warning: less than 75% GPU memory available for training. Free: 17089.125 Total: 24078.5625
+  detect all          AUROC 0.037 [0.03-0.06]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.007
+  detect copd         AUROC 0.037 [0.03-0.06]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.007
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test20_seed3
+
+== copd_clinical catboost (detect) days 7, train 80: test 20, seed 4
+Warning: less than 75% GPU memory available for training. Free: 17063.1875 Total: 24078.5625
+  detect all          AUROC 0.910 [0.86-0.93]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.009
+  detect copd         AUROC 0.910 [0.86-0.94]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.009
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test20_seed4
+
+== copd_clinical catboost (detect) days 7, train 90: test 10, seed 0
+Warning: less than 75% GPU memory available for training. Free: 17062.4375 Total: 24078.5625
+  detect all          AUROC 0.828 [0.74-0.83]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.011
+  detect copd         AUROC 0.828 [0.74-0.83]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.011
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test10_seed0
+
+== copd_clinical catboost (detect) days 7, train 90: test 10, seed 1
+Warning: less than 75% GPU memory available for training. Free: 17062.3125 Total: 24078.5625
+  detect all          AUROC 0.955 [0.94-0.96]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.008
+  detect copd         AUROC 0.955 [0.94-0.96]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.008
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test10_seed1
+
+== copd_clinical catboost (detect) days 7, train 90: test 10, seed 2
+Warning: less than 75% GPU memory available for training. Free: 17062.5 Total: 24078.5625
+  detect all          AUROC 0.681 [0.65-0.68]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.028
+  detect copd         AUROC 0.681 [0.65-0.68]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.028
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test10_seed2
+
+== copd_clinical catboost (detect) days 7, train 90: test 10, seed 3
+Warning: less than 75% GPU memory available for training. Free: 17062.375 Total: 24078.5625
+  detect all          AUROC 0.122 [0.12-0.16]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.020
+  detect copd         AUROC 0.122 [0.12-0.16]  PPV nan  sens 0.000  spec 1.000  events 0/1  false alarms 0.0/30 d  Brier 0.020
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test10_seed3
+
+== copd_clinical catboost (detect) days 7, train 90: test 10, seed 4
+Warning: less than 75% GPU memory available for training. Free: 17062.5 Total: 24078.5625
+  detect all          AUROC 0.596 [0.55-0.64]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.012
+  detect copd         AUROC 0.596 [0.55-0.64]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.012
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test10_seed4
+
+== copd_clinical catboost (detect) days 7, train 70: test 30, seed 0
+Warning: less than 75% GPU memory available for training. Free: 17062.375 Total: 24078.5625
+  detect all          AUROC 0.562 [0.16-0.80]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.007
+  detect copd         AUROC 0.562 [0.17-0.79]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.007
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test30_seed0
+
+== copd_clinical catboost (detect) days 7, train 70: test 30, seed 1
+Warning: less than 75% GPU memory available for training. Free: 17060.625 Total: 24078.5625
+  detect all          AUROC 0.741 [0.48-0.91]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.007
+  detect copd         AUROC 0.741 [0.48-0.91]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.007
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test30_seed1
+
+== copd_clinical catboost (detect) days 7, train 70: test 30, seed 2
+Warning: less than 75% GPU memory available for training. Free: 17062.375 Total: 24078.5625
+  detect all          AUROC 0.686 [0.29-0.98]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.012
+  detect copd         AUROC 0.686 [0.28-0.98]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.012
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test30_seed2
+
+== copd_clinical catboost (detect) days 7, train 70: test 30, seed 3
+Warning: less than 75% GPU memory available for training. Free: 17062.25 Total: 24078.5625
+  detect all          AUROC 0.585 [0.41-0.80]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.006
+  detect copd         AUROC 0.585 [0.41-0.79]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.006
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test30_seed3
+
+== copd_clinical catboost (detect) days 7, train 70: test 30, seed 4
+Warning: less than 75% GPU memory available for training. Free: 17060.5625 Total: 24078.5625
+  detect all          AUROC 0.794 [0.61-0.92]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.011
+  detect copd         AUROC 0.794 [0.61-0.93]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.011
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test30_seed4
+
+== copd_clinical catboost (detect) days 7, train 60: test 40, seed 0
+Warning: less than 75% GPU memory available for training. Free: 17062.3125 Total: 24078.5625
+  detect all          AUROC 0.615 [0.16-0.85]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.007
+  detect copd         AUROC 0.615 [0.15-0.84]  PPV nan  sens 0.000  spec 1.000  events 0/3  false alarms 0.0/30 d  Brier 0.007
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test40_seed0
+
+== copd_clinical catboost (detect) days 7, train 60: test 40, seed 1
+Warning: less than 75% GPU memory available for training. Free: 17062.4375 Total: 24078.5625
+  detect all          AUROC 0.776 [0.59-0.92]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.006
+  detect copd         AUROC 0.776 [0.58-0.93]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.006
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test40_seed1
+
+== copd_clinical catboost (detect) days 7, train 60: test 40, seed 2
+Warning: less than 75% GPU memory available for training. Free: 17060.4375 Total: 24078.5625
+  detect all          AUROC 0.806 [0.61-0.97]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.010
+  detect copd         AUROC 0.806 [0.61-0.96]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.010
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test40_seed2
+
+== copd_clinical catboost (detect) days 7, train 60: test 40, seed 3
+Warning: less than 75% GPU memory available for training. Free: 17058.0625 Total: 24078.5625
+  detect all          AUROC 0.299 [0.02-0.70]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.005
+  detect copd         AUROC 0.299 [0.02-0.70]  PPV nan  sens 0.000  spec 1.000  events 0/2  false alarms 0.0/30 d  Brier 0.005
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test40_seed3
+
+== copd_clinical catboost (detect) days 7, train 60: test 40, seed 4
+Warning: less than 75% GPU memory available for training. Free: 17062.25 Total: 24078.5625
+  detect all          AUROC 0.677 [0.56-0.78]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.010
+  detect copd         AUROC 0.677 [0.56-0.78]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.010
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test40_seed4
+
+== copd_clinical catboost (detect) days 7, train 50: test 50, seed 0
+Warning: less than 75% GPU memory available for training. Free: 17062.375 Total: 24078.5625
+  detect all          AUROC 0.283 [0.16-0.43]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.007
+  detect copd         AUROC 0.283 [0.17-0.43]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.007
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test50_seed0
+
+== copd_clinical catboost (detect) days 7, train 50: test 50, seed 1
+Warning: less than 75% GPU memory available for training. Free: 17062.25 Total: 24078.5625
+  detect all          AUROC 0.630 [0.20-0.97]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.005
+  detect copd         AUROC 0.630 [0.22-0.97]  PPV nan  sens 0.000  spec 1.000  events 0/5  false alarms 0.0/30 d  Brier 0.005
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test50_seed1
+
+== copd_clinical catboost (detect) days 7, train 50: test 50, seed 2
+Warning: less than 75% GPU memory available for training. Free: 17058.5 Total: 24078.5625
+  detect all          AUROC 0.643 [0.46-0.98]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.008
+  detect copd         AUROC 0.643 [0.47-0.98]  PPV nan  sens 0.000  spec 1.000  events 0/6  false alarms 0.0/30 d  Brier 0.008
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test50_seed2
+
+== copd_clinical catboost (detect) days 7, train 50: test 50, seed 3
+Warning: less than 75% GPU memory available for training. Free: 17031.875 Total: 24078.5625
+  detect all          AUROC 0.672 [0.19-0.93]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.006
+  detect copd         AUROC 0.672 [0.19-0.94]  PPV nan  sens 0.000  spec 1.000  events 0/4  false alarms 0.0/30 d  Brier 0.006
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test50_seed3
+
+== copd_clinical catboost (detect) days 7, train 50: test 50, seed 4
+Warning: less than 75% GPU memory available for training. Free: 16998.25 Total: 24078.5625
+  detect all          AUROC 0.716 [0.50-0.94]  PPV nan  sens 0.000  spec 1.000  events 0/7  false alarms 0.0/30 d  Brier 0.008
+  detect copd         AUROC 0.716 [0.49-0.94]  PPV nan  sens 0.000  spec 1.000  events 0/7  false alarms 0.0/30 d  Brier 0.008
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/copd_clinical/catboost/test50_seed4
+
+detect accuracy, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct     10    20     30     40     50
+model                                     
+catboost  0.984  0.99  0.991  0.992  0.993
+
+detect ppv, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+Empty DataFrame
+Columns: []
+Index: []
+
+detect sensitivity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct   10   20   30   40   50
+model                            
+catboost  0.0  0.0  0.0  0.0  0.0
+
+detect specificity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct   10   20   30   40   50
+model                            
+catboost  1.0  1.0  1.0  1.0  1.0
+
+detect auroc, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct     10     20     30     40     50
+model                                      
+catboost  0.636  0.618  0.674  0.634  0.589
+
+detect auprc, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct     10     20     30     40     50
+model                                      
+catboost  0.069  0.036  0.074  0.027  0.025
+
+detect brier, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct     10    20     30     40     50
+model                                     
+catboost  0.016  0.01  0.009  0.008  0.007
+
+detect event_sensitivity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct   10   20   30   40   50
+model                            
+catboost  0.0  0.0  0.0  0.0  0.0
+
+detect false_alarms_per_30_days, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct   10   20   30   40   50
+model                            
+catboost  0.0  0.0  0.0  0.0  0.0

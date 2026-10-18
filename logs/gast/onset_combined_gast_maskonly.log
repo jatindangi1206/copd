@@ -1,0 +1,491 @@
+CPU: 40 cores, about 1 busy, 39 free. Default leaves 2 for the UI: 38.
+using 18 core(s)
+device: cuda
+combined / aiims_adult: 110 patients | detect 9,338 days, 125 positive | onset 9,009 days, 97 positive
+combined / aiims_paed: 54 patients | detect 4,981 days, 8 positive | onset 4,881 days, 25 positive
+combined / copd: 27 patients | detect 1,372 days, 11 positive | onset 1,306 days, 29 positive
+
+== combined gast_maskonly (onset) days 7, train 80: test 20, seed 0
+    step 100: loss 0.7167, held-back AUROC 0.351
+    step 200: loss 0.6233, held-back AUROC 0.434
+    step 300: loss 0.6883, held-back AUROC 0.45
+    step 400: loss 0.4965, held-back AUROC 0.478
+    step 500: loss 0.4101, held-back AUROC 0.495
+    step 600: loss 0.5302, held-back AUROC 0.525
+    step 700: loss 0.6459, held-back AUROC 0.522
+    step 800: loss 0.5240, held-back AUROC 0.497
+    step 900: loss 0.3065, held-back AUROC 0.504
+    step 1000: loss 0.3506, held-back AUROC 0.487
+    step 1100: loss 0.2697, held-back AUROC 0.542
+    step 1200: loss 0.2624, held-back AUROC 0.475
+    step 1300: loss 0.1942, held-back AUROC 0.498
+    step 1400: loss 0.4028, held-back AUROC 0.56
+    step 1500: loss 0.3645, held-back AUROC 0.487
+    step 1600: loss 0.1248, held-back AUROC 0.556
+    step 1700: loss 0.1453, held-back AUROC 0.599
+    step 1800: loss 0.0971, held-back AUROC 0.63
+    step 1900: loss 0.1104, held-back AUROC 0.595
+    step 2000: loss 0.1810, held-back AUROC 0.614
+    step 2100: loss 0.1287, held-back AUROC 0.588
+    step 2200: loss 0.3897, held-back AUROC 0.645
+    step 2300: loss 0.0367, held-back AUROC 0.61
+    step 2400: loss 0.1287, held-back AUROC 0.577
+    step 2500: loss 0.0696, held-back AUROC 0.644
+    step 2600: loss 0.1443, held-back AUROC 0.609
+    step 2700: loss 0.1197, held-back AUROC 0.602
+  onset  all          AUROC 0.698 [0.39-0.88]  PPV 0.042  sens 0.400  spec 0.922  events 5/10  false alarms 2.3/30 d  Brier 0.060
+  onset  copd         AUROC 0.950 [0.92-0.97]  PPV 0.176  sens 0.500  spec 0.956  events 2/2  false alarms 1.3/30 d  Brier 0.034
+  onset  aiims_adult  AUROC 0.479 [0.15-0.76]  PPV 0.019  sens 0.250  spec 0.910  events 1/5  false alarms 2.7/30 d  Brier 0.068
+  onset  aiims_paed   AUROC 0.874 [0.56-0.95]  PPV 0.063  sens 0.571  spec 0.933  events 2/3  false alarms 2.0/30 d  Brier 0.055
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test20_seed0
+
+== combined gast_maskonly (onset) days 7, train 80: test 20, seed 1
+    step 100: loss 0.6731, held-back AUROC 0.567
+    step 200: loss 0.4738, held-back AUROC 0.516
+    step 300: loss 0.5674, held-back AUROC 0.615
+    step 400: loss 0.5090, held-back AUROC 0.614
+    step 500: loss 0.4035, held-back AUROC 0.631
+    step 600: loss 0.3462, held-back AUROC 0.613
+    step 700: loss 0.5343, held-back AUROC 0.621
+    step 800: loss 0.2938, held-back AUROC 0.601
+    step 900: loss 0.3851, held-back AUROC 0.567
+    step 1000: loss 0.3936, held-back AUROC 0.582
+  onset  all          AUROC 0.598 [0.41-0.84]  PPV 0.009  sens 0.458  spec 0.585  events 5/10  false alarms 12.4/30 d  Brier 0.243
+  onset  copd         AUROC 0.361 [0.29-0.47]  PPV 0.000  sens 0.000  spec 0.732  events 0/2  false alarms 8.0/30 d  Brier 0.215
+  onset  aiims_adult  AUROC 0.752 [0.53-0.97]  PPV 0.009  sens 0.692  spec 0.501  events 3/5  false alarms 15.0/30 d  Brier 0.286
+  onset  aiims_paed   AUROC 0.702 [0.41-0.94]  PPV 0.010  sens 0.400  spec 0.769  events 2/3  false alarms 6.9/30 d  Brier 0.145
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test20_seed1
+
+== combined gast_maskonly (onset) days 7, train 80: test 20, seed 2
+    step 100: loss 0.6141, held-back AUROC 0.42
+    step 200: loss 0.4796, held-back AUROC 0.542
+    step 300: loss 0.4102, held-back AUROC 0.498
+    step 400: loss 0.5331, held-back AUROC 0.508
+    step 500: loss 0.4541, held-back AUROC 0.531
+    step 600: loss 0.3567, held-back AUROC 0.584
+    step 700: loss 0.4516, held-back AUROC 0.544
+    step 800: loss 0.3876, held-back AUROC 0.573
+    step 900: loss 0.5905, held-back AUROC 0.533
+    step 1000: loss 0.3923, held-back AUROC 0.555
+    step 1100: loss 0.2281, held-back AUROC 0.583
+  onset  all          AUROC 0.443 [0.29-0.59]  PPV 0.007  sens 0.212  spec 0.670  events 5/13  false alarms 9.9/30 d  Brier 0.198
+  onset  copd         AUROC 0.622 [0.47-0.69]  PPV 0.013  sens 0.200  spec 0.683  events 1/2  false alarms 9.5/30 d  Brier 0.151
+  onset  aiims_adult  AUROC 0.387 [0.22-0.58]  PPV 0.010  sens 0.240  spec 0.627  events 4/9  false alarms 11.2/30 d  Brier 0.218
+  onset  aiims_paed   AUROC 0.411 [0.27-0.68]  PPV 0.000  sens 0.000  spec 0.744  events 0/2  false alarms 7.7/30 d  Brier 0.172
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test20_seed2
+
+== combined gast_maskonly (onset) days 7, train 80: test 20, seed 3
+    step 100: loss 0.6552, held-back AUROC 0.532
+    step 200: loss 0.5308, held-back AUROC 0.779
+    step 300: loss 0.5700, held-back AUROC 0.795
+    step 400: loss 0.4794, held-back AUROC 0.731
+    step 500: loss 0.5652, held-back AUROC 0.657
+    step 600: loss 0.4322, held-back AUROC 0.694
+    step 700: loss 0.4196, held-back AUROC 0.715
+    step 800: loss 0.5302, held-back AUROC 0.769
+  onset  all          AUROC 0.457 [0.29-0.62]  PPV 0.006  sens 0.269  spec 0.638  events 4/9  false alarms 10.9/30 d  Brier 0.191
+  onset  copd         AUROC 0.634 [0.42-0.71]  PPV 0.033  sens 0.333  spec 0.726  events 2/2  false alarms 8.2/30 d  Brier 0.156
+  onset  aiims_adult  AUROC 0.409 [0.18-0.66]  PPV 0.006  sens 0.294  spec 0.569  events 2/6  false alarms 12.9/30 d  Brier 0.216
+  onset  aiims_paed   AUROC 0.455 [0.38-0.58]  PPV 0.000  sens 0.000  spec 0.734  events 0/1  false alarms 8.0/30 d  Brier 0.156
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test20_seed3
+
+== combined gast_maskonly (onset) days 7, train 80: test 20, seed 4
+    step 100: loss 0.6061, held-back AUROC 0.628
+    step 200: loss 0.4832, held-back AUROC 0.536
+    step 300: loss 0.5193, held-back AUROC 0.506
+    step 400: loss 0.5927, held-back AUROC 0.514
+    step 500: loss 0.3139, held-back AUROC 0.519
+    step 600: loss 0.3351, held-back AUROC 0.532
+  onset  all          AUROC 0.528 [0.24-0.77]  PPV 0.009  sens 0.536  spec 0.541  events 6/12  false alarms 13.8/30 d  Brier 0.231
+  onset  copd         AUROC 0.896 [0.80-0.92]  PPV 0.035  sens 1.000  spec 0.661  events 2/2  false alarms 10.2/30 d  Brier 0.186
+  onset  aiims_adult  AUROC 0.318 [0.09-0.88]  PPV 0.003  sens 0.200  spec 0.467  events 1/6  false alarms 16.0/30 d  Brier 0.253
+  onset  aiims_paed   AUROC 0.745 [0.01-0.88]  PPV 0.018  sens 0.875  spec 0.646  events 3/4  false alarms 10.6/30 d  Brier 0.204
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test20_seed4
+
+== combined gast_maskonly (onset) days 7, train 90: test 10, seed 0
+    step 100: loss 0.6920, held-back AUROC 0.532
+    step 200: loss 0.6499, held-back AUROC 0.471
+    step 300: loss 0.7162, held-back AUROC 0.58
+    step 400: loss 0.6224, held-back AUROC 0.585
+    step 500: loss 0.5848, held-back AUROC 0.557
+    step 600: loss 0.5456, held-back AUROC 0.547
+    step 700: loss 0.5081, held-back AUROC 0.552
+    step 800: loss 0.5243, held-back AUROC 0.546
+    step 900: loss 0.2320, held-back AUROC 0.583
+  onset  all          AUROC 0.709 [0.61-0.82]  PPV 0.021  sens 0.273  spec 0.815  events 3/8  false alarms 5.6/30 d  Brier 0.156
+  onset  copd         AUROC 0.755 [0.73-0.87]  PPV 0.000  sens 0.000  spec 0.896  events 0/2  false alarms 3.1/30 d  Brier 0.105
+  onset  aiims_adult  AUROC 0.700 [0.45-0.92]  PPV 0.018  sens 0.333  spec 0.773  events 2/3  false alarms 6.8/30 d  Brier 0.178
+  onset  aiims_paed   AUROC 0.781 [0.65-0.86]  PPV 0.031  sens 0.429  spec 0.834  events 1/3  false alarms 5.0/30 d  Brier 0.148
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test10_seed0
+
+== combined gast_maskonly (onset) days 7, train 90: test 10, seed 1
+    step 100: loss 0.6453, held-back AUROC 0.603
+    step 200: loss 0.5652, held-back AUROC 0.586
+    step 300: loss 0.6751, held-back AUROC 0.596
+    step 400: loss 0.5459, held-back AUROC 0.625
+    step 500: loss 0.5165, held-back AUROC 0.629
+    step 600: loss 0.4590, held-back AUROC 0.645
+    step 700: loss 0.7127, held-back AUROC 0.607
+    step 800: loss 0.4066, held-back AUROC 0.62
+    step 900: loss 0.3349, held-back AUROC 0.63
+    step 1000: loss 0.3921, held-back AUROC 0.628
+    step 1100: loss 0.2686, held-back AUROC 0.623
+  onset  all          AUROC 0.473 [0.34-0.73]  PPV 0.006  sens 0.263  spec 0.540  events 3/7  false alarms 13.8/30 d  Brier 0.250
+  onset  copd         AUROC 0.468 [0.41-0.50]  PPV 0.000  sens 0.000  spec 0.750  events 0/2  false alarms 7.5/30 d  Brier 0.180
+  onset  aiims_adult  AUROC 0.540 [0.30-0.92]  PPV 0.006  sens 0.444  spec 0.479  events 2/3  false alarms 15.6/30 d  Brier 0.277
+  onset  aiims_paed   AUROC 0.609 [0.46-0.86]  PPV 0.005  sens 0.250  spec 0.649  events 1/2  false alarms 10.5/30 d  Brier 0.202
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test10_seed1
+
+== combined gast_maskonly (onset) days 7, train 90: test 10, seed 2
+    step 100: loss 0.6993, held-back AUROC 0.46
+    step 200: loss 0.6791, held-back AUROC 0.551
+    step 300: loss 0.6466, held-back AUROC 0.596
+    step 400: loss 0.4841, held-back AUROC 0.614
+    step 500: loss 0.5762, held-back AUROC 0.638
+    step 600: loss 0.4832, held-back AUROC 0.596
+    step 700: loss 0.3722, held-back AUROC 0.623
+    step 800: loss 0.5547, held-back AUROC 0.622
+    step 900: loss 0.3422, held-back AUROC 0.605
+    step 1000: loss 0.5381, held-back AUROC 0.586
+  onset  all          AUROC 0.464 [0.27-0.62]  PPV 0.014  sens 0.500  spec 0.465  events 6/9  false alarms 16.1/30 d  Brier 0.284
+  onset  copd         AUROC 0.391 [0.35-0.39]  PPV 0.078  sens 1.000  spec 0.119  events 2/2  false alarms 26.4/30 d  Brier 0.441
+  onset  aiims_adult  AUROC 0.358 [0.09-0.50]  PPV 0.008  sens 0.286  spec 0.429  events 2/5  false alarms 17.1/30 d  Brier 0.308
+  onset  aiims_paed   AUROC 0.563 [0.42-0.83]  PPV 0.007  sens 0.667  spec 0.552  events 2/2  false alarms 13.4/30 d  Brier 0.232
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test10_seed2
+
+== combined gast_maskonly (onset) days 7, train 90: test 10, seed 3
+    step 100: loss 0.6067, held-back AUROC 0.584
+    step 200: loss 0.5913, held-back AUROC 0.622
+    step 300: loss 0.5322, held-back AUROC 0.655
+    step 400: loss 0.4748, held-back AUROC 0.616
+    step 500: loss 0.4216, held-back AUROC 0.623
+    step 600: loss 0.3404, held-back AUROC 0.629
+    step 700: loss 0.2904, held-back AUROC 0.662
+    step 800: loss 0.3643, held-back AUROC 0.675
+    step 900: loss 0.4174, held-back AUROC 0.64
+    step 1000: loss 0.2666, held-back AUROC 0.66
+    step 1100: loss 0.3687, held-back AUROC 0.656
+    step 1200: loss 0.3921, held-back AUROC 0.656
+    step 1300: loss 0.2900, held-back AUROC 0.637
+  onset  all          AUROC 0.444 [0.25-0.66]  PPV 0.009  sens 0.111  spec 0.866  events 2/6  false alarms 4.0/30 d  Brier 0.100
+  onset  copd         AUROC 0.413 [0.35-0.49]  PPV 0.050  sens 0.167  spec 0.779  events 1/2  false alarms 6.6/30 d  Brier 0.162
+  onset  aiims_adult  AUROC 0.457 [0.08-0.71]  PPV 0.007  sens 0.111  spec 0.849  events 1/3  false alarms 4.5/30 d  Brier 0.108
+  onset  aiims_paed   AUROC 0.440 [0.31-0.62]  PPV 0.000  sens 0.000  spec 0.910  events 0/1  false alarms 2.7/30 d  Brier 0.074
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test10_seed3
+
+== combined gast_maskonly (onset) days 7, train 90: test 10, seed 4
+    step 100: loss 0.6674, held-back AUROC 0.476
+    step 200: loss 0.5237, held-back AUROC 0.47
+    step 300: loss 0.6216, held-back AUROC 0.542
+    step 400: loss 0.5726, held-back AUROC 0.517
+    step 500: loss 0.7096, held-back AUROC 0.585
+    step 600: loss 0.6443, held-back AUROC 0.532
+    step 700: loss 0.4066, held-back AUROC 0.51
+    step 800: loss 0.3099, held-back AUROC 0.555
+    step 900: loss 0.4700, held-back AUROC 0.489
+    step 1000: loss 0.2908, held-back AUROC 0.579
+  onset  all          AUROC 0.433 [0.03-0.71]  PPV 0.005  sens 0.150  spec 0.723  events 2/8  false alarms 8.3/30 d  Brier 0.170
+  onset  copd         AUROC 0.769 [0.61-0.86]  PPV 0.032  sens 0.600  spec 0.635  events 2/2  false alarms 11.0/30 d  Brier 0.189
+  onset  aiims_adult  AUROC 0.120 [0.02-0.34]  PPV 0.000  sens 0.000  spec 0.727  events 0/3  false alarms 8.2/30 d  Brier 0.176
+  onset  aiims_paed   AUROC 0.527 [0.03-0.69]  PPV 0.000  sens 0.000  spec 0.745  events 0/3  false alarms 7.7/30 d  Brier 0.155
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test10_seed4
+
+== combined gast_maskonly (onset) days 7, train 70: test 30, seed 0
+    step 100: loss 0.6664, held-back AUROC 0.603
+    step 200: loss 0.5460, held-back AUROC 0.464
+    step 300: loss 0.4924, held-back AUROC 0.418
+    step 400: loss 0.5247, held-back AUROC 0.48
+    step 500: loss 0.4180, held-back AUROC 0.481
+    step 600: loss 0.2635, held-back AUROC 0.489
+  onset  all          AUROC 0.471 [0.37-0.62]  PPV 0.008  sens 0.173  spec 0.764  events 4/20  false alarms 7.1/30 d  Brier 0.213
+  onset  copd         AUROC 0.438 [0.35-0.52]  PPV 0.000  sens 0.000  spec 0.831  events 0/4  false alarms 5.1/30 d  Brier 0.208
+  onset  aiims_adult  AUROC 0.538 [0.38-0.83]  PPV 0.012  sens 0.233  spec 0.802  events 3/12  false alarms 5.9/30 d  Brier 0.210
+  onset  aiims_paed   AUROC 0.388 [0.02-0.54]  PPV 0.005  sens 0.200  spec 0.656  events 1/4  false alarms 10.3/30 d  Brier 0.222
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test30_seed0
+
+== combined gast_maskonly (onset) days 7, train 70: test 30, seed 1
+    step 100: loss 0.5567, held-back AUROC 0.57
+    step 200: loss 0.6481, held-back AUROC 0.554
+    step 300: loss 0.3985, held-back AUROC 0.563
+    step 400: loss 0.3592, held-back AUROC 0.543
+    step 500: loss 0.5249, held-back AUROC 0.574
+    step 600: loss 0.4032, held-back AUROC 0.52
+    step 700: loss 0.3234, held-back AUROC 0.516
+    step 800: loss 0.2692, held-back AUROC 0.598
+    step 900: loss 0.3525, held-back AUROC 0.571
+    step 1000: loss 0.3014, held-back AUROC 0.518
+    step 1100: loss 0.2083, held-back AUROC 0.517
+    step 1200: loss 0.3000, held-back AUROC 0.537
+    step 1300: loss 0.2639, held-back AUROC 0.583
+  onset  all          AUROC 0.549 [0.41-0.67]  PPV 0.012  sens 0.419  spec 0.675  events 8/17  false alarms 9.7/30 d  Brier 0.185
+  onset  copd         AUROC 0.492 [0.17-0.57]  PPV 0.016  sens 0.111  spec 0.765  events 1/3  false alarms 7.1/30 d  Brier 0.170
+  onset  aiims_adult  AUROC 0.653 [0.52-0.76]  PPV 0.014  sens 0.615  spec 0.629  events 6/10  false alarms 11.1/30 d  Brier 0.205
+  onset  aiims_paed   AUROC 0.402 [0.17-0.69]  PPV 0.003  sens 0.125  spec 0.760  events 1/4  false alarms 7.2/30 d  Brier 0.145
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test30_seed1
+
+== combined gast_maskonly (onset) days 7, train 70: test 30, seed 2
+    step 100: loss 0.5602, held-back AUROC 0.557
+    step 200: loss 0.3611, held-back AUROC 0.583
+    step 300: loss 0.5479, held-back AUROC 0.563
+    step 400: loss 0.5622, held-back AUROC 0.622
+    step 500: loss 0.4870, held-back AUROC 0.564
+    step 600: loss 0.3086, held-back AUROC 0.591
+    step 700: loss 0.3836, held-back AUROC 0.582
+    step 800: loss 0.3329, held-back AUROC 0.524
+    step 900: loss 0.1279, held-back AUROC 0.607
+  onset  all          AUROC 0.452 [0.31-0.59]  PPV 0.003  sens 0.061  spec 0.784  events 3/19  false alarms 6.5/30 d  Brier 0.153
+  onset  copd         AUROC 0.518 [0.22-0.78]  PPV 0.000  sens 0.000  spec 0.919  events 0/4  false alarms 2.4/30 d  Brier 0.086
+  onset  aiims_adult  AUROC 0.328 [0.18-0.50]  PPV 0.001  sens 0.034  spec 0.706  events 1/11  false alarms 8.8/30 d  Brier 0.201
+  onset  aiims_paed   AUROC 0.660 [0.23-0.93]  PPV 0.009  sens 0.222  spec 0.861  events 2/4  false alarms 4.2/30 d  Brier 0.101
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test30_seed2
+
+== combined gast_maskonly (onset) days 7, train 70: test 30, seed 3
+    step 100: loss 0.6221, held-back AUROC 0.6
+    step 200: loss 0.4731, held-back AUROC 0.651
+    step 300: loss 0.5266, held-back AUROC 0.679
+    step 400: loss 0.3713, held-back AUROC 0.692
+    step 500: loss 0.3589, held-back AUROC 0.695
+    step 600: loss 0.3876, held-back AUROC 0.649
+    step 700: loss 0.4444, held-back AUROC 0.605
+    step 800: loss 0.6239, held-back AUROC 0.641
+    step 900: loss 0.5141, held-back AUROC 0.697
+    step 1000: loss 0.3572, held-back AUROC 0.702
+    step 1100: loss 0.3582, held-back AUROC 0.642
+    step 1200: loss 0.1866, held-back AUROC 0.642
+    step 1300: loss 0.2328, held-back AUROC 0.604
+    step 1400: loss 0.3532, held-back AUROC 0.584
+    step 1500: loss 0.2067, held-back AUROC 0.582
+  onset  all          AUROC 0.580 [0.44-0.70]  PPV 0.014  sens 0.412  spec 0.711  events 8/18  false alarms 8.7/30 d  Brier 0.147
+  onset  copd         AUROC 0.636 [0.39-0.91]  PPV 0.032  sens 0.222  spec 0.780  events 1/3  false alarms 6.6/30 d  Brier 0.140
+  onset  aiims_adult  AUROC 0.562 [0.37-0.70]  PPV 0.016  sens 0.514  spec 0.619  events 7/13  false alarms 11.4/30 d  Brier 0.186
+  onset  aiims_paed   AUROC 0.419 [0.32-0.53]  PPV 0.000  sens 0.000  spec 0.860  events 0/2  false alarms 4.2/30 d  Brier 0.078
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test30_seed3
+
+== combined gast_maskonly (onset) days 7, train 70: test 30, seed 4
+    step 100: loss 0.5866, held-back AUROC 0.431
+    step 200: loss 0.5690, held-back AUROC 0.461
+    step 300: loss 0.5701, held-back AUROC 0.415
+    step 400: loss 0.5245, held-back AUROC 0.398
+    step 500: loss 0.5471, held-back AUROC 0.429
+    step 600: loss 0.5576, held-back AUROC 0.389
+    step 700: loss 0.2956, held-back AUROC 0.379
+  onset  all          AUROC 0.501 [0.30-0.68]  PPV 0.008  sens 0.487  spec 0.566  events 8/17  false alarms 13.0/30 d  Brier 0.213
+  onset  copd         AUROC 0.675 [0.39-0.84]  PPV 0.028  sens 0.625  spec 0.642  events 2/3  false alarms 10.7/30 d  Brier 0.160
+  onset  aiims_adult  AUROC 0.404 [0.16-0.70]  PPV 0.005  sens 0.333  spec 0.479  events 3/9  false alarms 15.6/30 d  Brier 0.234
+  onset  aiims_paed   AUROC 0.612 [0.11-0.83]  PPV 0.013  sens 0.700  spec 0.692  events 3/5  false alarms 9.2/30 d  Brier 0.193
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test30_seed4
+
+== combined gast_maskonly (onset) days 7, train 60: test 40, seed 0
+    step 100: loss 0.6673, held-back AUROC 0.602
+    step 200: loss 0.6589, held-back AUROC 0.463
+    step 300: loss 0.5500, held-back AUROC 0.536
+    step 400: loss 0.3898, held-back AUROC 0.524
+    step 500: loss 0.3845, held-back AUROC 0.492
+    step 600: loss 0.3177, held-back AUROC 0.519
+  onset  all          AUROC 0.470 [0.35-0.60]  PPV 0.003  sens 0.052  spec 0.855  events 2/22  false alarms 4.3/30 d  Brier 0.222
+  onset  copd         AUROC 0.527 [0.26-0.74]  PPV 0.000  sens 0.000  spec 0.929  events 0/4  false alarms 2.1/30 d  Brier 0.206
+  onset  aiims_adult  AUROC 0.461 [0.28-0.62]  PPV 0.004  sens 0.056  spec 0.863  events 1/14  false alarms 4.1/30 d  Brier 0.222
+  onset  aiims_paed   AUROC 0.591 [0.03-0.73]  PPV 0.003  sens 0.100  spec 0.819  events 1/4  false alarms 5.4/30 d  Brier 0.225
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test40_seed0
+
+== combined gast_maskonly (onset) days 7, train 60: test 40, seed 1
+    step 100: loss 0.7089, held-back AUROC 0.717
+    step 200: loss 0.6027, held-back AUROC 0.628
+    step 300: loss 0.5738, held-back AUROC 0.568
+    step 400: loss 0.4900, held-back AUROC 0.576
+    step 500: loss 0.4876, held-back AUROC 0.681
+    step 600: loss 0.5316, held-back AUROC 0.671
+  onset  all          AUROC 0.502 [0.38-0.63]  PPV 0.008  sens 0.592  spec 0.395  events 14/19  false alarms 18.1/30 d  Brier 0.260
+  onset  copd         AUROC 0.364 [0.13-0.44]  PPV 0.014  sens 0.333  spec 0.465  events 2/3  false alarms 16.1/30 d  Brier 0.249
+  onset  aiims_adult  AUROC 0.545 [0.38-0.69]  PPV 0.009  sens 0.656  spec 0.350  events 8/12  false alarms 19.5/30 d  Brier 0.266
+  onset  aiims_paed   AUROC 0.502 [0.32-0.99]  PPV 0.005  sens 0.625  spec 0.472  events 4/4  false alarms 15.8/30 d  Brier 0.250
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test40_seed1
+
+== combined gast_maskonly (onset) days 7, train 60: test 40, seed 2
+    step 100: loss 0.5757, held-back AUROC 0.363
+    step 200: loss 0.5323, held-back AUROC 0.401
+    step 300: loss 0.5469, held-back AUROC 0.429
+    step 400: loss 1.0767, held-back AUROC 0.44
+    step 500: loss 0.3319, held-back AUROC 0.461
+    step 600: loss 0.5388, held-back AUROC 0.39
+    step 700: loss 0.2136, held-back AUROC 0.492
+    step 800: loss 0.1911, held-back AUROC 0.464
+    step 900: loss 0.3069, held-back AUROC 0.434
+    step 1000: loss 0.1771, held-back AUROC 0.463
+    step 1100: loss 0.3137, held-back AUROC 0.458
+    step 1200: loss 0.1971, held-back AUROC 0.481
+  onset  all          AUROC 0.522 [0.38-0.65]  PPV 0.010  sens 0.161  spec 0.830  events 5/24  false alarms 5.1/30 d  Brier 0.110
+  onset  copd         AUROC 0.734 [0.51-0.92]  PPV 0.048  sens 0.455  spec 0.818  events 2/4  false alarms 5.5/30 d  Brier 0.101
+  onset  aiims_adult  AUROC 0.442 [0.26-0.60]  PPV 0.007  sens 0.122  spec 0.784  events 3/15  false alarms 6.5/30 d  Brier 0.139
+  onset  aiims_paed   AUROC 0.524 [0.01-0.68]  PPV 0.000  sens 0.000  spec 0.913  events 0/5  false alarms 2.6/30 d  Brier 0.063
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test40_seed2
+
+== combined gast_maskonly (onset) days 7, train 60: test 40, seed 3
+    step 100: loss 0.7052, held-back AUROC 0.39
+    step 200: loss 0.5465, held-back AUROC 0.467
+    step 300: loss 0.5425, held-back AUROC 0.494
+    step 400: loss 0.5654, held-back AUROC 0.558
+    step 500: loss 0.3396, held-back AUROC 0.504
+    step 600: loss 0.4805, held-back AUROC 0.547
+    step 700: loss 0.4145, held-back AUROC 0.564
+    step 800: loss 0.4253, held-back AUROC 0.573
+    step 900: loss 0.4425, held-back AUROC 0.586
+    step 1000: loss 0.3114, held-back AUROC 0.588
+    step 1100: loss 0.1765, held-back AUROC 0.555
+    step 1200: loss 0.0901, held-back AUROC 0.526
+    step 1300: loss 0.1513, held-back AUROC 0.546
+    step 1400: loss 0.0664, held-back AUROC 0.552
+    step 1500: loss 0.2534, held-back AUROC 0.569
+  onset  all          AUROC 0.638 [0.52-0.73]  PPV 0.015  sens 0.368  spec 0.771  events 9/21  false alarms 6.9/30 d  Brier 0.120
+  onset  copd         AUROC 0.573 [0.44-0.75]  PPV 0.030  sens 0.111  spec 0.891  events 1/3  false alarms 3.3/30 d  Brier 0.081
+  onset  aiims_adult  AUROC 0.652 [0.54-0.76]  PPV 0.017  sens 0.476  spec 0.692  events 8/15  false alarms 9.2/30 d  Brier 0.156
+  onset  aiims_paed   AUROC 0.344 [0.20-0.79]  PPV 0.000  sens 0.000  spec 0.895  events 0/3  false alarms 3.1/30 d  Brier 0.060
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test40_seed3
+
+== combined gast_maskonly (onset) days 7, train 60: test 40, seed 4
+    step 100: loss 0.5657, held-back AUROC 0.396
+    step 200: loss 0.6158, held-back AUROC 0.459
+    step 300: loss 0.4724, held-back AUROC 0.469
+    step 400: loss 0.6759, held-back AUROC 0.38
+    step 500: loss 0.4830, held-back AUROC 0.524
+    step 600: loss 0.5944, held-back AUROC 0.517
+    step 700: loss 0.5526, held-back AUROC 0.528
+    step 800: loss 0.4087, held-back AUROC 0.496
+    step 900: loss 0.5158, held-back AUROC 0.43
+    step 1000: loss 0.4487, held-back AUROC 0.533
+    step 1100: loss 0.3668, held-back AUROC 0.394
+    step 1200: loss 0.4758, held-back AUROC 0.435
+    step 1300: loss 0.4097, held-back AUROC 0.377
+    step 1400: loss 0.3602, held-back AUROC 0.405
+    step 1500: loss 0.4229, held-back AUROC 0.403
+  onset  all          AUROC 0.545 [0.41-0.65]  PPV 0.007  sens 0.422  spec 0.639  events 11/19  false alarms 10.8/30 d  Brier 0.220
+  onset  copd         AUROC 0.688 [0.53-0.80]  PPV 0.029  sens 0.500  spec 0.731  events 3/3  false alarms 8.1/30 d  Brier 0.172
+  onset  aiims_adult  AUROC 0.483 [0.33-0.66]  PPV 0.006  sens 0.407  spec 0.586  events 5/11  false alarms 12.4/30 d  Brier 0.248
+  onset  aiims_paed   AUROC 0.612 [0.34-0.69]  PPV 0.006  sens 0.400  spec 0.711  events 3/5  false alarms 8.7/30 d  Brier 0.181
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test40_seed4
+
+== combined gast_maskonly (onset) days 7, train 50: test 50, seed 0
+    step 100: loss 0.7131, held-back AUROC 0.335
+    step 200: loss 0.5662, held-back AUROC 0.593
+    step 300: loss 0.5198, held-back AUROC 0.621
+    step 400: loss 0.5941, held-back AUROC 0.629
+    step 500: loss 0.5655, held-back AUROC 0.546
+    step 600: loss 0.3044, held-back AUROC 0.568
+    step 700: loss 0.3379, held-back AUROC 0.574
+    step 800: loss 0.4133, held-back AUROC 0.576
+    step 900: loss 0.0777, held-back AUROC 0.501
+  onset  all          AUROC 0.570 [0.45-0.66]  PPV 0.014  sens 0.375  spec 0.731  events 15/30  false alarms 8.1/30 d  Brier 0.164
+  onset  copd         AUROC 0.648 [0.44-0.78]  PPV 0.024  sens 0.176  spec 0.837  events 2/6  false alarms 4.9/30 d  Brier 0.114
+  onset  aiims_adult  AUROC 0.537 [0.36-0.66]  PPV 0.015  sens 0.412  spec 0.688  events 9/19  false alarms 9.4/30 d  Brier 0.187
+  onset  aiims_paed   AUROC 0.615 [0.18-0.94]  PPV 0.011  sens 0.500  spec 0.779  events 4/5  false alarms 6.6/30 d  Brier 0.136
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test50_seed0
+
+== combined gast_maskonly (onset) days 7, train 50: test 50, seed 1
+    step 100: loss 0.7037, held-back AUROC 0.286
+    step 200: loss 0.7218, held-back AUROC 0.331
+    step 300: loss 0.5757, held-back AUROC 0.447
+    step 400: loss 0.2858, held-back AUROC 0.489
+    step 500: loss 0.1900, held-back AUROC 0.585
+    step 600: loss 0.3805, held-back AUROC 0.471
+    step 700: loss 0.0765, held-back AUROC 0.451
+    step 800: loss 0.2274, held-back AUROC 0.522
+    step 900: loss 0.1019, held-back AUROC 0.472
+    step 1000: loss 0.1241, held-back AUROC 0.375
+  onset  all          AUROC 0.622 [0.52-0.71]  PPV 0.017  sens 0.212  spec 0.864  events 10/30  false alarms 4.1/30 d  Brier 0.103
+  onset  copd         AUROC 0.560 [0.26-0.73]  PPV 0.042  sens 0.214  spec 0.895  events 2/5  false alarms 3.1/30 d  Brier 0.090
+  onset  aiims_adult  AUROC 0.663 [0.56-0.77]  PPV 0.018  sens 0.250  spec 0.844  events 7/19  false alarms 4.7/30 d  Brier 0.118
+  onset  aiims_paed   AUROC 0.508 [0.18-0.73]  PPV 0.004  sens 0.071  spec 0.897  events 1/6  false alarms 3.1/30 d  Brier 0.078
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test50_seed1
+
+== combined gast_maskonly (onset) days 7, train 50: test 50, seed 2
+    step 100: loss 0.4552, held-back AUROC 0.723
+    step 200: loss 0.6628, held-back AUROC 0.756
+    step 300: loss 0.3954, held-back AUROC 0.808
+    step 400: loss 0.3349, held-back AUROC 0.821
+    step 500: loss 0.3899, held-back AUROC 0.791
+    step 600: loss 0.3139, held-back AUROC 0.814
+    step 700: loss 0.1460, held-back AUROC 0.819
+    step 800: loss 0.2334, held-back AUROC 0.775
+    step 900: loss 0.0906, held-back AUROC 0.788
+  onset  all          AUROC 0.509 [0.38-0.61]  PPV 0.014  sens 0.319  spec 0.728  events 14/34  false alarms 8.2/30 d  Brier 0.194
+  onset  copd         AUROC 0.607 [0.30-0.86]  PPV 0.050  sens 0.529  spec 0.738  events 4/6  false alarms 7.9/30 d  Brier 0.181
+  onset  aiims_adult  AUROC 0.468 [0.30-0.59]  PPV 0.012  sens 0.311  spec 0.644  events 9/22  false alarms 10.7/30 d  Brier 0.253
+  onset  aiims_paed   AUROC 0.447 [0.32-0.72]  PPV 0.003  sens 0.077  spec 0.876  events 1/6  false alarms 3.7/30 d  Brier 0.091
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test50_seed2
+
+== combined gast_maskonly (onset) days 7, train 50: test 50, seed 3
+    step 100: loss 0.5592, held-back AUROC 0.432
+    step 200: loss 0.4725, held-back AUROC 0.531
+    step 300: loss 0.3654, held-back AUROC 0.524
+    step 400: loss 0.3591, held-back AUROC 0.536
+    step 500: loss 0.3644, held-back AUROC 0.545
+    step 600: loss 0.2289, held-back AUROC 0.557
+    step 700: loss 0.3864, held-back AUROC 0.592
+    step 800: loss 0.2114, held-back AUROC 0.525
+    step 900: loss 0.1931, held-back AUROC 0.501
+    step 1000: loss 0.1438, held-back AUROC 0.499
+    step 1100: loss 0.1154, held-back AUROC 0.434
+    step 1200: loss 0.2286, held-back AUROC 0.509
+  onset  all          AUROC 0.526 [0.40-0.64]  PPV 0.015  sens 0.282  spec 0.781  events 12/32  false alarms 6.6/30 d  Brier 0.133
+  onset  copd         AUROC 0.438 [0.09-0.86]  PPV 0.049  sens 0.357  spec 0.797  events 2/5  false alarms 6.1/30 d  Brier 0.138
+  onset  aiims_adult  AUROC 0.493 [0.36-0.61]  PPV 0.011  sens 0.224  spec 0.738  events 7/21  false alarms 7.9/30 d  Brier 0.157
+  onset  aiims_paed   AUROC 0.635 [0.30-0.88]  PPV 0.016  sens 0.462  spec 0.852  events 3/6  false alarms 4.4/30 d  Brier 0.091
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test50_seed3
+
+== combined gast_maskonly (onset) days 7, train 50: test 50, seed 4
+    step 100: loss 0.6260, held-back AUROC 0.666
+    step 200: loss 0.5776, held-back AUROC 0.579
+    step 300: loss 0.6489, held-back AUROC 0.603
+    step 400: loss 0.5414, held-back AUROC 0.666
+    step 500: loss 0.4365, held-back AUROC 0.622
+    step 600: loss 0.4468, held-back AUROC 0.64
+  onset  all          AUROC 0.520 [0.37-0.65]  PPV 0.008  sens 0.222  spec 0.802  events 7/25  false alarms 6.0/30 d  Brier 0.181
+  onset  copd         AUROC 0.798 [0.58-0.92]  PPV 0.031  sens 0.143  spec 0.914  events 1/5  false alarms 2.6/30 d  Brier 0.127
+  onset  aiims_adult  AUROC 0.426 [0.24-0.63]  PPV 0.007  sens 0.194  spec 0.792  events 3/14  false alarms 6.2/30 d  Brier 0.186
+  onset  aiims_paed   AUROC 0.581 [0.04-0.76]  PPV 0.009  sens 0.385  spec 0.789  events 3/6  false alarms 6.3/30 d  Brier 0.186
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/onset/combined/gast_maskonly/test50_seed4
+
+onset accuracy, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct          10     20     30     40     50
+model                                           
+gast_maskonly  0.677  0.669  0.696  0.694  0.776
+
+onset ppv, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct          10     20     30     40     50
+model                                           
+gast_maskonly  0.011  0.015  0.009  0.009  0.014
+
+onset sensitivity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct          10     20    30     40     50
+model                                          
+gast_maskonly  0.259  0.375  0.31  0.319  0.282
+
+onset specificity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct          10     20   30     40     50
+model                                         
+gast_maskonly  0.682  0.671  0.7  0.698  0.781
+
+onset auroc, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct          10     20     30     40     50
+model                                           
+gast_maskonly  0.504  0.545  0.511  0.535  0.549
+
+onset auprc, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct          10     20     30    40     50
+model                                          
+gast_maskonly  0.019  0.019  0.011  0.01  0.014
+
+onset brier, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct          10     20     30     40     50
+model                                           
+gast_maskonly  0.192  0.185  0.182  0.186  0.155
+
+onset event_sensitivity, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct          10     20     30     40    50
+model                                          
+gast_maskonly  0.411  0.466  0.349  0.409  0.38
+
+onset false_alarms_per_30_days, all groups, by test share (%), mean over seeds [0, 1, 2, 3, 4]
+test_pct          10     20     30    40     50
+model                                          
+gast_maskonly  9.549  9.863  8.992  9.06  6.565

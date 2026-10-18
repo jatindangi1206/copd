@@ -1,0 +1,123 @@
+CPU: 40 cores, about 0 busy, 40 free. Default leaves 2 for the UI: 38.
+using 36 core(s)
+device: cuda
+combined / aiims_adult: 110 patients | detect 9,338 days, 125 positive | onset 9,009 days, 97 positive
+combined / aiims_paed: 54 patients | detect 4,981 days, 8 positive | onset 4,881 days, 25 positive
+combined / copd: 27 patients | detect 1,372 days, 11 positive | onset 1,306 days, 29 positive
+
+== combined timesfm3 (detect) days 7, train 80: test 20, seed 0
+Loading weights from local directory
+    timesfm3: 256 of 14,591 new days
+    timesfm3: 512 of 14,591 new days
+    timesfm3: 768 of 14,591 new days
+    timesfm3: 1,024 of 14,591 new days
+    timesfm3: 1,280 of 14,591 new days
+    timesfm3: 1,536 of 14,591 new days
+    timesfm3: 1,792 of 14,591 new days
+    timesfm3: 2,048 of 14,591 new days
+    timesfm3: 2,304 of 14,591 new days
+    timesfm3: 2,560 of 14,591 new days
+    timesfm3: 2,816 of 14,591 new days
+    timesfm3: 3,072 of 14,591 new days
+    timesfm3: 3,328 of 14,591 new days
+    timesfm3: 3,584 of 14,591 new days
+    timesfm3: 3,840 of 14,591 new days
+    timesfm3: 4,096 of 14,591 new days
+    timesfm3: 4,352 of 14,591 new days
+    timesfm3: 4,608 of 14,591 new days
+    timesfm3: 4,864 of 14,591 new days
+    timesfm3: 5,120 of 14,591 new days
+    timesfm3: 5,376 of 14,591 new days
+    timesfm3: 5,632 of 14,591 new days
+    timesfm3: 5,888 of 14,591 new days
+    timesfm3: 6,144 of 14,591 new days
+    timesfm3: 6,400 of 14,591 new days
+    timesfm3: 6,656 of 14,591 new days
+    timesfm3: 6,912 of 14,591 new days
+    timesfm3: 7,168 of 14,591 new days
+    timesfm3: 7,424 of 14,591 new days
+    timesfm3: 7,680 of 14,591 new days
+    timesfm3: 7,936 of 14,591 new days
+    timesfm3: 8,192 of 14,591 new days
+    timesfm3: 8,448 of 14,591 new days
+    timesfm3: 8,704 of 14,591 new days
+    timesfm3: 8,960 of 14,591 new days
+    timesfm3: 9,216 of 14,591 new days
+    timesfm3: 9,472 of 14,591 new days
+    timesfm3: 9,728 of 14,591 new days
+    timesfm3: 9,984 of 14,591 new days
+    timesfm3: 10,240 of 14,591 new days
+    timesfm3: 10,496 of 14,591 new days
+    timesfm3: 10,752 of 14,591 new days
+    timesfm3: 11,008 of 14,591 new days
+    timesfm3: 11,264 of 14,591 new days
+    timesfm3: 11,520 of 14,591 new days
+    timesfm3: 11,776 of 14,591 new days
+    timesfm3: 12,032 of 14,591 new days
+    timesfm3: 12,288 of 14,591 new days
+    timesfm3: 12,544 of 14,591 new days
+    timesfm3: 12,800 of 14,591 new days
+    timesfm3: 13,056 of 14,591 new days
+    timesfm3: 13,312 of 14,591 new days
+    timesfm3: 13,568 of 14,591 new days
+    timesfm3: 13,824 of 14,591 new days
+    timesfm3: 14,080 of 14,591 new days
+    timesfm3: 14,336 of 14,591 new days
+    timesfm3: 14,591 of 14,591 new days
+    step 100: loss 1.0004, held-back AUROC 0.601
+    step 200: loss 0.1326, held-back AUROC 0.643
+    step 300: loss 0.0613, held-back AUROC 0.631
+    step 400: loss 0.1072, held-back AUROC 0.574
+    step 500: loss 0.0084, held-back AUROC 0.602
+    step 600: loss 0.0029, held-back AUROC 0.597
+    step 700: loss 0.0197, held-back AUROC 0.621
+  detect all          AUROC 0.608 [0.52-0.71]  PPV 0.021  sens 0.103  spec 0.939  events 3/9  false alarms 1.8/30 d  Brier 0.055
+  detect copd         AUROC 0.850 [0.79-0.91]  PPV 0.000  sens 0.000  spec 0.970  events 0/2  false alarms 0.9/30 d  Brier 0.024
+  detect aiims_adult  AUROC 0.588 [0.49-0.71]  PPV 0.031  sens 0.114  spec 0.930  events 3/5  false alarms 2.1/30 d  Brier 0.065
+  detect aiims_paed   AUROC 0.443 [0.31-0.57]  PPV 0.000  sens 0.000  spec 0.945  events 0/2  false alarms 1.6/30 d  Brier 0.045
+  -> /home/kcdha/Desktop/JD/prediction/copd/results/exac/detect/combined/timesfm3/test20_seed0
+
+detect accuracy, all groups, by test share (%), mean over seeds [0]
+test_pct     20
+model          
+timesfm3  0.928
+
+detect ppv, all groups, by test share (%), mean over seeds [0]
+test_pct     20
+model          
+timesfm3  0.021
+
+detect sensitivity, all groups, by test share (%), mean over seeds [0]
+test_pct     20
+model          
+timesfm3  0.103
+
+detect specificity, all groups, by test share (%), mean over seeds [0]
+test_pct     20
+model          
+timesfm3  0.939
+
+detect auroc, all groups, by test share (%), mean over seeds [0]
+test_pct     20
+model          
+timesfm3  0.608
+
+detect auprc, all groups, by test share (%), mean over seeds [0]
+test_pct     20
+model          
+timesfm3  0.019
+
+detect brier, all groups, by test share (%), mean over seeds [0]
+test_pct     20
+model          
+timesfm3  0.055
+
+detect event_sensitivity, all groups, by test share (%), mean over seeds [0]
+test_pct     20
+model          
+timesfm3  0.333
+
+detect false_alarms_per_30_days, all groups, by test share (%), mean over seeds [0]
+test_pct     20
+model          
+timesfm3  1.829
