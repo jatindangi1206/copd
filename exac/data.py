@@ -1,4 +1,4 @@
-"""Data: days, minutes and the clinical table of one set; each sample's 7-day window (copied from run_exac.py).
+"""Data: days, minutes and the clinical table of one set; each sample's window of W days (copied from run_exac.py).
 
 load() fills the module state below once per run; every other module reads it as data.D, data.X, ...
 """
@@ -14,13 +14,18 @@ W = M = None                            # window in days and in minutes
 device = "cpu"
 
 
-def load(set_name, days, dev):
+def load(set_name, days, dev, horizon=C.HORIZON):
     global D, X, S, POS, DAYMAX, P, W, M, device
     W, M, device = days, days * 1440, dev
     cohorts, clinical = C.SETS[set_name]
     D = pd.read_csv(C.MD / "days.csv", parse_dates=["date"])
     X = np.load(C.MD / "minutes.npy", mmap_mode="r")        # (stored days, 1440, 7), blank = NaN
     D["row"] = np.arange(len(D))
+    if horizon != C.HORIZON:            # onset within fewer days: the same samples, only the label narrows (EXAC_DESIGN 9)
+        lead = (pd.to_datetime(D.onset_id.str.rsplit("_", n=1).str[1], format="%Y%m%d") - D.date).dt.days
+        assert 1 <= horizon < C.HORIZON and lead[D.onset_label == 1].between(1, C.HORIZON).all()
+        keep = (D.onset_label == 1) & (lead <= horizon)   # onset_id is the nearest onset: no closer one is missed
+        D["onset_label"], D["onset_id"] = keep.astype(int), D.onset_id.where(keep)
     S = pd.read_csv(C.MD / "static.csv").set_index("pid") if clinical else None
     D = D[D.cohort.isin(cohorts) & (D.pid.isin(S.index) if clinical else True)].reset_index(drop=True)
     POS = {(p_, d_): r for p_, d_, r in zip(D.pid, D.date, D.row)}

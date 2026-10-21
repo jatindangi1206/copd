@@ -5,12 +5,14 @@ episode begin in the next 3 days?). The same commands as run_exac.py, from the r
     python -m exac.run check                          # every model, tiny training on a small subset
     python -m exac.run all --task detect              # every single-task model, 5 ratios x 5 seeds
     python -m exac.run xgboost catboost --task onset --set copd
-    python -m exac.run gast --days 14                 # GAST with 14 days of history (GAST only)
+    python -m exac.run gast --days 14                 # 14 days of history (any model)
+    python -m exac.run xgboost --task onset --days 3 --horizon 1   # 3 days in, onset on the next day only
     python -m exac.run gast2                          # GAST with two heads: scores both tasks
 
 Settings: exac/config.py. Models: exac/models/. Design: docs/EXAC_DESIGN.md, docs/GAST_DESIGN.md.
 Results: results/exac/<task>/<set>/<model>/test<NN>_seed<S>/ predictions.csv.gz + metrics.json; one line
-per run and group in results/exac/summary_<task>.csv.
+per run and group in results/exac/summary_<task>.csv. A window other than 7 days / 3 days ahead is in the model's
+name: xgboost_d3_h1. The window ablation (both tasks, every window): python -m exac.window.
 Options: --cores N (else it shows what is free and asks; default leaves 2 free), --device cpu|cuda,
 --gpu-gb G (cap this process's GPU memory, for parallel runs), --quick.
 """
@@ -21,7 +23,7 @@ import time
 
 from exac import config as C
 from exac import cores
-from exac.models import ANY_DAYS, MODELS, TWO_TASKS
+from exac.models import MODELS, TWO_TASKS
 
 p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 p.add_argument("model", nargs="*", help="one or more models, 'all' (every single-task model) or 'check'")
@@ -29,7 +31,9 @@ p.add_argument("--task", default="detect", choices=list(C.EVENT))
 p.add_argument("--set", default="combined", choices=list(C.SETS))
 p.add_argument("--test", type=int, nargs="+", default=C.TEST_PCT, help="test share, %% of patients")
 p.add_argument("--seed", type=int, nargs="+", default=C.SEEDS)
-p.add_argument("--days", type=int, default=C.DAYS, help="history in days, the classified day included (GAST only)")
+p.add_argument("--days", type=int, default=C.DAYS, help="history in days, the classified day included")
+p.add_argument("--horizon", type=int, default=C.HORIZON, choices=range(1, C.HORIZON + 1),
+               help="onset: a new episode within this many days (1-3)")
 p.add_argument("--cores", type=int)
 p.add_argument("--device", choices=["cpu", "cuda"])
 p.add_argument("--gpu-gb", type=float, help="cap this process's GPU memory, GB (torch and CatBoost)")
@@ -44,8 +48,6 @@ check = a.model == ["check"]
 names = (list(MODELS) if check else [n for n in MODELS if n not in TWO_TASKS] if a.model == ["all"] else a.model)
 if any(n not in MODELS for n in names):
     sys.exit(f"unknown model in {a.model}; see --list")
-if a.days != C.DAYS and any(n not in ANY_DAYS for n in names):
-    sys.exit(f"--days other than {C.DAYS} is for the GAST models only (every other model uses {C.DAYS} days)")
 if a.quick or check:
     C.MAX_STEPS, C.CHECK_EVERY, C.BOOT = C.QUICK["MAX_STEPS"], C.QUICK["CHECK_EVERY"], C.QUICK["BOOT"]
 
@@ -71,7 +73,7 @@ print(f"device: {device}")
 from exac import data, models, scoring, split   # noqa: E402
 from exac.train import fit_net                  # noqa: E402
 
-data.load(a.set, a.days, device)
+data.load(a.set, a.days, device, a.horizon)
 D, W = data.D, data.W
 
 
@@ -115,7 +117,8 @@ def run(name, test_pct, seed, quick):
 
 def save(name, test_pct, seed, r):
     lab, evc = C.EVENT[r["task"]]
-    tag = name + (f"_d{W}" if W != C.DAYS else "")
+    onset_used = r["task"] == "onset" or name in TWO_TASKS          # gast2's detection head also learned the onset label
+    tag = name + (f"_d{W}" if W != C.DAYS else "") + (f"_h{a.horizon}" if a.horizon != C.HORIZON and onset_used else "")
     out = C.RES / r["task"] / a.set / tag / f"test{test_pct:02d}_seed{seed}"
     out.mkdir(parents=True, exist_ok=True)
     T = r["T"]
@@ -154,7 +157,8 @@ done = []
 for test_pct in a.test:
     for seed in a.seed:
         for name in names:
-            print(f"\n== {a.set} {name} ({'both tasks' if name in TWO_TASKS else a.task}) days {W}, "
+            print(f"\n== {a.set} {name} ({'both tasks' if name in TWO_TASKS else a.task}) days {W}"
+                  f"{f', onset within {a.horizon} days' if a.task == 'onset' or name in TWO_TASKS else ''}, "
                   f"train {100 - test_pct}: test {test_pct}, seed {seed}")
             try:
                 results = run(name, test_pct, seed, a.quick)

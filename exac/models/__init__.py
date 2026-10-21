@@ -20,7 +20,6 @@ MODELS = {
     "timesfm3": ("TimesFM 3, frozen, + a learned logistic layer", "timesfm3", None),
 }
 TWO_TASKS = {"gast2"}                         # trained on detection and onset at once
-ANY_DAYS = {n for n, (_, f, _) in MODELS.items() if f == "gast_v1"}     # --days other than 7: GAST only
 
 
 def load(name):

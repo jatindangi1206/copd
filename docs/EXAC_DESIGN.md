@@ -224,3 +224,29 @@ Tested on the Mac: the date parsers; the data self-checks; AUROC and AUPRC again
 to 1e-16 on 500 random cases with ties); `run_exac.py check` on the COPD set for both tasks (every model
 except XGBoost and CatBoost, which have no working library on the Mac); a full save. Not yet run: any
 real experiment.
+
+## 9. Window ablation (asked by the user, 20 Oct 2026)
+
+The user's request: run both tasks with shorter windows; keep the model, splits, features and scores the
+same so only the window changes; one results table per task.
+
+- **Detection:** input of 5, 4, 3 and 2 days (the classified day + the days before it).
+- **Onset:** input of 5, 4, 3 and 2 days x a new episode in the next 1-3 days (as in 6.7), the next 1-2
+  days, or the next day only: 12 settings.
+- **Every model** takes any window now (before, only GAST could). Trees get days x 1,440 x 7 raw values;
+  the RNN/LSTM read days x 144 blocks; GAST reads days x 24 hourly tokens, and its slowest starting rate
+  is 1/(the window) as in GAST_DESIGN 3; TimesFM 3 keeps one cache per window length
+  (`timesfm3_out_d<N>.npy`, about 0.7 GB each).
+- **What stays fixed:** the samples (for onset, the 6.7 samples: not inside an episode, not among the last
+  3 days of data, for every horizon), the patient splits (they depend only on the detection labels), every
+  model setting, the threshold and the scores.
+- **The onset label for 1 or 2 days** is the 3-day label kept only where the onset falls within that many
+  days (`data.load`). `onset_id` holds the nearest onset, so none closer is missed. Checked on 20 Oct 2026
+  against labels recomputed from `episodes.csv`: equal for 1, 2 and 3 days (51, 100 and 151 positive days
+  in all groups).
+- **Code:** `exac/run.py --days N --horizon H`; the grid and the tables: `exac/window.py`. A run's model name
+  carries its window: `xgboost_d3_h1` (3 days in, onset on the next day); 7 days and 3 days ahead add
+  nothing, so the main runs are the reference rows.
+- **Tables:** `results/exac/window_detect.csv`, `results/exac/window_onset.csv`: one row per set, model,
+  days, (horizon,) test share and group, with the number of seeds and the mean and SD over seeds of every
+  score.

@@ -15,10 +15,12 @@ copied, not rewritten. Only references to settings and data were changed (`MAX_S
 .venv/bin/python -m exac.run gast --days 14
 .venv/bin/python -m exac.run gast2                           # two heads: both tasks
 .venv/bin/python -m exac.models.gast_v1                      # GAST self-tests
+.venv/bin/python -m exac.window                            # window ablation: every window, both tasks, then the tables
+.venv/bin/python -m exac.window --table                    # only rebuild the two tables
 ```
 
 Options: `--task detect|onset`, `--set combined|copd|copd_clinical`, `--test 20 10 ...`, `--seed 0 1 ...`,
-`--days N` (GAST only), `--cores N`, `--device cpu|cuda`, `--gpu-gb G`, `--quick`.
+`--days N` (any model), `--horizon 1|2|3` (onset: within this many days), `--cores N`, `--device cpu|cuda`, `--gpu-gb G`, `--quick`.
 Two runs in parallel: give each `--cores` and `--gpu-gb` so the total leaves room for the GUI.
 Model names go before the options.
 
@@ -34,6 +36,7 @@ Model names go before the options.
 | one model | `models/<model>.py` |
 | add a model | a new file in `models/` + one line in `models/__init__.py` |
 | the command line, saving results | `run.py` |
+| the window ablation grid (days, horizons) | `config.py` (`WINDOW_DAYS`, `WINDOW_HORIZON`) |
 
 ## Files
 
@@ -46,6 +49,7 @@ exac/
   train.py       the shared network training loop
   scoring.py     AUROC, AUPRC, per-day / per-event scores, 95% intervals, calibration, slices
   run.py         command line, run, save
+  window.py      window ablation (EXAC_DESIGN 9): runs run.py per window, writes one table per task
   models/
     __init__.py  the list of models
     always_no.py

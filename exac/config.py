@@ -20,6 +20,7 @@ EVENT = {"detect": ("label", "episode"),                # task -> (label column,
          "onset": ("onset_label", "onset_id")}
 HR = 1                                                  # channel of heart rate in minutes.npy
 DAYS = 7                                                # window: the classified day + the 6 before (3)
+HORIZON = 3                                             # onset: a new episode on d+1 ... d+HORIZON, as days.csv holds it (6.7)
 
 # ---------------------------------------------------------------- split and scoring (5)
 TEST_PCT = [20, 10, 30, 40, 50]                         # test share, % of patients in each stratum
@@ -49,7 +50,11 @@ ALPHA = 1.0                                             # gast2: L = L_onset + A
 TIMESFM_CHECKPOINT = os.environ.get("TIMESFM_CHECKPOINT", "/home/kcdha/timesfm3/timesfm-3.0-pytorch")
 TIMESFM_DIM = 1280                                      # transformer width (its config.json)
 TIMESFM_BATCH = 4                                       # windows per forward pass (GPU memory)
-TIMESFM_CACHE = MD / "timesfm3_out.npy"                 # frozen outputs per day (shared with run_exac.py)
+TIMESFM_CACHE = MD / "timesfm3_out.npy"                 # frozen outputs per day, 7-day window (other windows: _d<N>)
+
+# ---------------------------------------------------------------- window ablation (9): only the window changes
+WINDOW_DAYS = [5, 4, 3, 2]                              # input: the classified day + the N-1 before
+WINDOW_HORIZON = [3, 2, 1]                              # onset: next 1-3 days, next 1-2 days, next day only
 
 # ---------------------------------------------------------------- --quick / check: tiny training, code check only
 QUICK = dict(MAX_STEPS=10, CHECK_EVERY=5, BOOT=30, trees=20, days=(600, 200, 300))   # train, held-back, test days

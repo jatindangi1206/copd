@@ -5,7 +5,7 @@ Every minute of the window, each of the 7 signals one variate, values as recorde
 series itself); a blank is masked with TimesFM's own masks, nothing is filled. Each variate's transformer
 output at the last patch (causal attention: it has seen the whole window) -> one logistic layer (+ the
 scaled clinical values for copd_clinical), trained by exac/train.py. The weights never change, so each
-day's output is computed once and cached (config.TIMESFM_CACHE, shared with run_exac.py).
+day's output is computed once and cached (config.TIMESFM_CACHE, shared with run_exac.py; one file per window length).
 Weights: config.TIMESFM_CHECKPOINT, local only (never downloads; non-commercial licence).
 """
 import numpy as np
@@ -41,7 +41,7 @@ def embed(v, device, batch=C.TIMESFM_BATCH):
 
 def prepare(rows):
     """Fill the cache for the windows `rows` (n, W), keyed by the classified day's row (NaN = not computed)."""
-    f = C.TIMESFM_CACHE
+    f = C.TIMESFM_CACHE if data.W == C.DAYS else C.TIMESFM_CACHE.with_name(f"timesfm3_out_d{data.W}.npy")
     if not f.exists():
         np.lib.format.open_memmap(f, "w+", np.float32, (len(data.X), data.X.shape[2] * C.TIMESFM_DIM))[:] = np.nan
     T = _CACHE["out"] = np.load(f, mmap_mode="r+")
