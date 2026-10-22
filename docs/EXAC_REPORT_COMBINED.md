@@ -9,11 +9,106 @@ children). Every model ran 25 splits per task:
 - GAST v1 with 3 and 14 days of history (detection only);
 - gast2: GAST v1 with two outputs, trained on both tasks at once.
 
-Section 8 adds the window ablation (21 Oct 2026): input windows of 5, 4, 3 and 2 days and, for onset, prediction windows of the next 1-3, 1-2 days and the next day, for every model except GAST (still running).
+Section 8 adds the window ablation (21-22 Oct 2026): input windows of 5, 4, 3 and 2 days and, for onset, prediction windows of the next 1-3, 1-2 days and the next day, for every model (some GAST settings still running). Section 9 has the copd and copd_clinical sets.
+
+New to this? Start with "How everything works, in plain words" just below.
 
 This file reports process, inputs, outputs and numbers. It does not interpret them. Every decision
 behind the design is in `docs/EXAC_DESIGN.md` and `docs/GAST_DESIGN.md`. The copd and copd_clinical sets
-also ran (every model except gast_d3, gast_d14 and gast2); they are not in this file.
+also ran (every model except gast_d3, gast_d14 and gast2): section 9.
+
+---
+
+## How everything works, in plain words
+
+The rest of this file is exact and technical. This part explains the same things with one picture: **a
+junior doctor learning to spot exacerbation days from watch data**. Each point ends with what it is in the
+experiment.
+
+### The question asked every day
+
+The doctor gets the watch data of one patient for the last few days (7 in the main runs) and answers one
+question about the last of those days: "is this an exacerbation day?" (detection), or "does an episode
+start in the next 1-3 days?" (onset). The answer is a number between 0 and 1. Then the window moves on by
+one day and the question is asked again, from scratch: nothing is carried over from yesterday's answer,
+and nothing after the day is ever used.
+
+*In the experiment:* one sample = one patient-day; the input is the day plus the days before it, every
+minute of 7 signals, blanks left blank; the output is a probability; a day at 0.5 or more is "flagged".
+
+### 25 quizzes: the 25 splits
+
+You cannot test a doctor on patients they were taught with. So the patients are divided: some teach the
+doctor, the rest form the quiz. Every patient is wholly on one side. Because there are few exacerbations,
+one quiz could be easy or hard by luck, so the division is redrawn 25 times (5 train:test ratios x 5
+random draws), each time with a fresh doctor taught from scratch. To keep every quiz fair, patients are
+first sorted into boxes (COPD / AIIMS adult / AIIMS child, x had an exacerbation or not) and each box is
+split in the same proportion. Quiz number 7 holds the same patients for every model and every window, so
+models can be compared quiz by quiz.
+
+*In the experiment:* 25 splits by patient (section 3.1); every model is trained 25 times.
+
+### The score: AUROC, and how far it can move
+
+The quiz: show the doctor one exacerbation day and one normal day from patients they have never seen,
+and see which one gets the higher number. **AUROC** = how often the exacerbation day got the higher
+number. 0.5 = guessing, 1.0 = always right, below 0.5 = usually the wrong way round.
+
+- **The main number** (for example XGBoost, 7 days: **0.484**) is the average over the 25 quizzes.
+- **The range** ([0.34-0.62]): each quiz holds only about 11 patients who had an exacerbation, so one
+  confusing patient can move the score a lot. For each quiz, the quiz is rebuilt 1,000 times by drawing
+  its patients at random (some twice, some not at all) and rescored; the middle 95% of those scores is
+  that quiz's range, averaged over the 25 quizzes. It shows how far the score could move with other,
+  similar patients. A range that includes 0.5 means this data cannot tell the model from guessing; two
+  ranges that overlap a lot mean this data cannot tell the two results apart.
+- **The comparison** ("+0.043, 19/25"): two doctors, one taught with 7 days of data and one with 2 days,
+  sit the same 25 quizzes. +0.043 = on average the 2-day doctor scored 0.043 higher; 19/25 = the 2-day
+  doctor scored higher in 19 of the 25 quizzes. The quizzes reuse the same patients in different mixes,
+  so 19/25 is not 19 independent confirmations.
+
+### How each kind of doctor reads the data
+
+- **XGBoost, CatBoost (trees):** look at every value of the window at once, as one long row (70,560
+  numbers for 7 days), with no sense of order: each number is just a column, such as "heart rate at
+  minute 3,215". They learn a large set of yes/no questions about those columns.
+- **RNN and LSTM:** read the window like a diary, oldest to newest, in pages of 10 minutes. Each page is
+  first condensed into a short note (32 numbers) by a summariser the model learns. The doctor keeps a
+  notebook (2 x 64 numbers) and updates it after every page; after the last page, the notebook gives
+  the answer. The RNN's notebook is rewritten a little on every page, so what it read on day 1 mostly
+  fades; the LSTM's notebook has keep and erase switches, so it can keep something from day 2 until
+  day 7. Everything else about the two is the same.
+- **TimesFM 3:** a large forecasting model trained by Google on other time series, used frozen: it reads
+  the whole window, and only a small final layer that turns its summary into a probability is trained
+  here.
+- **GAST** (the user's design): reads only the minutes where the watch sent a heart rate, each stamped
+  with its real time, so a 6-hour gap is "next entry: 6 hours later", not 36 blank pages. Each entry
+  says which signals are present and how long since each was last seen. Its notebook is written in
+  **fading ink**: between entries every line fades, by the real minutes that passed, each line at its own
+  learned speed (some hold minutes, some hold days). At the end of every hour it writes a summary; before
+  answering, it looks back over the earlier hourly summaries and picks the ones that matter (it can only
+  look back, never forward).
+
+### The GAST variations: each removes or changes one part
+
+| variation | what is different for the doctor |
+|---|---|
+| gast_ssm | no looking back over the hourly summaries; only the fading notebook |
+| gast_attn | no fading notebook; each hourly summary looks straight back at the raw entries |
+| gast_nogap | not told about gaps: the ink fades per entry, not per minute, so a 6-hour gap looks like the next minute |
+| gast_maskonly | never sees a reading, only when readings were present: can wear patterns alone do it? |
+| gast, 3 / 14 days | the full GAST with a shorter or longer diary |
+| gast2 | one doctor answers both questions (detection and onset) and learns from both |
+
+### How the networks learn, and why they flag many days
+
+The networks (RNN, LSTM, GAST, TimesFM 3's last layer) practise in rounds of 32 days, **half of them
+exacerbation days**, adjusting after every round. Every 100 rounds they sit a mock exam on patients set
+aside from the teaching group; training stops after 5 mock exams without improvement, and the version
+from the best mock exam is kept. Because they practise on half-and-half rounds but real days are about 1
+in 100, their numbers are on a half-and-half scale and many ordinary days get 0.5 or more: they flag many
+days (for example RNN, 7 days: 37% of exacerbation days flagged, and 8 false alarms per 30 normal days).
+The trees almost never reach 0.5, so they flag almost nothing. AUROC does not use the 0.5 cut-off, so it
+compares both kinds fairly.
 
 ---
 
@@ -636,10 +731,12 @@ TimesFM 3: the first detection split (80:20, seed 0) also computed the frozen ou
 sample days (2,521 s); every other split only trains the logistic layer. Times: one RTX A5500 GPU, 18 CPU
 cores per run, two runs at once (the first TimesFM 3 split ran alone on 36 cores).
 
-## 8. Window ablation (without GAST)
+## 8. Window ablation
 
-Run on 21 Oct 2026 (`exac/window.py`; design: `docs/EXAC_DESIGN.md` section 9). The GAST models of this
-ablation are still running and are not in this section.
+Run from 21 Oct 2026 (`exac/window.py`; design: `docs/EXAC_DESIGN.md` section 9). **Status at the time of
+writing (22 Oct 2026, 14:00):** every model except GAST has finished every setting. Of the GAST
+settings, most have finished; the rest are still running and are shown as "running (n/25)". This section
+will be regenerated when they finish.
 
 ### 8.1 What was done
 
@@ -649,12 +746,15 @@ sections 3-7. Only the window changes:
 - **Input window:** the classified day plus the days before it, **5, 4, 3 or 2 days** in total (7 days in
   the main runs). Trees get days x 1,440 minutes x 7 signals raw values (50,400 columns at 5 days, 20,160
   at 2 days); RNN and LSTM read days x 144 ten-minute blocks; TimesFM 3 reads days x 45 patches of 32
-  minutes, with one frozen-output cache per window length.
+  minutes, with one frozen-output cache per window length; GAST reads the heart-rate minutes of those
+  days and writes days x 24 hourly readings (its slowest starting memory rate is 1/(the window)).
 - **Onset prediction window** (onset task only): a new episode begins in the **next 1-3 days** (the main
   runs), the **next 1-2 days**, or the **next day only**.
 - **Settings run:** detection x 4 input windows; onset x 4 input windows x 3 prediction windows = 16
-  settings, each with 25 splits, for XGBoost, CatBoost, RNN, LSTM and TimesFM 3 (always_no: AUROC 0.500,
-  sensitivity 0, specificity 1 in every setting).
+  settings, each with 25 splits, for XGBoost, CatBoost, RNN, LSTM, TimesFM 3 and the five GAST models
+  (gast, gast_ssm, gast_attn, gast_nogap, gast_maskonly). always_no: AUROC 0.500, sensitivity 0,
+  specificity 1 in every setting. **GAST, detection, 3 days** is the main run's 3-day GAST (section 6),
+  the same model, input, splits and settings, and was not run again.
 
 ### 8.2 What stays fixed, and what the shorter prediction windows change
 
@@ -682,11 +782,12 @@ sections 3-7. Only the window changes:
   independent comparisons.
 - **AUPRC** has a no-skill value equal to the share of positive days, which differs between prediction
   windows (8.2): compare AUPRC within one prediction window only.
-- In every table of this section, the 95% interval of each window overlaps that of the 7-day run.
+- For every finished cell of this section that has a 7-day run (AUROC and AUPRC, all groups and each
+  group; 308 cells), the 95% interval overlaps that of the 7-day run.
 
 ### 8.4 Detection: is today an exacerbation day?
 
-Positive share of test days: 0.0099 (the same samples at every window).
+Positive share of test days: 0.0099 (the same samples at every window). GAST at 3 days is the main run's 3-day GAST (section 6), not run again.
 
 **AUROC [95%]** (difference from 7 days, splits higher than 7 days)
 
@@ -697,6 +798,11 @@ Positive share of test days: 0.0099 (the same samples at every window).
 | RNN | 0.564 [0.43-0.69] | 0.558 [0.42-0.67] (-0.006, 12/25) | 0.557 [0.41-0.68] (-0.006, 11/25) | 0.552 [0.41-0.67] (-0.012, 11/25) | 0.560 [0.41-0.68] (-0.004, 12/25) |
 | LSTM | 0.599 [0.45-0.74] | 0.596 [0.45-0.73] (-0.003, 18/25) | 0.604 [0.45-0.74] (+0.005, 14/25) | 0.600 [0.45-0.74] (+0.001, 11/25) | 0.593 [0.44-0.73] (-0.006, 13/25) |
 | TimesFM 3 | 0.552 [0.44-0.66] | 0.571 [0.46-0.71] (+0.019, 17/25) | 0.601 [0.50-0.71] (+0.050, 22/25) | 0.614 [0.50-0.74] (+0.062, 22/25) | 0.596 [0.49-0.70] (+0.045, 20/25) |
+| gast | 0.506 [0.35-0.67] | 0.547 [0.39-0.71] (+0.041, 21/25) | 0.527 [0.37-0.71] (+0.021, 18/25) | 0.551 [0.40-0.72] (+0.045, 19/25) | running (8/25) |
+| gast_ssm | 0.534 [0.37-0.69] | 0.560 [0.40-0.72] (+0.025, 17/25) | 0.555 [0.40-0.72] (+0.020, 19/25) | 0.570 [0.41-0.73] (+0.035, 19/25) | 0.578 [0.43-0.74] (+0.044, 21/25) |
+| gast_attn | 0.547 [0.37-0.72] | 0.561 [0.40-0.73] (+0.014, 13/25) | 0.563 [0.38-0.76] (+0.016, 15/25) | 0.569 [0.41-0.74] (+0.022, 13/25) | 0.603 [0.45-0.75] (+0.057, 18/25) |
+| gast_nogap | 0.579 [0.41-0.74] | 0.586 [0.41-0.76] (+0.007, 13/25) | 0.611 [0.43-0.78] (+0.031, 17/25) | 0.613 [0.44-0.78] (+0.034, 17/25) | 0.635 [0.49-0.78] (+0.056, 17/25) |
+| gast_maskonly | 0.528 [0.36-0.69] | 0.525 [0.37-0.69] (-0.003, 14/25) | 0.556 [0.39-0.72] (+0.028, 15/25) | 0.557 [0.39-0.72] (+0.029, 14/25) | 0.581 [0.45-0.73] (+0.052, 19/25) |
 
 **AUPRC [95%]**
 
@@ -707,6 +813,11 @@ Positive share of test days: 0.0099 (the same samples at every window).
 | RNN | 0.018 [0.005-0.038] | 0.015 [0.005-0.035] | 0.016 [0.005-0.037] | 0.015 [0.005-0.037] | 0.015 [0.005-0.034] |
 | LSTM | 0.021 [0.006-0.053] | 0.022 [0.005-0.055] | 0.020 [0.006-0.052] | 0.022 [0.005-0.063] | 0.021 [0.005-0.053] |
 | TimesFM 3 | 0.013 [0.005-0.031] | 0.014 [0.005-0.029] | 0.017 [0.006-0.036] | 0.016 [0.006-0.035] | 0.017 [0.006-0.039] |
+| gast | 0.012 [0.004-0.029] | 0.014 [0.005-0.036] | 0.013 [0.004-0.034] | 0.014 [0.005-0.033] | running (8/25) |
+| gast_ssm | 0.013 [0.004-0.033] | 0.015 [0.005-0.036] | 0.015 [0.005-0.036] | 0.017 [0.005-0.042] | 0.014 [0.005-0.031] |
+| gast_attn | 0.015 [0.005-0.034] | 0.015 [0.005-0.036] | 0.017 [0.005-0.049] | 0.015 [0.005-0.043] | 0.017 [0.006-0.043] |
+| gast_nogap | 0.017 [0.006-0.039] | 0.016 [0.006-0.038] | 0.018 [0.006-0.041] | 0.021 [0.006-0.054] | 0.022 [0.007-0.051] |
+| gast_maskonly | 0.013 [0.004-0.032] | 0.014 [0.004-0.037] | 0.013 [0.005-0.031] | 0.014 [0.005-0.030] | 0.014 [0.005-0.031] |
 
 **At the 0.5 threshold**
 
@@ -737,6 +848,31 @@ Positive share of test days: 0.0099 (the same samples at every window).
 | TimesFM 3 | 4 | 0.068 | 0.950 | 0.020 | 47/434 | 1.51 | 0.049 |
 | TimesFM 3 | 3 | 0.104 | 0.931 | 0.013 | 66/434 | 2.07 | 0.062 |
 | TimesFM 3 | 2 | 0.094 | 0.935 | 0.018 | 60/434 | 1.94 | 0.060 |
+| gast | 7 | 0.278 | 0.725 | 0.010 | 171/434 | 8.24 | 0.172 |
+| gast | 5 | 0.339 | 0.744 | 0.013 | 173/434 | 7.68 | 0.158 |
+| gast | 4 | 0.326 | 0.712 | 0.012 | 194/434 | 8.65 | 0.171 |
+| gast | 3 | 0.403 | 0.672 | 0.013 | 221/434 | 9.85 | 0.195 |
+| gast | 2 | running (8/25) |  |  |  |  |  |
+| gast_ssm | 7 | 0.367 | 0.658 | 0.011 | 204/434 | 10.27 | 0.193 |
+| gast_ssm | 5 | 0.396 | 0.675 | 0.013 | 212/434 | 9.75 | 0.191 |
+| gast_ssm | 4 | 0.449 | 0.635 | 0.011 | 233/434 | 10.94 | 0.207 |
+| gast_ssm | 3 | 0.452 | 0.639 | 0.013 | 226/434 | 10.83 | 0.197 |
+| gast_ssm | 2 | 0.477 | 0.620 | 0.013 | 253/434 | 11.40 | 0.200 |
+| gast_attn | 7 | 0.326 | 0.725 | 0.010 | 196/434 | 8.25 | 0.178 |
+| gast_attn | 5 | 0.350 | 0.720 | 0.012 | 183/434 | 8.40 | 0.175 |
+| gast_attn | 4 | 0.373 | 0.704 | 0.013 | 184/434 | 8.88 | 0.178 |
+| gast_attn | 3 | 0.421 | 0.673 | 0.013 | 207/434 | 9.80 | 0.196 |
+| gast_attn | 2 | 0.517 | 0.610 | 0.014 | 279/434 | 11.71 | 0.221 |
+| gast_nogap | 7 | 0.380 | 0.727 | 0.014 | 179/434 | 8.19 | 0.164 |
+| gast_nogap | 5 | 0.442 | 0.701 | 0.016 | 220/434 | 8.96 | 0.174 |
+| gast_nogap | 4 | 0.440 | 0.707 | 0.016 | 210/434 | 8.80 | 0.175 |
+| gast_nogap | 3 | 0.394 | 0.750 | 0.017 | 200/434 | 7.49 | 0.161 |
+| gast_nogap | 2 | 0.419 | 0.746 | 0.019 | 227/434 | 7.63 | 0.160 |
+| gast_maskonly | 7 | 0.321 | 0.710 | 0.010 | 174/434 | 8.69 | 0.180 |
+| gast_maskonly | 5 | 0.321 | 0.713 | 0.011 | 182/434 | 8.62 | 0.175 |
+| gast_maskonly | 4 | 0.378 | 0.696 | 0.013 | 204/434 | 9.11 | 0.183 |
+| gast_maskonly | 3 | 0.381 | 0.694 | 0.013 | 194/434 | 9.18 | 0.183 |
+| gast_maskonly | 2 | 0.366 | 0.713 | 0.013 | 201/434 | 8.61 | 0.175 |
 
 **AUROC [95%] per group**. Average test fold per split: COPD 3.8 positive of 408 days; AIIMS adults 42.2 positive of 2,909 days; AIIMS children 2.4 positive of 1,565 days.
 
@@ -747,16 +883,31 @@ Positive share of test days: 0.0099 (the same samples at every window).
 | COPD | RNN | 0.624 [0.43-0.79] | 0.614 [0.43-0.78] | 0.643 [0.45-0.81] | 0.624 [0.43-0.81] | 0.628 [0.43-0.81] |
 | COPD | LSTM | 0.687 [0.47-0.81] | 0.672 [0.46-0.79] | 0.701 [0.49-0.81] | 0.698 [0.47-0.83] | 0.661 [0.45-0.78] |
 | COPD | TimesFM 3 | 0.649 [0.46-0.75] | 0.704 [0.50-0.80] | 0.681 [0.51-0.78] | 0.736 [0.58-0.83] | 0.639 [0.45-0.74] |
+| COPD | gast | 0.608 [0.44-0.74] | 0.654 [0.48-0.76] | 0.639 [0.45-0.74] | 0.654 [0.49-0.76] | running (8/25) |
+| COPD | gast_ssm | 0.671 [0.50-0.78] | 0.659 [0.48-0.77] | 0.675 [0.51-0.78] | 0.666 [0.46-0.79] | 0.648 [0.48-0.75] |
+| COPD | gast_attn | 0.626 [0.42-0.76] | 0.614 [0.38-0.76] | 0.639 [0.45-0.77] | 0.575 [0.37-0.72] | 0.534 [0.35-0.71] |
+| COPD | gast_nogap | 0.651 [0.41-0.81] | 0.657 [0.46-0.78] | 0.689 [0.51-0.81] | 0.678 [0.53-0.77] | 0.655 [0.50-0.76] |
+| COPD | gast_maskonly | 0.639 [0.43-0.78] | 0.674 [0.48-0.79] | 0.634 [0.42-0.75] | 0.684 [0.51-0.80] | 0.631 [0.41-0.79] |
 | AIIMS adults | XGBoost | 0.485 [0.35-0.62] | 0.508 [0.39-0.65] | 0.517 [0.38-0.67] | 0.509 [0.39-0.64] | 0.515 [0.40-0.64] |
 | AIIMS adults | CatBoost | 0.509 [0.40-0.63] | 0.536 [0.40-0.65] | 0.527 [0.38-0.65] | 0.526 [0.40-0.67] | 0.529 [0.41-0.65] |
 | AIIMS adults | RNN | 0.540 [0.38-0.68] | 0.539 [0.38-0.68] | 0.533 [0.37-0.68] | 0.530 [0.36-0.67] | 0.537 [0.36-0.68] |
 | AIIMS adults | LSTM | 0.566 [0.39-0.72] | 0.565 [0.40-0.73] | 0.571 [0.40-0.73] | 0.567 [0.40-0.73] | 0.561 [0.39-0.72] |
 | AIIMS adults | TimesFM 3 | 0.524 [0.40-0.68] | 0.526 [0.40-0.71] | 0.574 [0.45-0.71] | 0.576 [0.44-0.73] | 0.575 [0.46-0.70] |
+| AIIMS adults | gast | 0.472 [0.29-0.66] | 0.511 [0.33-0.71] | 0.487 [0.31-0.70] | 0.518 [0.35-0.72] | running (8/25) |
+| AIIMS adults | gast_ssm | 0.492 [0.31-0.68] | 0.522 [0.34-0.71] | 0.516 [0.34-0.71] | 0.532 [0.34-0.73] | 0.541 [0.35-0.74] |
+| AIIMS adults | gast_attn | 0.511 [0.29-0.70] | 0.528 [0.34-0.73] | 0.530 [0.32-0.75] | 0.548 [0.35-0.74] | 0.589 [0.42-0.76] |
+| AIIMS adults | gast_nogap | 0.544 [0.35-0.74] | 0.550 [0.35-0.75] | 0.578 [0.38-0.78] | 0.587 [0.39-0.78] | 0.612 [0.44-0.79] |
+| AIIMS adults | gast_maskonly | 0.487 [0.29-0.68] | 0.483 [0.31-0.67] | 0.517 [0.33-0.71] | 0.515 [0.32-0.71] | 0.547 [0.39-0.73] |
 | AIIMS children | XGBoost | 0.320 [0.18-0.48] | 0.378 [0.23-0.52] | 0.407 [0.24-0.58] | 0.386 [0.26-0.50] | 0.405 [0.31-0.51] |
 | AIIMS children | CatBoost | 0.520 [0.35-0.70] | 0.494 [0.34-0.67] | 0.481 [0.32-0.63] | 0.478 [0.32-0.63] | 0.489 [0.33-0.64] |
 | AIIMS children | RNN | 0.496 [0.33-0.64] | 0.447 [0.31-0.59] | 0.421 [0.27-0.56] | 0.431 [0.27-0.58] | 0.403 [0.25-0.55] |
 | AIIMS children | LSTM | 0.450 [0.24-0.62] | 0.452 [0.26-0.62] | 0.467 [0.26-0.65] | 0.464 [0.24-0.65] | 0.466 [0.26-0.64] |
 | AIIMS children | TimesFM 3 | 0.410 [0.22-0.56] | 0.568 [0.36-0.72] | 0.590 [0.36-0.75] | 0.556 [0.31-0.71] | 0.469 [0.26-0.61] |
+| AIIMS children | gast | 0.418 [0.20-0.58] | 0.482 [0.25-0.64] | 0.421 [0.23-0.58] | 0.477 [0.23-0.64] | running (8/25) |
+| AIIMS children | gast_ssm | 0.447 [0.21-0.62] | 0.480 [0.23-0.64] | 0.458 [0.20-0.64] | 0.495 [0.24-0.67] | 0.507 [0.26-0.67] |
+| AIIMS children | gast_attn | 0.495 [0.23-0.70] | 0.550 [0.33-0.71] | 0.546 [0.34-0.70] | 0.500 [0.24-0.67] | 0.557 [0.33-0.71] |
+| AIIMS children | gast_nogap | 0.511 [0.22-0.70] | 0.534 [0.26-0.71] | 0.558 [0.28-0.74] | 0.591 [0.33-0.76] | 0.588 [0.32-0.77] |
+| AIIMS children | gast_maskonly | 0.475 [0.25-0.64] | 0.464 [0.25-0.62] | 0.439 [0.22-0.58] | 0.480 [0.23-0.64] | 0.516 [0.30-0.68] |
 
 ### 8.5 Onset: a new episode in the next 1-3 days
 
@@ -771,6 +922,11 @@ Positive share of test days: 0.0096.
 | RNN | 0.504 [0.39-0.62] | 0.521 [0.41-0.63] (+0.017, 15/25) | 0.511 [0.39-0.63] (+0.006, 13/25) | 0.507 [0.39-0.61] (+0.003, 15/25) | 0.511 [0.39-0.63] (+0.007, 16/25) |
 | LSTM | 0.554 [0.41-0.69] | 0.569 [0.42-0.70] (+0.015, 14/25) | 0.549 [0.41-0.68] (-0.005, 12/25) | 0.548 [0.40-0.69] (-0.006, 6/25) | 0.555 [0.41-0.69] (+0.001, 10/25) |
 | TimesFM 3 | 0.524 [0.40-0.63] | 0.521 [0.41-0.63] (-0.004, 12/25) | 0.563 [0.46-0.66] (+0.039, 18/25) | 0.552 [0.43-0.65] (+0.028, 18/25) | 0.556 [0.44-0.66] (+0.032, 17/25) |
+| gast | 0.525 [0.38-0.65] | 0.532 [0.38-0.67] (+0.007, 13/25) | 0.529 [0.38-0.67] (+0.004, 13/25) | running (0/25) | running (0/25) |
+| gast_ssm | 0.512 [0.36-0.65] | 0.505 [0.37-0.64] (-0.007, 13/25) | 0.500 [0.37-0.63] (-0.012, 13/25) | 0.511 [0.38-0.63] (-0.001, 13/25) | 0.531 [0.41-0.65] (+0.019, 17/25) |
+| gast_attn | 0.563 [0.39-0.71] | 0.521 [0.36-0.67] (-0.042, 7/25) | 0.512 [0.35-0.67] (-0.051, 5/25) | 0.517 [0.37-0.66] (-0.046, 7/25) | 0.520 [0.38-0.65] (-0.042, 7/25) |
+| gast_nogap | 0.555 [0.39-0.71] | 0.536 [0.37-0.70] (-0.019, 8/25) | 0.549 [0.39-0.70] (-0.006, 13/25) | 0.558 [0.40-0.71] (+0.003, 13/25) | 0.556 [0.40-0.70] (+0.000, 13/25) |
+| gast_maskonly | 0.529 [0.36-0.68] | 0.542 [0.39-0.68] (+0.013, 15/25) | 0.541 [0.39-0.67] (+0.013, 14/25) | 0.550 [0.42-0.67] (+0.021, 16/25) | 0.563 [0.43-0.68] (+0.034, 18/25) |
 
 **AUPRC [95%]**
 
@@ -781,6 +937,11 @@ Positive share of test days: 0.0096.
 | RNN | 0.012 [0.005-0.026] | 0.013 [0.005-0.029] | 0.012 [0.005-0.026] | 0.012 [0.005-0.027] | 0.013 [0.005-0.031] |
 | LSTM | 0.015 [0.006-0.035] | 0.016 [0.006-0.041] | 0.015 [0.005-0.037] | 0.016 [0.006-0.041] | 0.015 [0.006-0.038] |
 | TimesFM 3 | 0.013 [0.005-0.032] | 0.013 [0.005-0.035] | 0.014 [0.006-0.028] | 0.013 [0.005-0.025] | 0.014 [0.006-0.033] |
+| gast | 0.011 [0.005-0.024] | 0.012 [0.005-0.029] | 0.014 [0.005-0.033] | running (0/25) | running (0/25) |
+| gast_ssm | 0.012 [0.005-0.032] | 0.011 [0.005-0.023] | 0.012 [0.005-0.029] | 0.011 [0.005-0.024] | 0.012 [0.005-0.024] |
+| gast_attn | 0.014 [0.005-0.033] | 0.016 [0.005-0.050] | 0.013 [0.005-0.041] | 0.013 [0.005-0.033] | 0.014 [0.005-0.034] |
+| gast_nogap | 0.013 [0.005-0.031] | 0.014 [0.005-0.034] | 0.014 [0.005-0.037] | 0.014 [0.006-0.032] | 0.014 [0.005-0.031] |
+| gast_maskonly | 0.014 [0.005-0.039] | 0.013 [0.005-0.033] | 0.015 [0.005-0.035] | 0.015 [0.006-0.039] | 0.015 [0.006-0.034] |
 
 **At the 0.5 threshold**
 
@@ -811,6 +972,31 @@ Positive share of test days: 0.0096.
 | TimesFM 3 | 4 | 0.070 | 0.939 | 0.009 | 60/439 | 1.84 | 0.056 | 2.24 |
 | TimesFM 3 | 3 | 0.077 | 0.935 | 0.008 | 57/439 | 1.94 | 0.058 | 2.25 |
 | TimesFM 3 | 2 | 0.122 | 0.917 | 0.013 | 97/439 | 2.48 | 0.072 | 2.00 |
+| gast | 7 | 0.232 | 0.774 | 0.010 | 133/439 | 6.79 | 0.146 | 2.69 |
+| gast | 5 | 0.341 | 0.690 | 0.011 | 198/439 | 9.29 | 0.187 | 2.64 |
+| gast | 4 | 0.373 | 0.657 | 0.011 | 207/439 | 10.30 | 0.195 | 2.72 |
+| gast | 3 | running (0/25) |  |  |  |  |  |  |
+| gast | 2 | running (0/25) |  |  |  |  |  |  |
+| gast_ssm | 7 | 0.382 | 0.624 | 0.010 | 210/439 | 11.28 | 0.205 | 2.80 |
+| gast_ssm | 5 | 0.369 | 0.625 | 0.010 | 212/439 | 11.25 | 0.208 | 2.74 |
+| gast_ssm | 4 | 0.428 | 0.569 | 0.010 | 241/439 | 12.93 | 0.224 | 2.88 |
+| gast_ssm | 3 | 0.396 | 0.615 | 0.010 | 236/439 | 11.55 | 0.208 | 2.80 |
+| gast_ssm | 2 | 0.423 | 0.596 | 0.010 | 270/439 | 12.11 | 0.213 | 2.72 |
+| gast_attn | 7 | 0.390 | 0.696 | 0.012 | 200/439 | 9.13 | 0.175 | 2.85 |
+| gast_attn | 5 | 0.430 | 0.599 | 0.010 | 217/439 | 12.02 | 0.217 | 2.78 |
+| gast_attn | 4 | 0.398 | 0.623 | 0.011 | 219/439 | 11.31 | 0.204 | 2.62 |
+| gast_attn | 3 | 0.413 | 0.621 | 0.011 | 247/439 | 11.38 | 0.210 | 2.74 |
+| gast_attn | 2 | 0.350 | 0.672 | 0.011 | 198/439 | 9.84 | 0.196 | 2.66 |
+| gast_nogap | 7 | 0.276 | 0.792 | 0.012 | 150/439 | 6.24 | 0.133 | 2.69 |
+| gast_nogap | 5 | 0.256 | 0.797 | 0.013 | 131/439 | 6.10 | 0.136 | 2.72 |
+| gast_nogap | 4 | 0.298 | 0.765 | 0.012 | 173/439 | 7.04 | 0.143 | 2.64 |
+| gast_nogap | 3 | 0.286 | 0.784 | 0.014 | 165/439 | 6.48 | 0.142 | 2.56 |
+| gast_nogap | 2 | 0.325 | 0.737 | 0.014 | 188/439 | 7.88 | 0.164 | 2.68 |
+| gast_maskonly | 7 | 0.309 | 0.706 | 0.011 | 171/439 | 8.81 | 0.180 | 2.78 |
+| gast_maskonly | 5 | 0.316 | 0.713 | 0.011 | 189/439 | 8.61 | 0.176 | 2.67 |
+| gast_maskonly | 4 | 0.367 | 0.669 | 0.011 | 208/439 | 9.92 | 0.191 | 2.70 |
+| gast_maskonly | 3 | 0.311 | 0.737 | 0.012 | 186/439 | 7.89 | 0.157 | 2.64 |
+| gast_maskonly | 2 | 0.422 | 0.665 | 0.013 | 263/439 | 10.04 | 0.196 | 2.48 |
 
 **AUROC [95%] per group**. Average test fold per split: COPD 9.2 positive of 388 days; AIIMS adults 28.4 positive of 2,808 days; AIIMS children 8.0 positive of 1,534 days.
 
@@ -821,16 +1007,31 @@ Positive share of test days: 0.0096.
 | COPD | RNN | 0.464 [0.35-0.55] | 0.504 [0.38-0.59] | 0.475 [0.34-0.58] | 0.495 [0.38-0.59] | 0.478 [0.37-0.56] |
 | COPD | LSTM | 0.497 [0.36-0.63] | 0.528 [0.36-0.67] | 0.509 [0.37-0.65] | 0.504 [0.34-0.65] | 0.495 [0.34-0.64] |
 | COPD | TimesFM 3 | 0.548 [0.40-0.66] | 0.562 [0.41-0.68] | 0.575 [0.43-0.68] | 0.591 [0.44-0.70] | 0.556 [0.43-0.64] |
+| COPD | gast | 0.568 [0.38-0.69] | 0.624 [0.44-0.75] | 0.602 [0.45-0.71] | running (0/25) | running (0/25) |
+| COPD | gast_ssm | 0.617 [0.44-0.73] | 0.597 [0.44-0.70] | 0.567 [0.41-0.67] | 0.556 [0.41-0.65] | 0.580 [0.42-0.69] |
+| COPD | gast_attn | 0.619 [0.44-0.75] | 0.567 [0.39-0.70] | 0.530 [0.39-0.64] | 0.505 [0.37-0.61] | 0.540 [0.39-0.65] |
+| COPD | gast_nogap | 0.536 [0.33-0.69] | 0.566 [0.37-0.73] | 0.549 [0.36-0.71] | 0.573 [0.38-0.71] | 0.563 [0.38-0.70] |
+| COPD | gast_maskonly | 0.598 [0.42-0.73] | 0.622 [0.46-0.76] | 0.589 [0.45-0.71] | 0.555 [0.42-0.67] | 0.617 [0.47-0.72] |
 | AIIMS adults | XGBoost | 0.514 [0.36-0.68] | 0.527 [0.37-0.69] | 0.540 [0.37-0.69] | 0.554 [0.40-0.69] | 0.574 [0.39-0.74] |
 | AIIMS adults | CatBoost | 0.515 [0.35-0.68] | 0.484 [0.34-0.65] | 0.509 [0.35-0.66] | 0.524 [0.38-0.67] | 0.526 [0.40-0.66] |
 | AIIMS adults | RNN | 0.529 [0.40-0.66] | 0.542 [0.42-0.67] | 0.539 [0.42-0.66] | 0.521 [0.39-0.64] | 0.543 [0.41-0.67] |
 | AIIMS adults | LSTM | 0.576 [0.43-0.73] | 0.597 [0.45-0.74] | 0.569 [0.44-0.70] | 0.581 [0.44-0.73] | 0.581 [0.44-0.72] |
 | AIIMS adults | TimesFM 3 | 0.555 [0.40-0.67] | 0.552 [0.40-0.70] | 0.594 [0.46-0.72] | 0.552 [0.41-0.68] | 0.582 [0.44-0.72] |
+| AIIMS adults | gast | 0.494 [0.32-0.66] | 0.499 [0.33-0.68] | 0.501 [0.32-0.68] | running (0/25) | running (0/25) |
+| AIIMS adults | gast_ssm | 0.472 [0.29-0.65] | 0.467 [0.30-0.64] | 0.480 [0.30-0.65] | 0.482 [0.32-0.64] | 0.507 [0.36-0.67] |
+| AIIMS adults | gast_attn | 0.513 [0.32-0.71] | 0.482 [0.31-0.68] | 0.486 [0.31-0.66] | 0.509 [0.33-0.69] | 0.508 [0.34-0.67] |
+| AIIMS adults | gast_nogap | 0.545 [0.35-0.72] | 0.510 [0.31-0.71] | 0.516 [0.32-0.70] | 0.522 [0.33-0.70] | 0.514 [0.33-0.69] |
+| AIIMS adults | gast_maskonly | 0.487 [0.29-0.69] | 0.503 [0.33-0.67] | 0.519 [0.34-0.70] | 0.556 [0.40-0.70] | 0.532 [0.36-0.70] |
 | AIIMS children | XGBoost | 0.330 [0.17-0.52] | 0.361 [0.18-0.56] | 0.380 [0.20-0.57] | 0.430 [0.27-0.70] | 0.500 [0.35-0.80] |
 | AIIMS children | CatBoost | 0.445 [0.27-0.71] | 0.459 [0.28-0.64] | 0.438 [0.27-0.63] | 0.523 [0.30-0.77] | 0.552 [0.37-0.83] |
 | AIIMS children | RNN | 0.435 [0.18-0.59] | 0.431 [0.18-0.56] | 0.413 [0.15-0.55] | 0.429 [0.21-0.56] | 0.420 [0.19-0.57] |
 | AIIMS children | LSTM | 0.503 [0.26-0.70] | 0.499 [0.19-0.73] | 0.491 [0.24-0.73] | 0.481 [0.20-0.71] | 0.493 [0.24-0.72] |
 | AIIMS children | TimesFM 3 | 0.408 [0.12-0.53] | 0.419 [0.17-0.58] | 0.481 [0.18-0.65] | 0.462 [0.16-0.63] | 0.448 [0.14-0.61] |
+| AIIMS children | gast | 0.510 [0.23-0.75] | 0.511 [0.18-0.73] | 0.503 [0.19-0.71] | running (0/25) | running (0/25) |
+| AIIMS children | gast_ssm | 0.489 [0.19-0.71] | 0.493 [0.21-0.73] | 0.497 [0.24-0.73] | 0.513 [0.27-0.74] | 0.506 [0.28-0.76] |
+| AIIMS children | gast_attn | 0.590 [0.25-0.84] | 0.529 [0.22-0.75] | 0.520 [0.23-0.75] | 0.514 [0.22-0.74] | 0.488 [0.19-0.75] |
+| AIIMS children | gast_nogap | 0.534 [0.25-0.79] | 0.531 [0.27-0.75] | 0.578 [0.31-0.81] | 0.612 [0.37-0.81] | 0.578 [0.31-0.80] |
+| AIIMS children | gast_maskonly | 0.558 [0.25-0.77] | 0.552 [0.22-0.79] | 0.535 [0.20-0.75] | 0.511 [0.26-0.72] | 0.526 [0.27-0.75] |
 
 ### 8.6 Onset: a new episode in the next 1-2 days
 
@@ -845,6 +1046,11 @@ Positive share of test days: 0.0063. No 7-day run exists for this horizon, so th
 | RNN | 0.494 [0.38-0.62] | 0.508 [0.40-0.62] | 0.495 [0.39-0.61] | 0.486 [0.38-0.61] |
 | LSTM | 0.526 [0.38-0.67] | 0.532 [0.38-0.69] | 0.530 [0.38-0.68] | 0.525 [0.38-0.67] |
 | TimesFM 3 | 0.548 [0.42-0.68] | 0.569 [0.44-0.69] | 0.564 [0.45-0.66] | 0.588 [0.47-0.70] |
+| gast | 0.527 [0.36-0.67] | 0.540 [0.39-0.68] | running (0/25) | running (0/25) |
+| gast_ssm | 0.500 [0.35-0.64] | 0.522 [0.38-0.65] | 0.521 [0.37-0.65] | 0.557 [0.40-0.69] |
+| gast_attn | 0.537 [0.38-0.70] | 0.523 [0.36-0.69] | 0.510 [0.35-0.66] | 0.532 [0.37-0.69] |
+| gast_nogap | 0.533 [0.36-0.68] | 0.541 [0.37-0.69] | 0.552 [0.36-0.72] | 0.575 [0.41-0.72] |
+| gast_maskonly | 0.545 [0.37-0.70] | 0.544 [0.40-0.67] | 0.533 [0.38-0.68] | 0.560 [0.42-0.69] |
 
 **AUPRC [95%]**
 
@@ -855,6 +1061,11 @@ Positive share of test days: 0.0063. No 7-day run exists for this horizon, so th
 | RNN | 0.010 [0.003-0.024] | 0.009 [0.004-0.019] | 0.009 [0.003-0.022] | 0.008 [0.003-0.019] |
 | LSTM | 0.010 [0.004-0.026] | 0.011 [0.003-0.031] | 0.010 [0.004-0.027] | 0.010 [0.004-0.027] |
 | TimesFM 3 | 0.008 [0.004-0.018] | 0.010 [0.004-0.026] | 0.009 [0.004-0.023] | 0.011 [0.004-0.028] |
+| gast | 0.008 [0.003-0.019] | 0.010 [0.004-0.031] | running (0/25) | running (0/25) |
+| gast_ssm | 0.007 [0.003-0.018] | 0.008 [0.003-0.019] | 0.010 [0.003-0.028] | 0.009 [0.004-0.019] |
+| gast_attn | 0.011 [0.004-0.038] | 0.010 [0.004-0.034] | 0.008 [0.003-0.019] | 0.010 [0.003-0.031] |
+| gast_nogap | 0.009 [0.003-0.027] | 0.009 [0.003-0.021] | 0.009 [0.003-0.023] | 0.011 [0.004-0.031] |
+| gast_maskonly | 0.010 [0.003-0.029] | 0.010 [0.004-0.032] | 0.008 [0.003-0.021] | 0.011 [0.004-0.033] |
 
 **At the 0.5 threshold**
 
@@ -880,6 +1091,26 @@ Positive share of test days: 0.0063. No 7-day run exists for this horizon, so th
 | TimesFM 3 | 4 | 0.042 | 0.963 | 0.004 | 22/392 | 1.11 | 0.035 | 1.64 |
 | TimesFM 3 | 3 | 0.061 | 0.956 | 0.008 | 33/392 | 1.33 | 0.041 | 1.63 |
 | TimesFM 3 | 2 | 0.043 | 0.969 | 0.007 | 24/392 | 0.92 | 0.030 | 1.62 |
+| gast | 5 | 0.286 | 0.736 | 0.006 | 143/392 | 7.91 | 0.161 | 1.93 |
+| gast | 4 | 0.306 | 0.756 | 0.008 | 154/392 | 7.32 | 0.159 | 1.76 |
+| gast | 3 | running (0/25) |  |  |  |  |  |  |
+| gast | 2 | running (0/25) |  |  |  |  |  |  |
+| gast_ssm | 5 | 0.356 | 0.618 | 0.006 | 164/392 | 11.45 | 0.198 | 1.94 |
+| gast_ssm | 4 | 0.395 | 0.613 | 0.007 | 184/392 | 11.60 | 0.208 | 1.94 |
+| gast_ssm | 3 | 0.383 | 0.618 | 0.006 | 179/392 | 11.46 | 0.199 | 1.80 |
+| gast_ssm | 2 | 0.472 | 0.606 | 0.008 | 235/392 | 11.81 | 0.209 | 1.90 |
+| gast_attn | 5 | 0.307 | 0.726 | 0.008 | 125/392 | 8.21 | 0.164 | 1.84 |
+| gast_attn | 4 | 0.267 | 0.750 | 0.008 | 126/392 | 7.50 | 0.151 | 1.72 |
+| gast_attn | 3 | 0.318 | 0.677 | 0.006 | 148/392 | 9.68 | 0.186 | 1.87 |
+| gast_attn | 2 | 0.379 | 0.653 | 0.007 | 173/392 | 10.41 | 0.197 | 1.94 |
+| gast_nogap | 5 | 0.249 | 0.786 | 0.006 | 114/392 | 6.41 | 0.131 | 1.88 |
+| gast_nogap | 4 | 0.288 | 0.746 | 0.007 | 137/392 | 7.62 | 0.152 | 1.80 |
+| gast_nogap | 3 | 0.249 | 0.799 | 0.009 | 102/392 | 6.02 | 0.129 | 1.86 |
+| gast_nogap | 2 | 0.306 | 0.765 | 0.010 | 145/392 | 7.05 | 0.145 | 1.86 |
+| gast_maskonly | 5 | 0.287 | 0.777 | 0.008 | 134/392 | 6.68 | 0.134 | 1.75 |
+| gast_maskonly | 4 | 0.258 | 0.792 | 0.008 | 136/392 | 6.23 | 0.128 | 1.58 |
+| gast_maskonly | 3 | 0.315 | 0.701 | 0.007 | 153/392 | 8.98 | 0.169 | 1.78 |
+| gast_maskonly | 2 | 0.326 | 0.715 | 0.008 | 162/392 | 8.54 | 0.161 | 1.74 |
 
 **AUROC [95%] per group**. Average test fold per split: COPD 6.5 positive of 388 days; AIIMS adults 19.0 positive of 2,808 days; AIIMS children 4.3 positive of 1,534 days.
 
@@ -890,16 +1121,31 @@ Positive share of test days: 0.0063. No 7-day run exists for this horizon, so th
 | COPD | RNN | 0.469 [0.36-0.59] | 0.492 [0.40-0.63] | 0.483 [0.38-0.61] | 0.480 [0.37-0.61] |
 | COPD | LSTM | 0.509 [0.35-0.66] | 0.519 [0.38-0.65] | 0.499 [0.35-0.64] | 0.502 [0.36-0.63] |
 | COPD | TimesFM 3 | 0.607 [0.46-0.72] | 0.584 [0.45-0.69] | 0.588 [0.45-0.68] | 0.580 [0.46-0.66] |
+| COPD | gast | 0.552 [0.38-0.68] | 0.573 [0.44-0.69] | running (0/25) | running (0/25) |
+| COPD | gast_ssm | 0.557 [0.38-0.68] | 0.591 [0.42-0.71] | 0.602 [0.44-0.72] | 0.617 [0.46-0.72] |
+| COPD | gast_attn | 0.594 [0.42-0.74] | 0.533 [0.38-0.65] | 0.559 [0.41-0.68] | 0.564 [0.41-0.67] |
+| COPD | gast_nogap | 0.582 [0.39-0.75] | 0.591 [0.40-0.74] | 0.591 [0.40-0.74] | 0.597 [0.43-0.73] |
+| COPD | gast_maskonly | 0.587 [0.40-0.72] | 0.554 [0.40-0.68] | 0.556 [0.40-0.69] | 0.581 [0.42-0.69] |
 | AIIMS adults | XGBoost | 0.563 [0.39-0.72] | 0.570 [0.41-0.71] | 0.586 [0.41-0.75] | 0.556 [0.37-0.72] |
 | AIIMS adults | CatBoost | 0.498 [0.34-0.65] | 0.527 [0.38-0.69] | 0.562 [0.42-0.71] | 0.529 [0.38-0.70] |
 | AIIMS adults | RNN | 0.521 [0.37-0.66] | 0.540 [0.41-0.67] | 0.521 [0.38-0.65] | 0.508 [0.37-0.65] |
 | AIIMS adults | LSTM | 0.538 [0.38-0.71] | 0.532 [0.37-0.71] | 0.540 [0.38-0.72] | 0.529 [0.36-0.71] |
 | AIIMS adults | TimesFM 3 | 0.540 [0.37-0.72] | 0.570 [0.40-0.73] | 0.547 [0.39-0.67] | 0.586 [0.44-0.72] |
+| AIIMS adults | gast | 0.483 [0.30-0.65] | 0.502 [0.32-0.68] | running (0/25) | running (0/25) |
+| AIIMS adults | gast_ssm | 0.459 [0.29-0.63] | 0.480 [0.30-0.64] | 0.473 [0.29-0.65] | 0.505 [0.34-0.66] |
+| AIIMS adults | gast_attn | 0.516 [0.34-0.71] | 0.515 [0.35-0.69] | 0.463 [0.26-0.65] | 0.499 [0.32-0.70] |
+| AIIMS adults | gast_nogap | 0.492 [0.31-0.68] | 0.484 [0.29-0.67] | 0.486 [0.28-0.68] | 0.531 [0.34-0.70] |
+| AIIMS adults | gast_maskonly | 0.506 [0.31-0.71] | 0.516 [0.34-0.69] | 0.500 [0.32-0.67] | 0.513 [0.37-0.67] |
 | AIIMS children | XGBoost | 0.375 [0.20-0.52] | 0.358 [0.17-0.50] | 0.407 [0.25-0.54] | 0.454 [0.33-0.57] |
 | AIIMS children | CatBoost | 0.428 [0.27-0.53] | 0.417 [0.29-0.53] | 0.446 [0.31-0.55] | 0.480 [0.37-0.61] |
 | AIIMS children | RNN | 0.445 [0.38-0.56] | 0.427 [0.36-0.53] | 0.457 [0.39-0.57] | 0.431 [0.35-0.54] |
 | AIIMS children | LSTM | 0.480 [0.36-0.58] | 0.514 [0.36-0.63] | 0.485 [0.31-0.61] | 0.504 [0.36-0.61] |
 | AIIMS children | TimesFM 3 | 0.482 [0.36-0.60] | 0.492 [0.33-0.58] | 0.532 [0.40-0.65] | 0.536 [0.32-0.68] |
+| AIIMS children | gast | 0.537 [0.30-0.69] | 0.539 [0.34-0.69] | running (0/25) | running (0/25) |
+| AIIMS children | gast_ssm | 0.471 [0.25-0.63] | 0.503 [0.26-0.66] | 0.498 [0.29-0.65] | 0.520 [0.26-0.66] |
+| AIIMS children | gast_attn | 0.479 [0.26-0.64] | 0.496 [0.27-0.65] | 0.498 [0.30-0.68] | 0.480 [0.24-0.63] |
+| AIIMS children | gast_nogap | 0.500 [0.29-0.64] | 0.581 [0.38-0.70] | 0.631 [0.43-0.78] | 0.562 [0.33-0.74] |
+| AIIMS children | gast_maskonly | 0.557 [0.35-0.71] | 0.535 [0.35-0.66] | 0.497 [0.31-0.64] | 0.508 [0.31-0.64] |
 
 ### 8.7 Onset: a new episode in the next day only
 
@@ -914,6 +1160,11 @@ Positive share of test days: 0.0032. No 7-day run exists for this horizon, so th
 | RNN | 0.517 [0.37-0.68] | 0.503 [0.36-0.66] | 0.506 [0.38-0.66] | 0.508 [0.37-0.66] |
 | LSTM | 0.540 [0.37-0.72] | 0.526 [0.35-0.70] | 0.537 [0.35-0.73] | 0.529 [0.36-0.70] |
 | TimesFM 3 | 0.549 [0.39-0.70] | 0.548 [0.40-0.69] | 0.534 [0.38-0.68] | 0.530 [0.36-0.69] |
+| gast | running (3/25) | running (24/25) | running (0/25) | running (0/25) |
+| gast_ssm | running (3/25) | running (23/25) | 0.528 [0.37-0.68] | 0.547 [0.38-0.70] |
+| gast_attn | running (2/25) | running (23/25) | 0.520 [0.34-0.69] | 0.523 [0.35-0.68] |
+| gast_nogap | running (2/25) | running (23/25) | 0.598 [0.41-0.75] | 0.587 [0.44-0.73] |
+| gast_maskonly | running (2/25) | running (23/25) | 0.571 [0.43-0.71] | 0.557 [0.40-0.70] |
 
 **AUPRC [95%]**
 
@@ -924,6 +1175,11 @@ Positive share of test days: 0.0032. No 7-day run exists for this horizon, so th
 | RNN | 0.005 [0.002-0.020] | 0.007 [0.002-0.037] | 0.008 [0.002-0.040] | 0.005 [0.002-0.019] |
 | LSTM | 0.006 [0.002-0.022] | 0.008 [0.002-0.029] | 0.006 [0.002-0.023] | 0.006 [0.002-0.021] |
 | TimesFM 3 | 0.007 [0.002-0.031] | 0.007 [0.002-0.023] | 0.005 [0.002-0.016] | 0.005 [0.002-0.013] |
+| gast | running (3/25) | running (24/25) | running (0/25) | running (0/25) |
+| gast_ssm | running (3/25) | running (23/25) | 0.004 [0.002-0.011] | 0.005 [0.002-0.014] |
+| gast_attn | running (2/25) | running (23/25) | 0.005 [0.002-0.015] | 0.006 [0.002-0.016] |
+| gast_nogap | running (2/25) | running (23/25) | 0.008 [0.002-0.027] | 0.005 [0.002-0.014] |
+| gast_maskonly | running (2/25) | running (23/25) | 0.005 [0.002-0.013] | 0.005 [0.002-0.015] |
 
 **At the 0.5 threshold**
 
@@ -949,6 +1205,26 @@ Positive share of test days: 0.0032. No 7-day run exists for this horizon, so th
 | TimesFM 3 | 4 | 0.019 | 0.991 | 0.006 | 6/384 | 0.27 | 0.011 | 1.00 |
 | TimesFM 3 | 3 | 0.005 | 0.989 | 0.002 | 2/384 | 0.33 | 0.012 | 1.00 |
 | TimesFM 3 | 2 | 0.020 | 0.984 | 0.001 | 5/384 | 0.49 | 0.016 | 1.00 |
+| gast | 5 | running (3/25) |  |  |  |  |  |  |
+| gast | 4 | running (24/25) |  |  |  |  |  |  |
+| gast | 3 | running (0/25) |  |  |  |  |  |  |
+| gast | 2 | running (0/25) |  |  |  |  |  |  |
+| gast_ssm | 5 | running (3/25) |  |  |  |  |  |  |
+| gast_ssm | 4 | running (23/25) |  |  |  |  |  |  |
+| gast_ssm | 3 | 0.370 | 0.701 | 0.004 | 137/384 | 8.97 | 0.161 | 1.00 |
+| gast_ssm | 2 | 0.414 | 0.660 | 0.004 | 159/384 | 10.19 | 0.189 | 1.00 |
+| gast_attn | 5 | running (2/25) |  |  |  |  |  |  |
+| gast_attn | 4 | running (23/25) |  |  |  |  |  |  |
+| gast_attn | 3 | 0.296 | 0.726 | 0.003 | 116/384 | 8.23 | 0.156 | 1.00 |
+| gast_attn | 2 | 0.371 | 0.649 | 0.004 | 143/384 | 10.53 | 0.199 | 1.00 |
+| gast_nogap | 5 | running (2/25) |  |  |  |  |  |  |
+| gast_nogap | 4 | running (23/25) |  |  |  |  |  |  |
+| gast_nogap | 3 | 0.327 | 0.796 | 0.007 | 124/384 | 6.11 | 0.130 | 1.00 |
+| gast_nogap | 2 | 0.239 | 0.822 | 0.004 | 78/384 | 5.34 | 0.117 | 1.00 |
+| gast_maskonly | 5 | running (2/25) |  |  |  |  |  |  |
+| gast_maskonly | 4 | running (23/25) |  |  |  |  |  |  |
+| gast_maskonly | 3 | 0.244 | 0.763 | 0.003 | 99/384 | 7.11 | 0.136 | 1.00 |
+| gast_maskonly | 2 | 0.258 | 0.769 | 0.004 | 95/384 | 6.94 | 0.135 | 1.00 |
 
 **AUROC [95%] per group**. Average test fold per split: COPD 3.2 positive of 388 days; AIIMS adults 9.7 positive of 2,808 days; AIIMS children 2.4 positive of 1,534 days.
 
@@ -959,16 +1235,31 @@ Positive share of test days: 0.0032. No 7-day run exists for this horizon, so th
 | COPD | RNN | 0.491 [0.32-0.62] | 0.415 [0.26-0.53] | 0.452 [0.33-0.56] | 0.442 [0.29-0.56] |
 | COPD | LSTM | 0.507 [0.35-0.67] | 0.449 [0.30-0.59] | 0.489 [0.34-0.64] | 0.462 [0.31-0.62] |
 | COPD | TimesFM 3 | 0.605 [0.45-0.74] | 0.599 [0.44-0.70] | 0.507 [0.35-0.64] | 0.456 [0.31-0.58] |
+| COPD | gast | running (3/25) | running (24/25) | running (0/25) | running (0/25) |
+| COPD | gast_ssm | running (3/25) | running (23/25) | 0.521 [0.37-0.64] | 0.565 [0.42-0.68] |
+| COPD | gast_attn | running (2/25) | running (23/25) | 0.508 [0.31-0.64] | 0.559 [0.42-0.67] |
+| COPD | gast_nogap | running (2/25) | running (23/25) | 0.615 [0.43-0.76] | 0.565 [0.40-0.70] |
+| COPD | gast_maskonly | running (2/25) | running (23/25) | 0.559 [0.40-0.69] | 0.518 [0.36-0.63] |
 | AIIMS adults | XGBoost | 0.589 [0.40-0.78] | 0.615 [0.42-0.81] | 0.605 [0.40-0.80] | 0.545 [0.35-0.75] |
 | AIIMS adults | CatBoost | 0.552 [0.34-0.73] | 0.551 [0.34-0.76] | 0.525 [0.31-0.72] | 0.512 [0.28-0.74] |
 | AIIMS adults | RNN | 0.540 [0.36-0.72] | 0.548 [0.36-0.73] | 0.524 [0.35-0.72] | 0.531 [0.35-0.72] |
 | AIIMS adults | LSTM | 0.548 [0.33-0.77] | 0.546 [0.35-0.75] | 0.555 [0.35-0.76] | 0.542 [0.36-0.72] |
 | AIIMS adults | TimesFM 3 | 0.509 [0.29-0.72] | 0.520 [0.34-0.72] | 0.507 [0.30-0.69] | 0.545 [0.34-0.73] |
+| AIIMS adults | gast | running (3/25) | running (24/25) | running (0/25) | running (0/25) |
+| AIIMS adults | gast_ssm | running (3/25) | running (23/25) | 0.502 [0.28-0.70] | 0.500 [0.29-0.72] |
+| AIIMS adults | gast_attn | running (2/25) | running (23/25) | 0.489 [0.28-0.72] | 0.503 [0.29-0.72] |
+| AIIMS adults | gast_nogap | running (2/25) | running (23/25) | 0.554 [0.34-0.76] | 0.572 [0.37-0.75] |
+| AIIMS adults | gast_maskonly | running (2/25) | running (23/25) | 0.537 [0.35-0.73] | 0.531 [0.32-0.75] |
 | AIIMS children | XGBoost | 0.390 [0.23-0.54] | 0.370 [0.22-0.51] | 0.478 [0.30-0.63] | 0.536 [0.39-0.70] |
 | AIIMS children | CatBoost | 0.491 [0.31-0.64] | 0.475 [0.30-0.62] | 0.495 [0.35-0.62] | 0.554 [0.44-0.69] |
 | AIIMS children | RNN | 0.518 [0.40-0.64] | 0.506 [0.41-0.62] | 0.573 [0.48-0.71] | 0.561 [0.45-0.70] |
 | AIIMS children | LSTM | 0.580 [0.46-0.73] | 0.603 [0.49-0.75] | 0.575 [0.46-0.71] | 0.593 [0.48-0.73] |
 | AIIMS children | TimesFM 3 | 0.607 [0.47-0.72] | 0.550 [0.40-0.66] | 0.650 [0.52-0.76] | 0.536 [0.34-0.69] |
+| AIIMS children | gast | running (3/25) | running (24/25) | running (0/25) | running (0/25) |
+| AIIMS children | gast_ssm | running (3/25) | running (23/25) | 0.593 [0.39-0.73] | 0.594 [0.41-0.71] |
+| AIIMS children | gast_attn | running (2/25) | running (23/25) | 0.508 [0.30-0.68] | 0.431 [0.21-0.60] |
+| AIIMS children | gast_nogap | running (2/25) | running (23/25) | 0.583 [0.40-0.74] | 0.588 [0.38-0.74] |
+| AIIMS children | gast_maskonly | running (2/25) | running (23/25) | 0.595 [0.44-0.71] | 0.542 [0.33-0.69] |
 
 ### 8.8 Training time (detection, median per split)
 
@@ -979,10 +1270,103 @@ Positive share of test days: 0.0032. No 7-day run exists for this horizon, so th
 | RNN | 33 s | 23 s | 18 s | 15 s | 12 s |
 | LSTM | 35 s | 24 s | 21 s | 17 s | 13 s |
 | TimesFM 3 | 6 s | 6 s | 7 s | 6 s | 6 s |
+| gast | 208 s | 209 s | 142 s | 102 s | running (8/25) |
+| gast_ssm | 246 s | 217 s | 160 s | 108 s | 74 s |
+| gast_attn | 204 s | 152 s | 117 s | 105 s | 59 s |
+| gast_nogap | 154 s | 108 s | 89 s | 67 s | 53 s |
+| gast_maskonly | 211 s | 183 s | 140 s | 122 s | 64 s |
 
 The TimesFM 3 cache for each new window was built during its first split: 5 days 81 min, 4 days 75 min, 3 days 62 min, 2 days 15 min (the first three built at the same time on one GPU). 7-day runs: two runs at once; window runs: three at once, 12 CPU cores each.
 
-## 9. Where everything is
+## 9. The other two sets: copd and copd_clinical (main runs, 7 days)
+
+Run on 17-18 Oct 2026 with the main runs (`run_exac.py`): every model except gast2 and the 3- and 14-day
+GAST, 25 splits each, both tasks, 7-day input, onset in the next 1-3 days. Everything is as in sections 3-5
+except the patients and, for `copd_clinical`, the inputs.
+
+- **`copd`:** the COPD pilot cohort only, watch data. 27 patients; detection 1,372 days, 11 exacerbation
+  days in 11 episodes; onset 1,306 days, 29 days before 10 onsets.
+- **`copd_clinical`:** the same 27 patients and days, plus the 28 values of the COPD clinical table as
+  recorded (minus the count of exacerbations during monitoring), given to every model: as extra columns,
+  as recorded, to the trees; and, each divided by its largest value in the training patients, as extra
+  numbers on every minute to RNN/LSTM, as the starting state of GAST's memory (gast_attn: added to its
+  start key), and next to the frozen outputs for TimesFM 3's layer.
+- **Splits:** drawn the same way (section 3.1) within these 27 patients, so they are not the COPD
+  patients' splits of the combined set. `copd` and `copd_clinical` have the same patients and labels, so
+  they have the same 25 splits.
+- Each test fold holds about 2 patients with an exacerbation (the line above each table); see the "AUROC
+  range" column for how far the per-split AUROC moves.
+
+### 9.1 Set `copd`
+
+**Detection.** Average test fold per split: 407 days, 3.3 positive, from 8.0 patients (1.8 with a positive day).
+
+| model | AUROC [95%] | AUROC range | AUPRC [95%] | sensitivity | specificity | episodes flagged | false alarms / 30 d | Brier |
+|---|---|---|---|---|---|---|---|---|
+| always_no | 0.500 [0.50-0.50] | 0.500-0.500 | 0.010 [0.006-0.022] | 0.000 | 1.000 | 0/82 | 0.00 | 0.010 |
+| XGBoost | 0.550 [0.37-0.68] | 0.143-0.862 | 0.021 [0.012-0.059] | 0.000 | 1.000 | 0/82 | 0.00 | 0.010 |
+| CatBoost | 0.630 [0.44-0.79] | 0.224-0.942 | 0.038 [0.017-0.104] | 0.000 | 1.000 | 0/82 | 0.00 | 0.010 |
+| RNN | 0.535 [0.43-0.65] | 0.172-0.853 | 0.029 [0.017-0.070] | 0.021 | 0.981 | 2/82 | 0.57 | 0.025 |
+| LSTM | 0.454 [0.31-0.63] | 0.136-0.875 | 0.026 [0.015-0.064] | 0.039 | 0.969 | 4/82 | 0.93 | 0.040 |
+| TimesFM 3 | 0.656 [0.47-0.79] | 0.265-0.927 | 0.037 [0.015-0.141] | 0.000 | 0.997 | 0/82 | 0.10 | 0.013 |
+| gast | 0.443 [0.30-0.57] | 0.083-0.877 | 0.015 [0.010-0.034] | 0.000 | 0.954 | 0/82 | 1.38 | 0.045 |
+| gast_ssm | 0.448 [0.30-0.60] | 0.134-0.722 | 0.014 [0.010-0.030] | 0.050 | 0.900 | 3/82 | 2.99 | 0.082 |
+| gast_attn | 0.413 [0.27-0.56] | 0.199-0.825 | 0.014 [0.009-0.039] | 0.000 | 0.910 | 0/82 | 2.70 | 0.075 |
+| gast_nogap | 0.503 [0.37-0.66] | 0.180-0.793 | 0.020 [0.012-0.048] | 0.000 | 0.986 | 0/82 | 0.41 | 0.020 |
+| gast_maskonly | 0.420 [0.25-0.59] | 0.061-0.790 | 0.013 [0.008-0.033] | 0.000 | 0.936 | 0/82 | 1.93 | 0.057 |
+
+**Onset (next 1-3 days).** Average test fold per split: 388 days, 9.0 positive, from 7.8 patients (1.8 with a positive day).
+
+| model | AUROC [95%] | AUROC range | AUPRC [95%] | sensitivity | specificity | onsets flagged | false alarms / 30 d | Brier |
+|---|---|---|---|---|---|---|---|---|
+| always_no | 0.500 [0.50-0.50] | 0.500-0.500 | 0.029 [0.018-0.064] | 0.000 | 1.000 | 0/77 | 0.00 | 0.029 |
+| XGBoost | 0.551 [0.35-0.72] | 0.252-0.881 | 0.090 [0.032-0.202] | 0.000 | 1.000 | 0/77 | 0.00 | 0.029 |
+| CatBoost | 0.536 [0.39-0.67] | 0.161-0.736 | 0.044 [0.026-0.101] | 0.000 | 1.000 | 0/77 | 0.00 | 0.029 |
+| RNN | 0.555 [0.47-0.64] | 0.243-0.723 | 0.058 [0.034-0.127] | 0.046 | 0.963 | 9/77 | 1.12 | 0.057 |
+| LSTM | 0.558 [0.41-0.70] | 0.333-0.808 | 0.063 [0.037-0.143] | 0.156 | 0.890 | 23/77 | 3.30 | 0.106 |
+| TimesFM 3 | 0.559 [0.41-0.67] | 0.267-0.723 | 0.056 [0.029-0.132] | 0.003 | 0.993 | 1/77 | 0.20 | 0.035 |
+| gast | 0.494 [0.32-0.64] | 0.098-0.945 | 0.048 [0.027-0.106] | 0.038 | 0.937 | 4/77 | 1.89 | 0.072 |
+| gast_ssm | 0.584 [0.42-0.70] | 0.311-0.910 | 0.048 [0.031-0.104] | 0.166 | 0.817 | 16/77 | 5.49 | 0.127 |
+| gast_attn | 0.463 [0.30-0.61] | 0.114-0.858 | 0.036 [0.023-0.090] | 0.023 | 0.913 | 5/77 | 2.61 | 0.089 |
+| gast_nogap | 0.452 [0.26-0.63] | 0.062-0.888 | 0.042 [0.023-0.088] | 0.076 | 0.948 | 8/77 | 1.56 | 0.068 |
+| gast_maskonly | 0.496 [0.30-0.66] | 0.218-0.853 | 0.038 [0.022-0.084] | 0.057 | 0.896 | 5/77 | 3.12 | 0.099 |
+
+### 9.2 Set `copd_clinical`
+
+**Detection.** Average test fold per split: 407 days, 3.3 positive, from 8.0 patients (1.8 with a positive day).
+
+| model | AUROC [95%] | AUROC range | AUPRC [95%] | sensitivity | specificity | episodes flagged | false alarms / 30 d | Brier |
+|---|---|---|---|---|---|---|---|---|
+| always_no | 0.500 [0.50-0.50] | 0.500-0.500 | 0.010 [0.006-0.022] | 0.000 | 1.000 | 0/82 | 0.00 | 0.010 |
+| XGBoost | 0.568 [0.38-0.70] | 0.163-0.825 | 0.021 [0.012-0.056] | 0.000 | 1.000 | 0/82 | 0.00 | 0.010 |
+| CatBoost | 0.630 [0.45-0.78] | 0.037-0.955 | 0.046 [0.019-0.104] | 0.000 | 1.000 | 0/82 | 0.00 | 0.010 |
+| RNN | 0.517 [0.32-0.70] | 0.122-0.855 | 0.023 [0.011-0.070] | 0.040 | 0.951 | 3/82 | 1.47 | 0.048 |
+| LSTM | 0.472 [0.30-0.69] | 0.141-0.881 | 0.019 [0.012-0.054] | 0.030 | 0.953 | 3/82 | 1.42 | 0.045 |
+| TimesFM 3 | 0.649 [0.46-0.79] | 0.347-0.926 | 0.040 [0.017-0.134] | 0.000 | 0.997 | 0/82 | 0.09 | 0.012 |
+| gast | 0.532 [0.36-0.67] | 0.227-0.839 | 0.019 [0.012-0.042] | 0.020 | 0.943 | 1/82 | 1.70 | 0.050 |
+| gast_ssm | 0.455 [0.28-0.61] | 0.149-0.833 | 0.015 [0.010-0.034] | 0.070 | 0.914 | 5/82 | 2.57 | 0.060 |
+| gast_attn | 0.426 [0.26-0.57] | 0.079-0.725 | 0.016 [0.010-0.041] | 0.016 | 0.933 | 2/82 | 2.01 | 0.058 |
+| gast_nogap | 0.519 [0.36-0.66] | 0.035-0.904 | 0.026 [0.011-0.059] | 0.060 | 0.982 | 6/82 | 0.55 | 0.024 |
+| gast_maskonly | 0.432 [0.29-0.59] | 0.148-0.746 | 0.014 [0.009-0.036] | 0.000 | 0.952 | 0/82 | 1.44 | 0.045 |
+
+**Onset (next 1-3 days).** Average test fold per split: 388 days, 9.0 positive, from 7.8 patients (1.8 with a positive day).
+
+| model | AUROC [95%] | AUROC range | AUPRC [95%] | sensitivity | specificity | onsets flagged | false alarms / 30 d | Brier |
+|---|---|---|---|---|---|---|---|---|
+| always_no | 0.500 [0.50-0.50] | 0.500-0.500 | 0.029 [0.018-0.064] | 0.000 | 1.000 | 0/77 | 0.00 | 0.029 |
+| XGBoost | 0.571 [0.34-0.77] | 0.307-0.904 | 0.120 [0.041-0.228] | 0.000 | 1.000 | 0/77 | 0.00 | 0.029 |
+| CatBoost | 0.640 [0.43-0.78] | 0.279-0.874 | 0.064 [0.046-0.105] | 0.000 | 1.000 | 0/77 | 0.01 | 0.029 |
+| RNN | 0.510 [0.32-0.68] | 0.197-0.807 | 0.042 [0.026-0.097] | 0.027 | 0.969 | 3/77 | 0.93 | 0.051 |
+| LSTM | 0.406 [0.24-0.61] | 0.078-0.801 | 0.038 [0.024-0.087] | 0.080 | 0.938 | 8/77 | 1.86 | 0.073 |
+| TimesFM 3 | 0.560 [0.41-0.67] | 0.234-0.717 | 0.058 [0.033-0.131] | 0.013 | 0.993 | 4/77 | 0.22 | 0.035 |
+| gast | 0.487 [0.33-0.63] | 0.082-0.858 | 0.044 [0.029-0.086] | 0.047 | 0.930 | 5/77 | 2.10 | 0.078 |
+| gast_ssm | 0.547 [0.39-0.70] | 0.220-0.901 | 0.045 [0.031-0.093] | 0.121 | 0.900 | 9/77 | 3.01 | 0.090 |
+| gast_attn | 0.478 [0.32-0.61] | 0.053-0.840 | 0.045 [0.031-0.089] | 0.107 | 0.878 | 11/77 | 3.67 | 0.102 |
+| gast_nogap | 0.460 [0.28-0.62] | 0.085-0.969 | 0.055 [0.032-0.100] | 0.066 | 0.974 | 7/77 | 0.78 | 0.049 |
+| gast_maskonly | 0.480 [0.32-0.62] | 0.175-0.781 | 0.048 [0.033-0.096] | 0.056 | 0.890 | 7/77 | 3.29 | 0.098 |
+
+
+## 10. Where everything is
 
 | what | where |
 |---|---|
