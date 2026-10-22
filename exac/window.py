@@ -10,7 +10,8 @@ in the next 1-3 days, 1-2 days, next day only). Each setting is one `python -m e
 seed. The 7-day, 3-days-ahead runs already in the summaries are the reference rows of the tables.
 
 Tables: results/exac/window_detect.csv and results/exac/window_onset.csv, one row per set, model, days,
-(horizon,) test share and group: the number of seeds, then the mean and SD over seeds of every score.
+(horizon,) test share and group: the number of seeds, then for every score its mean and SD over seeds and
+its 95% interval (<score>_lo, <score>_hi: the mean over seeds of each split's interval, as in the reports).
 """
 import argparse
 import subprocess
@@ -52,15 +53,21 @@ def table(task):
         keys.insert(3, "horizon")
     R = R.drop_duplicates(keys + ["seed"], keep="last")  # a rerun replaces the earlier one
     S = [c for c in R if c not in HEAD and not c.endswith(("_lo", "_hi"))]
-    T = R.groupby(keys).agg(seeds=("seed", "nunique"), **{f"{k}_{s}": (k, s) for k in S for s in ("mean", "std")})
-    T = T.rename(columns=lambda c: c.replace("_std", "_sd")).reset_index()
+    agg = {}
+    for k in S:
+        agg[f"{k}_mean"], agg[f"{k}_sd"] = (k, "mean"), (k, "std")
+        for b in ("lo", "hi"):
+            if f"{k}_{b}" in R:
+                agg[f"{k}_{b}"] = (f"{k}_{b}", "mean")   # the 95% interval: mean over seeds of each split's bounds
+    T = R.groupby(keys).agg(seeds=("seed", "nunique"), **agg).reset_index()
     out = C.RES / f"window_{task}.csv"
     T.to_csv(out, index=False, float_format="%.4g")
     t0 = T[(T.group == "all") & (T.test_pct == C.TEST_PCT[0]) & (T.set == a.set)]
     cols = ["horizon", "days"] if task == "onset" else ["days"]
     for k in ("auroc", "auprc"):
-        print(f"\n{task} {k}, all groups, {a.set}, test {C.TEST_PCT[0]}%, mean over seeds")
-        print(t0.pivot_table(index="model", columns=cols, values=f"{k}_mean").round(3).to_string())
+        print(f"\n{task} {k} [95% interval], all groups, {a.set}, test {C.TEST_PCT[0]}%, mean over seeds")
+        t0 = t0.assign(cell=[f"{m:.3f} [{lo:.2f}-{hi:.2f}]" for m, lo, hi in zip(t0[f"{k}_mean"], t0[f"{k}_lo"], t0[f"{k}_hi"])])
+        print(t0.pivot_table(index="model", columns=cols, values="cell", aggfunc="first").fillna("").to_string())
     print(f"-> {out}")
 
 

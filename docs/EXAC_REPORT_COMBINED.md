@@ -9,6 +9,8 @@ children). Every model ran 25 splits per task:
 - GAST v1 with 3 and 14 days of history (detection only);
 - gast2: GAST v1 with two outputs, trained on both tasks at once.
 
+Section 8 adds the window ablation (21 Oct 2026): input windows of 5, 4, 3 and 2 days and, for onset, prediction windows of the next 1-3, 1-2 days and the next day, for every model except GAST (still running).
+
 This file reports process, inputs, outputs and numbers. It does not interpret them. Every decision
 behind the design is in `docs/EXAC_DESIGN.md` and `docs/GAST_DESIGN.md`. The copd and copd_clinical sets
 also ran (every model except gast_d3, gast_d14 and gast2); they are not in this file.
@@ -634,7 +636,353 @@ TimesFM 3: the first detection split (80:20, seed 0) also computed the frozen ou
 sample days (2,521 s); every other split only trains the logistic layer. Times: one RTX A5500 GPU, 18 CPU
 cores per run, two runs at once (the first TimesFM 3 split ran alone on 36 cores).
 
-## 8. Where everything is
+## 8. Window ablation (without GAST)
+
+Run on 21 Oct 2026 (`exac/window.py`; design: `docs/EXAC_DESIGN.md` section 9). The GAST models of this
+ablation are still running and are not in this section.
+
+### 8.1 What was done
+
+The same models, patient splits, inputs (signals as recorded), training settings, threshold and scores as
+sections 3-7. Only the window changes:
+
+- **Input window:** the classified day plus the days before it, **5, 4, 3 or 2 days** in total (7 days in
+  the main runs). Trees get days x 1,440 minutes x 7 signals raw values (50,400 columns at 5 days, 20,160
+  at 2 days); RNN and LSTM read days x 144 ten-minute blocks; TimesFM 3 reads days x 45 patches of 32
+  minutes, with one frozen-output cache per window length.
+- **Onset prediction window** (onset task only): a new episode begins in the **next 1-3 days** (the main
+  runs), the **next 1-2 days**, or the **next day only**.
+- **Settings run:** detection x 4 input windows; onset x 4 input windows x 3 prediction windows = 16
+  settings, each with 25 splits, for XGBoost, CatBoost, RNN, LSTM and TimesFM 3 (always_no: AUROC 0.500,
+  sensitivity 0, specificity 1 in every setting).
+
+### 8.2 What stays fixed, and what the shorter prediction windows change
+
+- **Samples:** detection samples are the days with HRV at every window (15,691). Onset samples are the
+  days of section 1 (15,196: not inside an episode, not among the last 3 days of data) for every
+  prediction window.
+- **Patient splits:** the same 25 splits as the main runs (they depend only on the detection labels).
+- **Onset label:** for the next 1-2 days or the next day, a day is positive only if the episode begins
+  within that many days. The positives therefore shrink:
+
+| prediction window | positive days (all patients) | distinct onsets | patients with an onset | share of test days positive |
+|---|---|---|---|---|
+| next 1-3 days | 151 | 56 | 39 | 0.0096 |
+| next 1-2 days | 100 | 52 | 36 | 0.0063 |
+| next day only | 51 | 51 | 36 | 0.0032 |
+
+### 8.3 How to read these tables
+
+- Each value is the **mean over the 25 splits**; "[lo-hi]" is the mean of the per-split 95% intervals
+  (as in sections 6-7). Event counts are summed over the 25 splits.
+- **Difference from 7 days** (detection, and onset in the next 1-3 days): every window uses the same 25
+  splits as the 7-day run, so each split is compared with itself: "(+0.039, 21/25)" = the mean of the 25
+  per-split AUROC differences, and the number of splits in which the AUROC was higher than at 7 days.
+  The 25 splits reuse the same patients in different combinations, so these counts are not 25
+  independent comparisons.
+- **AUPRC** has a no-skill value equal to the share of positive days, which differs between prediction
+  windows (8.2): compare AUPRC within one prediction window only.
+- In every table of this section, the 95% interval of each window overlaps that of the 7-day run.
+
+### 8.4 Detection: is today an exacerbation day?
+
+Positive share of test days: 0.0099 (the same samples at every window).
+
+**AUROC [95%]** (difference from 7 days, splits higher than 7 days)
+
+| model | 7 days (main run) | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|---|
+| XGBoost | 0.484 [0.34-0.62] | 0.507 [0.38-0.63] (+0.023, 19/25) | 0.524 [0.39-0.66] (+0.039, 21/25) | 0.524 [0.40-0.66] (+0.039, 20/25) | 0.527 [0.40-0.65] (+0.043, 19/25) |
+| CatBoost | 0.523 [0.42-0.65] | 0.549 [0.43-0.67] (+0.026, 15/25) | 0.546 [0.42-0.67] (+0.023, 16/25) | 0.550 [0.43-0.69] (+0.027, 18/25) | 0.551 [0.44-0.68] (+0.028, 17/25) |
+| RNN | 0.564 [0.43-0.69] | 0.558 [0.42-0.67] (-0.006, 12/25) | 0.557 [0.41-0.68] (-0.006, 11/25) | 0.552 [0.41-0.67] (-0.012, 11/25) | 0.560 [0.41-0.68] (-0.004, 12/25) |
+| LSTM | 0.599 [0.45-0.74] | 0.596 [0.45-0.73] (-0.003, 18/25) | 0.604 [0.45-0.74] (+0.005, 14/25) | 0.600 [0.45-0.74] (+0.001, 11/25) | 0.593 [0.44-0.73] (-0.006, 13/25) |
+| TimesFM 3 | 0.552 [0.44-0.66] | 0.571 [0.46-0.71] (+0.019, 17/25) | 0.601 [0.50-0.71] (+0.050, 22/25) | 0.614 [0.50-0.74] (+0.062, 22/25) | 0.596 [0.49-0.70] (+0.045, 20/25) |
+
+**AUPRC [95%]**
+
+| model | 7 days | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|---|
+| XGBoost | 0.012 [0.004-0.029] | 0.013 [0.004-0.030] | 0.013 [0.004-0.031] | 0.014 [0.004-0.034] | 0.016 [0.004-0.042] |
+| CatBoost | 0.017 [0.005-0.038] | 0.017 [0.005-0.041] | 0.017 [0.005-0.039] | 0.017 [0.005-0.042] | 0.018 [0.005-0.048] |
+| RNN | 0.018 [0.005-0.038] | 0.015 [0.005-0.035] | 0.016 [0.005-0.037] | 0.015 [0.005-0.037] | 0.015 [0.005-0.034] |
+| LSTM | 0.021 [0.006-0.053] | 0.022 [0.005-0.055] | 0.020 [0.006-0.052] | 0.022 [0.005-0.063] | 0.021 [0.005-0.053] |
+| TimesFM 3 | 0.013 [0.005-0.031] | 0.014 [0.005-0.029] | 0.017 [0.006-0.036] | 0.016 [0.006-0.035] | 0.017 [0.006-0.039] |
+
+**At the 0.5 threshold**
+
+| model | days | sensitivity | specificity | PPV | episodes flagged | false alarms / 30 d | Brier |
+|---|---|---|---|---|---|---|---|
+| XGBoost | 7 | 0.000 | 1.000 | - | 0/434 | 0.00 | 0.010 |
+| XGBoost | 5 | 0.000 | 1.000 | 0.000 | 0/434 | 0.00 | 0.010 |
+| XGBoost | 4 | 0.000 | 1.000 | - | 0/434 | 0.00 | 0.010 |
+| XGBoost | 3 | 0.000 | 1.000 | 0.000 | 0/434 | 0.00 | 0.010 |
+| XGBoost | 2 | 0.000 | 1.000 | 0.000 | 0/434 | 0.00 | 0.010 |
+| CatBoost | 7 | 0.000 | 1.000 | 0.000 | 0/434 | 0.01 | 0.012 |
+| CatBoost | 5 | 0.000 | 1.000 | 0.000 | 0/434 | 0.01 | 0.012 |
+| CatBoost | 4 | 0.000 | 1.000 | 0.000 | 0/434 | 0.01 | 0.012 |
+| CatBoost | 3 | 0.000 | 1.000 | 0.000 | 0/434 | 0.01 | 0.012 |
+| CatBoost | 2 | 0.002 | 0.999 | 0.015 | 1/434 | 0.02 | 0.013 |
+| RNN | 7 | 0.370 | 0.734 | 0.014 | 189/434 | 7.97 | 0.180 |
+| RNN | 5 | 0.335 | 0.758 | 0.015 | 170/434 | 7.25 | 0.170 |
+| RNN | 4 | 0.347 | 0.752 | 0.014 | 187/434 | 7.44 | 0.171 |
+| RNN | 3 | 0.346 | 0.740 | 0.014 | 185/434 | 7.81 | 0.179 |
+| RNN | 2 | 0.355 | 0.732 | 0.013 | 176/434 | 8.04 | 0.185 |
+| LSTM | 7 | 0.443 | 0.701 | 0.015 | 228/434 | 8.98 | 0.193 |
+| LSTM | 5 | 0.441 | 0.703 | 0.016 | 221/434 | 8.92 | 0.197 |
+| LSTM | 4 | 0.439 | 0.706 | 0.016 | 213/434 | 8.81 | 0.197 |
+| LSTM | 3 | 0.441 | 0.691 | 0.015 | 229/434 | 9.27 | 0.202 |
+| LSTM | 2 | 0.439 | 0.696 | 0.015 | 231/434 | 9.11 | 0.197 |
+| TimesFM 3 | 7 | 0.049 | 0.949 | 0.010 | 41/434 | 1.53 | 0.048 |
+| TimesFM 3 | 5 | 0.098 | 0.923 | 0.012 | 55/434 | 2.31 | 0.069 |
+| TimesFM 3 | 4 | 0.068 | 0.950 | 0.020 | 47/434 | 1.51 | 0.049 |
+| TimesFM 3 | 3 | 0.104 | 0.931 | 0.013 | 66/434 | 2.07 | 0.062 |
+| TimesFM 3 | 2 | 0.094 | 0.935 | 0.018 | 60/434 | 1.94 | 0.060 |
+
+**AUROC [95%] per group**. Average test fold per split: COPD 3.8 positive of 408 days; AIIMS adults 42.2 positive of 2,909 days; AIIMS children 2.4 positive of 1,565 days.
+
+| group | model | 7 days | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|---|---|
+| COPD | XGBoost | 0.515 [0.35-0.67] | 0.536 [0.37-0.70] | 0.568 [0.41-0.72] | 0.656 [0.51-0.80] | 0.623 [0.45-0.75] |
+| COPD | CatBoost | 0.524 [0.32-0.68] | 0.580 [0.41-0.72] | 0.610 [0.41-0.73] | 0.658 [0.49-0.76] | 0.618 [0.43-0.72] |
+| COPD | RNN | 0.624 [0.43-0.79] | 0.614 [0.43-0.78] | 0.643 [0.45-0.81] | 0.624 [0.43-0.81] | 0.628 [0.43-0.81] |
+| COPD | LSTM | 0.687 [0.47-0.81] | 0.672 [0.46-0.79] | 0.701 [0.49-0.81] | 0.698 [0.47-0.83] | 0.661 [0.45-0.78] |
+| COPD | TimesFM 3 | 0.649 [0.46-0.75] | 0.704 [0.50-0.80] | 0.681 [0.51-0.78] | 0.736 [0.58-0.83] | 0.639 [0.45-0.74] |
+| AIIMS adults | XGBoost | 0.485 [0.35-0.62] | 0.508 [0.39-0.65] | 0.517 [0.38-0.67] | 0.509 [0.39-0.64] | 0.515 [0.40-0.64] |
+| AIIMS adults | CatBoost | 0.509 [0.40-0.63] | 0.536 [0.40-0.65] | 0.527 [0.38-0.65] | 0.526 [0.40-0.67] | 0.529 [0.41-0.65] |
+| AIIMS adults | RNN | 0.540 [0.38-0.68] | 0.539 [0.38-0.68] | 0.533 [0.37-0.68] | 0.530 [0.36-0.67] | 0.537 [0.36-0.68] |
+| AIIMS adults | LSTM | 0.566 [0.39-0.72] | 0.565 [0.40-0.73] | 0.571 [0.40-0.73] | 0.567 [0.40-0.73] | 0.561 [0.39-0.72] |
+| AIIMS adults | TimesFM 3 | 0.524 [0.40-0.68] | 0.526 [0.40-0.71] | 0.574 [0.45-0.71] | 0.576 [0.44-0.73] | 0.575 [0.46-0.70] |
+| AIIMS children | XGBoost | 0.320 [0.18-0.48] | 0.378 [0.23-0.52] | 0.407 [0.24-0.58] | 0.386 [0.26-0.50] | 0.405 [0.31-0.51] |
+| AIIMS children | CatBoost | 0.520 [0.35-0.70] | 0.494 [0.34-0.67] | 0.481 [0.32-0.63] | 0.478 [0.32-0.63] | 0.489 [0.33-0.64] |
+| AIIMS children | RNN | 0.496 [0.33-0.64] | 0.447 [0.31-0.59] | 0.421 [0.27-0.56] | 0.431 [0.27-0.58] | 0.403 [0.25-0.55] |
+| AIIMS children | LSTM | 0.450 [0.24-0.62] | 0.452 [0.26-0.62] | 0.467 [0.26-0.65] | 0.464 [0.24-0.65] | 0.466 [0.26-0.64] |
+| AIIMS children | TimesFM 3 | 0.410 [0.22-0.56] | 0.568 [0.36-0.72] | 0.590 [0.36-0.75] | 0.556 [0.31-0.71] | 0.469 [0.26-0.61] |
+
+### 8.5 Onset: a new episode in the next 1-3 days
+
+Positive share of test days: 0.0096.
+
+**AUROC [95%]** (difference from 7 days, splits higher than 7 days)
+
+| model | 7 days (main run) | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|---|
+| XGBoost | 0.424 [0.28-0.58] | 0.436 [0.28-0.59] (+0.011, 11/25) | 0.449 [0.30-0.60] (+0.025, 17/25) | 0.471 [0.33-0.62] (+0.047, 22/25) | 0.503 [0.36-0.67] (+0.078, 23/25) |
+| CatBoost | 0.458 [0.33-0.59] | 0.444 [0.32-0.58] (-0.014, 10/25) | 0.457 [0.33-0.59] (-0.002, 13/25) | 0.479 [0.35-0.62] (+0.021, 15/25) | 0.493 [0.37-0.62] (+0.035, 19/25) |
+| RNN | 0.504 [0.39-0.62] | 0.521 [0.41-0.63] (+0.017, 15/25) | 0.511 [0.39-0.63] (+0.006, 13/25) | 0.507 [0.39-0.61] (+0.003, 15/25) | 0.511 [0.39-0.63] (+0.007, 16/25) |
+| LSTM | 0.554 [0.41-0.69] | 0.569 [0.42-0.70] (+0.015, 14/25) | 0.549 [0.41-0.68] (-0.005, 12/25) | 0.548 [0.40-0.69] (-0.006, 6/25) | 0.555 [0.41-0.69] (+0.001, 10/25) |
+| TimesFM 3 | 0.524 [0.40-0.63] | 0.521 [0.41-0.63] (-0.004, 12/25) | 0.563 [0.46-0.66] (+0.039, 18/25) | 0.552 [0.43-0.65] (+0.028, 18/25) | 0.556 [0.44-0.66] (+0.032, 17/25) |
+
+**AUPRC [95%]**
+
+| model | 7 days | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|---|
+| XGBoost | 0.010 [0.004-0.027] | 0.011 [0.004-0.027] | 0.011 [0.004-0.026] | 0.013 [0.005-0.038] | 0.012 [0.005-0.028] |
+| CatBoost | 0.012 [0.005-0.030] | 0.012 [0.004-0.034] | 0.011 [0.004-0.027] | 0.013 [0.005-0.035] | 0.013 [0.005-0.031] |
+| RNN | 0.012 [0.005-0.026] | 0.013 [0.005-0.029] | 0.012 [0.005-0.026] | 0.012 [0.005-0.027] | 0.013 [0.005-0.031] |
+| LSTM | 0.015 [0.006-0.035] | 0.016 [0.006-0.041] | 0.015 [0.005-0.037] | 0.016 [0.006-0.041] | 0.015 [0.006-0.038] |
+| TimesFM 3 | 0.013 [0.005-0.032] | 0.013 [0.005-0.035] | 0.014 [0.006-0.028] | 0.013 [0.005-0.025] | 0.014 [0.006-0.033] |
+
+**At the 0.5 threshold**
+
+| model | days | sensitivity | specificity | PPV | onsets flagged | false alarms / 30 d | Brier | lead time (days) |
+|---|---|---|---|---|---|---|---|---|
+| XGBoost | 7 | 0.000 | 1.000 | - | 0/439 | 0.00 | 0.010 | - |
+| XGBoost | 5 | 0.000 | 1.000 | - | 0/439 | 0.00 | 0.010 | - |
+| XGBoost | 4 | 0.000 | 1.000 | 0.000 | 0/439 | 0.00 | 0.010 | - |
+| XGBoost | 3 | 0.000 | 1.000 | 0.000 | 0/439 | 0.00 | 0.010 | - |
+| XGBoost | 2 | 0.000 | 1.000 | 0.000 | 0/439 | 0.00 | 0.010 | - |
+| CatBoost | 7 | 0.000 | 1.000 | 0.000 | 0/439 | 0.01 | 0.012 | - |
+| CatBoost | 5 | 0.000 | 1.000 | 0.000 | 0/439 | 0.01 | 0.013 | - |
+| CatBoost | 4 | 0.000 | 1.000 | 0.000 | 0/439 | 0.01 | 0.013 | - |
+| CatBoost | 3 | 0.000 | 1.000 | 0.000 | 0/439 | 0.01 | 0.014 | - |
+| CatBoost | 2 | 0.001 | 0.999 | 0.018 | 1/439 | 0.02 | 0.014 | 3.00 |
+| RNN | 7 | 0.304 | 0.744 | 0.012 | 213/439 | 7.69 | 0.181 | 2.46 |
+| RNN | 5 | 0.333 | 0.718 | 0.011 | 226/439 | 8.46 | 0.196 | 2.46 |
+| RNN | 4 | 0.362 | 0.693 | 0.012 | 244/439 | 9.21 | 0.207 | 2.50 |
+| RNN | 3 | 0.306 | 0.731 | 0.011 | 208/439 | 8.06 | 0.182 | 2.36 |
+| RNN | 2 | 0.326 | 0.715 | 0.011 | 234/439 | 8.54 | 0.198 | 2.54 |
+| LSTM | 7 | 0.438 | 0.644 | 0.013 | 259/439 | 10.68 | 0.220 | 2.90 |
+| LSTM | 5 | 0.539 | 0.569 | 0.013 | 308/439 | 12.93 | 0.250 | 2.84 |
+| LSTM | 4 | 0.470 | 0.628 | 0.012 | 271/439 | 11.16 | 0.223 | 2.66 |
+| LSTM | 3 | 0.450 | 0.646 | 0.013 | 267/439 | 10.63 | 0.215 | 2.82 |
+| LSTM | 2 | 0.473 | 0.623 | 0.012 | 275/439 | 11.31 | 0.221 | 2.82 |
+| TimesFM 3 | 7 | 0.082 | 0.925 | 0.012 | 55/439 | 2.25 | 0.065 | 2.28 |
+| TimesFM 3 | 5 | 0.092 | 0.906 | 0.019 | 60/439 | 2.81 | 0.080 | 2.41 |
+| TimesFM 3 | 4 | 0.070 | 0.939 | 0.009 | 60/439 | 1.84 | 0.056 | 2.24 |
+| TimesFM 3 | 3 | 0.077 | 0.935 | 0.008 | 57/439 | 1.94 | 0.058 | 2.25 |
+| TimesFM 3 | 2 | 0.122 | 0.917 | 0.013 | 97/439 | 2.48 | 0.072 | 2.00 |
+
+**AUROC [95%] per group**. Average test fold per split: COPD 9.2 positive of 388 days; AIIMS adults 28.4 positive of 2,808 days; AIIMS children 8.0 positive of 1,534 days.
+
+| group | model | 7 days | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|---|---|
+| COPD | XGBoost | 0.366 [0.24-0.55] | 0.347 [0.22-0.53] | 0.374 [0.25-0.56] | 0.402 [0.27-0.61] | 0.424 [0.30-0.62] |
+| COPD | CatBoost | 0.391 [0.26-0.51] | 0.380 [0.25-0.52] | 0.390 [0.28-0.51] | 0.379 [0.27-0.49] | 0.397 [0.28-0.52] |
+| COPD | RNN | 0.464 [0.35-0.55] | 0.504 [0.38-0.59] | 0.475 [0.34-0.58] | 0.495 [0.38-0.59] | 0.478 [0.37-0.56] |
+| COPD | LSTM | 0.497 [0.36-0.63] | 0.528 [0.36-0.67] | 0.509 [0.37-0.65] | 0.504 [0.34-0.65] | 0.495 [0.34-0.64] |
+| COPD | TimesFM 3 | 0.548 [0.40-0.66] | 0.562 [0.41-0.68] | 0.575 [0.43-0.68] | 0.591 [0.44-0.70] | 0.556 [0.43-0.64] |
+| AIIMS adults | XGBoost | 0.514 [0.36-0.68] | 0.527 [0.37-0.69] | 0.540 [0.37-0.69] | 0.554 [0.40-0.69] | 0.574 [0.39-0.74] |
+| AIIMS adults | CatBoost | 0.515 [0.35-0.68] | 0.484 [0.34-0.65] | 0.509 [0.35-0.66] | 0.524 [0.38-0.67] | 0.526 [0.40-0.66] |
+| AIIMS adults | RNN | 0.529 [0.40-0.66] | 0.542 [0.42-0.67] | 0.539 [0.42-0.66] | 0.521 [0.39-0.64] | 0.543 [0.41-0.67] |
+| AIIMS adults | LSTM | 0.576 [0.43-0.73] | 0.597 [0.45-0.74] | 0.569 [0.44-0.70] | 0.581 [0.44-0.73] | 0.581 [0.44-0.72] |
+| AIIMS adults | TimesFM 3 | 0.555 [0.40-0.67] | 0.552 [0.40-0.70] | 0.594 [0.46-0.72] | 0.552 [0.41-0.68] | 0.582 [0.44-0.72] |
+| AIIMS children | XGBoost | 0.330 [0.17-0.52] | 0.361 [0.18-0.56] | 0.380 [0.20-0.57] | 0.430 [0.27-0.70] | 0.500 [0.35-0.80] |
+| AIIMS children | CatBoost | 0.445 [0.27-0.71] | 0.459 [0.28-0.64] | 0.438 [0.27-0.63] | 0.523 [0.30-0.77] | 0.552 [0.37-0.83] |
+| AIIMS children | RNN | 0.435 [0.18-0.59] | 0.431 [0.18-0.56] | 0.413 [0.15-0.55] | 0.429 [0.21-0.56] | 0.420 [0.19-0.57] |
+| AIIMS children | LSTM | 0.503 [0.26-0.70] | 0.499 [0.19-0.73] | 0.491 [0.24-0.73] | 0.481 [0.20-0.71] | 0.493 [0.24-0.72] |
+| AIIMS children | TimesFM 3 | 0.408 [0.12-0.53] | 0.419 [0.17-0.58] | 0.481 [0.18-0.65] | 0.462 [0.16-0.63] | 0.448 [0.14-0.61] |
+
+### 8.6 Onset: a new episode in the next 1-2 days
+
+Positive share of test days: 0.0063. No 7-day run exists for this horizon, so the table starts at 5 days.
+
+**AUROC [95%]**
+
+| model | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|
+| XGBoost | 0.481 [0.33-0.64] | 0.491 [0.35-0.64] | 0.523 [0.38-0.67] | 0.523 [0.39-0.66] |
+| CatBoost | 0.468 [0.33-0.60] | 0.482 [0.34-0.62] | 0.506 [0.37-0.64] | 0.495 [0.36-0.64] |
+| RNN | 0.494 [0.38-0.62] | 0.508 [0.40-0.62] | 0.495 [0.39-0.61] | 0.486 [0.38-0.61] |
+| LSTM | 0.526 [0.38-0.67] | 0.532 [0.38-0.69] | 0.530 [0.38-0.68] | 0.525 [0.38-0.67] |
+| TimesFM 3 | 0.548 [0.42-0.68] | 0.569 [0.44-0.69] | 0.564 [0.45-0.66] | 0.588 [0.47-0.70] |
+
+**AUPRC [95%]**
+
+| model | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|
+| XGBoost | 0.008 [0.003-0.025] | 0.007 [0.003-0.018] | 0.009 [0.003-0.025] | 0.008 [0.003-0.022] |
+| CatBoost | 0.008 [0.003-0.020] | 0.008 [0.003-0.020] | 0.009 [0.003-0.027] | 0.009 [0.003-0.027] |
+| RNN | 0.010 [0.003-0.024] | 0.009 [0.004-0.019] | 0.009 [0.003-0.022] | 0.008 [0.003-0.019] |
+| LSTM | 0.010 [0.004-0.026] | 0.011 [0.003-0.031] | 0.010 [0.004-0.027] | 0.010 [0.004-0.027] |
+| TimesFM 3 | 0.008 [0.004-0.018] | 0.010 [0.004-0.026] | 0.009 [0.004-0.023] | 0.011 [0.004-0.028] |
+
+**At the 0.5 threshold**
+
+| model | days | sensitivity | specificity | PPV | onsets flagged | false alarms / 30 d | Brier | lead time (days) |
+|---|---|---|---|---|---|---|---|---|
+| XGBoost | 5 | 0.000 | 1.000 | - | 0/392 | 0.00 | 0.007 | - |
+| XGBoost | 4 | 0.000 | 1.000 | - | 0/392 | 0.00 | 0.007 | - |
+| XGBoost | 3 | 0.000 | 1.000 | - | 0/392 | 0.00 | 0.007 | - |
+| XGBoost | 2 | 0.000 | 1.000 | - | 0/392 | 0.00 | 0.007 | - |
+| CatBoost | 5 | 0.000 | 1.000 | 0.000 | 0/392 | 0.00 | 0.007 | - |
+| CatBoost | 4 | 0.000 | 1.000 | 0.000 | 0/392 | 0.00 | 0.007 | - |
+| CatBoost | 3 | 0.000 | 1.000 | 0.000 | 0/392 | 0.00 | 0.007 | - |
+| CatBoost | 2 | 0.000 | 1.000 | 0.000 | 0/392 | 0.00 | 0.007 | - |
+| RNN | 5 | 0.243 | 0.785 | 0.008 | 127/392 | 6.46 | 0.151 | 1.70 |
+| RNN | 4 | 0.237 | 0.798 | 0.008 | 141/392 | 6.05 | 0.148 | 1.60 |
+| RNN | 3 | 0.230 | 0.794 | 0.007 | 126/392 | 6.18 | 0.148 | 1.66 |
+| RNN | 2 | 0.200 | 0.805 | 0.006 | 106/392 | 5.84 | 0.140 | 1.75 |
+| LSTM | 5 | 0.402 | 0.663 | 0.008 | 222/392 | 10.12 | 0.209 | 1.78 |
+| LSTM | 4 | 0.403 | 0.677 | 0.009 | 220/392 | 9.70 | 0.211 | 1.74 |
+| LSTM | 3 | 0.440 | 0.633 | 0.008 | 229/392 | 11.00 | 0.229 | 1.76 |
+| LSTM | 2 | 0.353 | 0.702 | 0.009 | 200/392 | 8.93 | 0.195 | 1.60 |
+| TimesFM 3 | 5 | 0.060 | 0.950 | 0.006 | 31/392 | 1.51 | 0.043 | 1.39 |
+| TimesFM 3 | 4 | 0.042 | 0.963 | 0.004 | 22/392 | 1.11 | 0.035 | 1.64 |
+| TimesFM 3 | 3 | 0.061 | 0.956 | 0.008 | 33/392 | 1.33 | 0.041 | 1.63 |
+| TimesFM 3 | 2 | 0.043 | 0.969 | 0.007 | 24/392 | 0.92 | 0.030 | 1.62 |
+
+**AUROC [95%] per group**. Average test fold per split: COPD 6.5 positive of 388 days; AIIMS adults 19.0 positive of 2,808 days; AIIMS children 4.3 positive of 1,534 days.
+
+| group | model | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|---|
+| COPD | XGBoost | 0.427 [0.31-0.57] | 0.453 [0.32-0.61] | 0.512 [0.39-0.66] | 0.517 [0.39-0.66] |
+| COPD | CatBoost | 0.463 [0.35-0.56] | 0.446 [0.31-0.57] | 0.437 [0.31-0.54] | 0.438 [0.32-0.54] |
+| COPD | RNN | 0.469 [0.36-0.59] | 0.492 [0.40-0.63] | 0.483 [0.38-0.61] | 0.480 [0.37-0.61] |
+| COPD | LSTM | 0.509 [0.35-0.66] | 0.519 [0.38-0.65] | 0.499 [0.35-0.64] | 0.502 [0.36-0.63] |
+| COPD | TimesFM 3 | 0.607 [0.46-0.72] | 0.584 [0.45-0.69] | 0.588 [0.45-0.68] | 0.580 [0.46-0.66] |
+| AIIMS adults | XGBoost | 0.563 [0.39-0.72] | 0.570 [0.41-0.71] | 0.586 [0.41-0.75] | 0.556 [0.37-0.72] |
+| AIIMS adults | CatBoost | 0.498 [0.34-0.65] | 0.527 [0.38-0.69] | 0.562 [0.42-0.71] | 0.529 [0.38-0.70] |
+| AIIMS adults | RNN | 0.521 [0.37-0.66] | 0.540 [0.41-0.67] | 0.521 [0.38-0.65] | 0.508 [0.37-0.65] |
+| AIIMS adults | LSTM | 0.538 [0.38-0.71] | 0.532 [0.37-0.71] | 0.540 [0.38-0.72] | 0.529 [0.36-0.71] |
+| AIIMS adults | TimesFM 3 | 0.540 [0.37-0.72] | 0.570 [0.40-0.73] | 0.547 [0.39-0.67] | 0.586 [0.44-0.72] |
+| AIIMS children | XGBoost | 0.375 [0.20-0.52] | 0.358 [0.17-0.50] | 0.407 [0.25-0.54] | 0.454 [0.33-0.57] |
+| AIIMS children | CatBoost | 0.428 [0.27-0.53] | 0.417 [0.29-0.53] | 0.446 [0.31-0.55] | 0.480 [0.37-0.61] |
+| AIIMS children | RNN | 0.445 [0.38-0.56] | 0.427 [0.36-0.53] | 0.457 [0.39-0.57] | 0.431 [0.35-0.54] |
+| AIIMS children | LSTM | 0.480 [0.36-0.58] | 0.514 [0.36-0.63] | 0.485 [0.31-0.61] | 0.504 [0.36-0.61] |
+| AIIMS children | TimesFM 3 | 0.482 [0.36-0.60] | 0.492 [0.33-0.58] | 0.532 [0.40-0.65] | 0.536 [0.32-0.68] |
+
+### 8.7 Onset: a new episode in the next day only
+
+Positive share of test days: 0.0032. No 7-day run exists for this horizon, so the table starts at 5 days.
+
+**AUROC [95%]**
+
+| model | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|
+| XGBoost | 0.532 [0.39-0.69] | 0.552 [0.40-0.71] | 0.559 [0.41-0.71] | 0.534 [0.38-0.70] |
+| CatBoost | 0.535 [0.36-0.71] | 0.536 [0.38-0.71] | 0.521 [0.36-0.67] | 0.532 [0.36-0.69] |
+| RNN | 0.517 [0.37-0.68] | 0.503 [0.36-0.66] | 0.506 [0.38-0.66] | 0.508 [0.37-0.66] |
+| LSTM | 0.540 [0.37-0.72] | 0.526 [0.35-0.70] | 0.537 [0.35-0.73] | 0.529 [0.36-0.70] |
+| TimesFM 3 | 0.549 [0.39-0.70] | 0.548 [0.40-0.69] | 0.534 [0.38-0.68] | 0.530 [0.36-0.69] |
+
+**AUPRC [95%]**
+
+| model | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|
+| XGBoost | 0.006 [0.002-0.027] | 0.010 [0.002-0.043] | 0.006 [0.002-0.021] | 0.005 [0.002-0.015] |
+| CatBoost | 0.007 [0.002-0.028] | 0.006 [0.002-0.017] | 0.005 [0.002-0.014] | 0.008 [0.002-0.031] |
+| RNN | 0.005 [0.002-0.020] | 0.007 [0.002-0.037] | 0.008 [0.002-0.040] | 0.005 [0.002-0.019] |
+| LSTM | 0.006 [0.002-0.022] | 0.008 [0.002-0.029] | 0.006 [0.002-0.023] | 0.006 [0.002-0.021] |
+| TimesFM 3 | 0.007 [0.002-0.031] | 0.007 [0.002-0.023] | 0.005 [0.002-0.016] | 0.005 [0.002-0.013] |
+
+**At the 0.5 threshold**
+
+| model | days | sensitivity | specificity | PPV | onsets flagged | false alarms / 30 d | Brier | lead time (days) |
+|---|---|---|---|---|---|---|---|---|
+| XGBoost | 5 | 0.000 | 1.000 | - | 0/384 | 0.00 | 0.003 | - |
+| XGBoost | 4 | 0.000 | 1.000 | - | 0/384 | 0.00 | 0.003 | - |
+| XGBoost | 3 | 0.000 | 1.000 | - | 0/384 | 0.00 | 0.003 | - |
+| XGBoost | 2 | 0.000 | 1.000 | - | 0/384 | 0.00 | 0.003 | - |
+| CatBoost | 5 | 0.000 | 1.000 | - | 0/384 | 0.00 | 0.003 | - |
+| CatBoost | 4 | 0.000 | 1.000 | - | 0/384 | 0.00 | 0.003 | - |
+| CatBoost | 3 | 0.000 | 1.000 | - | 0/384 | 0.00 | 0.003 | - |
+| CatBoost | 2 | 0.000 | 1.000 | - | 0/384 | 0.00 | 0.003 | - |
+| RNN | 5 | 0.115 | 0.894 | 0.004 | 35/384 | 3.19 | 0.082 | 1.00 |
+| RNN | 4 | 0.117 | 0.884 | 0.003 | 35/384 | 3.47 | 0.089 | 1.00 |
+| RNN | 3 | 0.087 | 0.917 | 0.003 | 28/384 | 2.48 | 0.065 | 1.00 |
+| RNN | 2 | 0.099 | 0.899 | 0.003 | 29/384 | 3.02 | 0.078 | 1.00 |
+| LSTM | 5 | 0.264 | 0.798 | 0.005 | 95/384 | 6.07 | 0.142 | 1.00 |
+| LSTM | 4 | 0.282 | 0.790 | 0.005 | 102/384 | 6.29 | 0.163 | 1.00 |
+| LSTM | 3 | 0.290 | 0.794 | 0.005 | 102/384 | 6.19 | 0.152 | 1.00 |
+| LSTM | 2 | 0.266 | 0.798 | 0.005 | 91/384 | 6.06 | 0.156 | 1.00 |
+| TimesFM 3 | 5 | 0.007 | 0.993 | 0.001 | 2/384 | 0.22 | 0.009 | 1.00 |
+| TimesFM 3 | 4 | 0.019 | 0.991 | 0.006 | 6/384 | 0.27 | 0.011 | 1.00 |
+| TimesFM 3 | 3 | 0.005 | 0.989 | 0.002 | 2/384 | 0.33 | 0.012 | 1.00 |
+| TimesFM 3 | 2 | 0.020 | 0.984 | 0.001 | 5/384 | 0.49 | 0.016 | 1.00 |
+
+**AUROC [95%] per group**. Average test fold per split: COPD 3.2 positive of 388 days; AIIMS adults 9.7 positive of 2,808 days; AIIMS children 2.4 positive of 1,534 days.
+
+| group | model | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|---|
+| COPD | XGBoost | 0.537 [0.37-0.66] | 0.585 [0.42-0.73] | 0.529 [0.37-0.67] | 0.543 [0.38-0.68] |
+| COPD | CatBoost | 0.565 [0.37-0.70] | 0.584 [0.46-0.69] | 0.528 [0.41-0.62] | 0.571 [0.44-0.67] |
+| COPD | RNN | 0.491 [0.32-0.62] | 0.415 [0.26-0.53] | 0.452 [0.33-0.56] | 0.442 [0.29-0.56] |
+| COPD | LSTM | 0.507 [0.35-0.67] | 0.449 [0.30-0.59] | 0.489 [0.34-0.64] | 0.462 [0.31-0.62] |
+| COPD | TimesFM 3 | 0.605 [0.45-0.74] | 0.599 [0.44-0.70] | 0.507 [0.35-0.64] | 0.456 [0.31-0.58] |
+| AIIMS adults | XGBoost | 0.589 [0.40-0.78] | 0.615 [0.42-0.81] | 0.605 [0.40-0.80] | 0.545 [0.35-0.75] |
+| AIIMS adults | CatBoost | 0.552 [0.34-0.73] | 0.551 [0.34-0.76] | 0.525 [0.31-0.72] | 0.512 [0.28-0.74] |
+| AIIMS adults | RNN | 0.540 [0.36-0.72] | 0.548 [0.36-0.73] | 0.524 [0.35-0.72] | 0.531 [0.35-0.72] |
+| AIIMS adults | LSTM | 0.548 [0.33-0.77] | 0.546 [0.35-0.75] | 0.555 [0.35-0.76] | 0.542 [0.36-0.72] |
+| AIIMS adults | TimesFM 3 | 0.509 [0.29-0.72] | 0.520 [0.34-0.72] | 0.507 [0.30-0.69] | 0.545 [0.34-0.73] |
+| AIIMS children | XGBoost | 0.390 [0.23-0.54] | 0.370 [0.22-0.51] | 0.478 [0.30-0.63] | 0.536 [0.39-0.70] |
+| AIIMS children | CatBoost | 0.491 [0.31-0.64] | 0.475 [0.30-0.62] | 0.495 [0.35-0.62] | 0.554 [0.44-0.69] |
+| AIIMS children | RNN | 0.518 [0.40-0.64] | 0.506 [0.41-0.62] | 0.573 [0.48-0.71] | 0.561 [0.45-0.70] |
+| AIIMS children | LSTM | 0.580 [0.46-0.73] | 0.603 [0.49-0.75] | 0.575 [0.46-0.71] | 0.593 [0.48-0.73] |
+| AIIMS children | TimesFM 3 | 0.607 [0.47-0.72] | 0.550 [0.40-0.66] | 0.650 [0.52-0.76] | 0.536 [0.34-0.69] |
+
+### 8.8 Training time (detection, median per split)
+
+| model | 7 days | 5 days | 4 days | 3 days | 2 days |
+|---|---|---|---|---|---|
+| XGBoost | 49 s | 35 s | 28 s | 20 s | 13 s |
+| CatBoost | 38 s | 42 s | 40 s | 34 s | 18 s |
+| RNN | 33 s | 23 s | 18 s | 15 s | 12 s |
+| LSTM | 35 s | 24 s | 21 s | 17 s | 13 s |
+| TimesFM 3 | 6 s | 6 s | 7 s | 6 s | 6 s |
+
+The TimesFM 3 cache for each new window was built during its first split: 5 days 81 min, 4 days 75 min, 3 days 62 min, 2 days 15 min (the first three built at the same time on one GPU). 7-day runs: two runs at once; window runs: three at once, 12 CPU cores each.
+
+## 9. Where everything is
 
 | what | where |
 |---|---|
@@ -643,4 +991,6 @@ cores per run, two runs at once (the first TimesFM 3 split ran alone on 36 cores
 | one line per split and group | `results/exac/summary_detect.csv`, `results/exac/summary_onset.csv` |
 | run logs | `logs/classical/`, `logs/gast/`, `logs/timesfm3/` |
 | code | `run_exac.py`, `models/rnn.py`, `models/gast_v1.py`, `models/timesfm3.py` (and the copy in `exac/`) |
-| design decisions | `docs/EXAC_DESIGN.md`, `docs/GAST_DESIGN.md` |
+| window ablation: one table per task (every score, mean and SD over seeds, 95% interval, per test share and group) | `results/exac/window_detect.csv`, `results/exac/window_onset.csv` (`python -m exac.window --table`) |
+| window ablation runs and logs | `results/exac/<task>/combined/<model>_d<N>[_h<H>]/`, `logs/window/` |
+| design decisions | `docs/EXAC_DESIGN.md` (window ablation: section 9), `docs/GAST_DESIGN.md` |
